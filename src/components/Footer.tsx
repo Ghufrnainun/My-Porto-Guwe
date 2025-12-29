@@ -1,19 +1,23 @@
-import { Github, Linkedin, Twitter, Mail, Heart } from "lucide-react";
+import { Github, Linkedin, Twitter, Mail, Heart } from 'lucide-react';
 
 const socialLinks = [
-  { href: "https://github.com", icon: Github, label: "GitHub" },
-  { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
-  { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
-  { href: "mailto:john@example.com", icon: Mail, label: "Email" },
+  { href: 'https://github.com/ghufronainun', icon: Github, label: 'GitHub' },
+  {
+    href: 'https://linkedin.com/in/ghufronainun',
+    icon: Linkedin,
+    label: 'LinkedIn',
+  },
+  { href: 'https://twitter.com', icon: Twitter, label: 'Twitter' },
+  { href: 'mailto:ghufrnainunajib@gmail.com', icon: Mail, label: 'Email' },
 ];
 
 const quickLinks = [
-  { href: "#about", label: "About" },
-  { href: "#skills", label: "Skills" },
-  { href: "#projects", label: "Projects" },
-  { href: "#education", label: "Education" },
-  { href: "/blog", label: "Blog" },
-  { href: "#contact", label: "Contact" },
+  { href: '#about', label: 'About' },
+  { href: '#skills', label: 'Skills' },
+  { href: '#projects', label: 'Projects' },
+  { href: '#education', label: 'Education' },
+  { href: '/blog', label: 'Blog' },
+  { href: '#contact', label: 'Contact' },
 ];
 
 export function Footer() {
@@ -26,11 +30,11 @@ export function Footer() {
           {/* Brand */}
           <div>
             <h3 className="text-xl font-bold mb-4">
-              <span className="text-gradient">John Doe</span>
+              <span className="text-gradient">Ghufron Ainun</span>
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Computer Science Graduate passionate about building elegant
-              solutions to complex problems.
+              Fullstack Developer shipping production web apps with Laravel,
+              React, and MySQL.
             </p>
           </div>
 
@@ -73,7 +77,7 @@ export function Footer() {
 
         <div className="pt-8 border-t border-border text-center">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-            © {currentYear} John Doe. Made with
+            © {currentYear} Ghufron Ainun. Made with
             <Heart className="h-4 w-4 text-destructive fill-current" />
             and lots of coffee.
           </p>

@@ -1,59 +1,63 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
-  { href: "#about", label: "About" },
-  { href: "#skills", label: "Skills" },
-  { href: "#projects", label: "Projects" },
-  { href: "#education", label: "Education" },
-  { href: "/blog", label: "Blog", isPage: true },
-  { href: "#contact", label: "Contact" },
+  { href: '#about', label: 'About' },
+  { href: '#skills', label: 'Skills' },
+  { href: '#projects', label: 'Projects' },
+  { href: '#education', label: 'Education' },
+  { href: '/blog', label: 'Blog', isPage: true },
+  { href: '#contact', label: 'Contact' },
 ];
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const isHomePage = location.pathname === "/";
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleNavClick = (href: string, isPage?: boolean) => {
     setIsMobileMenuOpen(false);
     if (!isPage && !isHomePage) {
-      window.location.href = "/" + href;
+      window.location.href = '/' + href;
     }
   };
 
   return (
     <motion.header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled ? "bg-background/80 backdrop-blur-lg border-b border-border shadow-sm" : "bg-transparent",
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        isScrolled
+          ? 'bg-background/80 backdrop-blur-lg border-b border-border shadow-sm'
+          : 'bg-transparent'
       )}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      transition={{ type: 'spring', stiffness: 100, damping: 20 }}
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link to="/" className="text-xl font-bold tracking-tight hover:text-primary transition-colors">
-              <span className="text-gradient">Ghufron Ainun</span>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/"
+              className="text-xl font-bold tracking-tight hover:text-primary transition-colors"
+            >
+              <span className="text-muted-foreground">{'{'}</span>
+              <span className="text-gradient"> Ghufron </span>
+              <span className="text-muted-foreground">{'}'}</span>
             </Link>
           </motion.div>
 
@@ -81,7 +85,7 @@ export function Header() {
                   </Link>
                 ) : (
                   <a
-                    href={isHomePage ? link.href : "/" + link.href}
+                    href={isHomePage ? link.href : '/' + link.href}
                     className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
                   >
                     {link.label}
@@ -95,7 +99,7 @@ export function Header() {
                 )}
               </motion.div>
             ))}
-            <motion.div 
+            <motion.div
               className="ml-2"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -108,10 +112,12 @@ export function Header() {
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
-            <motion.div
-              whileTap={{ scale: 0.9 }}
-            >
-              <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
                 <AnimatePresence mode="wait">
                   {isMobileMenuOpen ? (
                     <motion.div
@@ -143,10 +149,10 @@ export function Header() {
         {/* Mobile Navigation */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.nav 
+            <motion.nav
               className="md:hidden py-4 border-t border-border overflow-hidden"
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
@@ -168,7 +174,7 @@ export function Header() {
                     </Link>
                   ) : (
                     <a
-                      href={isHomePage ? link.href : "/" + link.href}
+                      href={isHomePage ? link.href : '/' + link.href}
                       onClick={() => handleNavClick(link.href, link.isPage)}
                       className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                     >

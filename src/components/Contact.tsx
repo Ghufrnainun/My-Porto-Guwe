@@ -1,43 +1,95 @@
-import { useState } from "react";
-import { Send, Mail, MapPin, Phone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { ScrollReveal } from "@/components/ScrollReveal";
-import { ParallaxBackground } from "@/components/ParallaxBackground";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Send, Mail, MapPin, Phone, Loader2, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { ScrollReveal } from '@/components/ScrollReveal';
+import { ParallaxBackground } from '@/components/ParallaxBackground';
+
+// Zod validation schema
+const contactSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Please enter a valid email'),
+  subject: z.string().optional(),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
+
+// Replace with your Formspree endpoint
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
 
 export function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
+
+  const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
+    setIsSuccess(false);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-    toast({
-      title: "Message sent!",
-      description: "Thank you for reaching out. I'll get back to you soon.",
-    });
+      if (response.ok) {
+        setIsSuccess(true);
+        toast({
+          title: 'Message sent!',
+          description: "Thank you for reaching out. I'll get back to you soon.",
+        });
+        reset();
 
-    setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
+        // Reset success state after 5 seconds
+        setTimeout(() => setIsSuccess(false), 5000);
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description:
+          'Failed to send message. Please try again or email me directly.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="contact" className="py-20 md:py-32 bg-muted/30 relative overflow-hidden">
+    <section
+      id="contact"
+      className="py-24 md:py-32 bg-background relative overflow-hidden"
+    >
       <ParallaxBackground variant="dots" />
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         <ScrollReveal>
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
               Get In Touch
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Interested in collaborating or have a question? I'd love to hear from you.
+              Interested in collaborating or have a question? I'd love to hear
+              from you.
             </p>
           </div>
         </ScrollReveal>
@@ -49,8 +101,9 @@ export function Contact() {
               <div>
                 <h3 className="text-2xl font-semibold mb-6">Let's Connect</h3>
                 <p className="text-muted-foreground mb-8">
-                  I'm actively seeking new opportunities and my inbox is always open. 
-                  Whether you want to discuss a project or just network — I'll respond as soon as possible.
+                  I'm actively seeking new opportunities and my inbox is always
+                  open. Whether you want to discuss a project or just network —
+                  I'll respond as soon as possible.
                 </p>
               </div>
 
@@ -96,79 +149,110 @@ export function Contact() {
           {/* Contact Form */}
           <ScrollReveal delay={200}>
             <form
-              onSubmit={handleSubmit}
-              className="p-6 bg-card rounded-xl border border-border shadow-card"
+              onSubmit={handleSubmit(onSubmit)}
+              className="p-6 bg-card rounded-xl border border-border"
             >
               <div className="space-y-4">
+                {/* Name Field */}
                 <div>
                   <label
                     htmlFor="name"
                     className="block text-sm font-medium mb-2"
                   >
-                    Name
+                    Name <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="name"
-                    name="name"
                     placeholder="Your name"
-                    required
+                    className="focus:border-primary focus:ring-primary"
+                    {...register('name')}
                   />
+                  {errors.name && (
+                    <p className="text-destructive text-xs mt-1">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
 
+                {/* Email Field */}
                 <div>
                   <label
                     htmlFor="email"
                     className="block text-sm font-medium mb-2"
                   >
-                    Email
+                    Email <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="email"
-                    name="email"
                     type="email"
                     placeholder="your@email.com"
-                    required
+                    className="focus:border-primary focus:ring-primary"
+                    {...register('email')}
                   />
+                  {errors.email && (
+                    <p className="text-destructive text-xs mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
+                {/* Subject Field (Optional) */}
                 <div>
                   <label
                     htmlFor="subject"
                     className="block text-sm font-medium mb-2"
                   >
-                    Subject
+                    Subject{' '}
+                    <span className="text-muted-foreground text-xs">
+                      (optional)
+                    </span>
                   </label>
                   <Input
                     id="subject"
-                    name="subject"
                     placeholder="What's this about?"
-                    required
+                    className="focus:border-primary focus:ring-primary"
+                    {...register('subject')}
                   />
                 </div>
 
+                {/* Message Field */}
                 <div>
                   <label
                     htmlFor="message"
                     className="block text-sm font-medium mb-2"
                   >
-                    Message
+                    Message <span className="text-destructive">*</span>
                   </label>
                   <Textarea
                     id="message"
-                    name="message"
-                    placeholder="Write your message..."
+                    placeholder="Write your message... (min. 10 characters)"
                     rows={5}
-                    required
+                    className="focus:border-primary focus:ring-primary resize-none"
+                    {...register('message')}
                   />
+                  {errors.message && (
+                    <p className="text-destructive text-xs mt-1">
+                      {errors.message.message}
+                    </p>
+                  )}
                 </div>
 
+                {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    "Sending..."
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : isSuccess ? (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Message Sent!
+                    </>
                   ) : (
                     <>
                       Send Message
@@ -176,6 +260,13 @@ export function Contact() {
                     </>
                   )}
                 </Button>
+
+                {/* Success Message */}
+                {isSuccess && (
+                  <p className="text-center text-sm text-primary">
+                    Thank you! I'll get back to you as soon as possible.
+                  </p>
+                )}
               </div>
             </form>
           </ScrollReveal>
