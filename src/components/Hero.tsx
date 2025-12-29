@@ -14,7 +14,7 @@ export function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[90vh] flex flex-col justify-center px-6 py-20 md:px-12 lg:px-24 overflow-hidden bg-background"
+      className="relative min-h-screen flex flex-col justify-center px-6 py-20 md:px-12 lg:px-24 overflow-hidden bg-background"
     >
       {/* Subtle organic background mesh */}
       <div className="absolute inset-0 pointer-events-none opacity-30">

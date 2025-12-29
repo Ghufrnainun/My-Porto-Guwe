@@ -1,6 +1,4 @@
 import { Header } from '@/components/Header';
-import { ScrollProgress } from '@/components/ScrollProgress';
-import { SectionNavigator } from '@/components/SectionNavigator';
 import { CursorFollower } from '@/components/CursorFollower';
 import { Hero } from '@/components/Hero';
 import { About } from '@/components/About';
@@ -20,8 +18,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <CursorFollower />
       <Header />
-      <ScrollProgress />
-      <SectionNavigator />
       <main>
         <section id="hero">
           <Hero />

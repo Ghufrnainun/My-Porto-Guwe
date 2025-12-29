@@ -51,14 +51,20 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link
-              to="/"
-              className="text-xl font-bold tracking-tight hover:text-primary transition-colors"
+            <a
+              href="#hero"
+              onClick={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById('hero')
+                  ?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer"
             >
               <span className="text-muted-foreground">{'{'}</span>
               <span className="text-gradient"> Ghufron </span>
               <span className="text-muted-foreground">{'}'}</span>
-            </Link>
+            </a>
           </motion.div>
 
           {/* Desktop Navigation */}
