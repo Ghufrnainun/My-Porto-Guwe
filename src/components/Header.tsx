@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
@@ -6,28 +6,78 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navLinks = [
+interface NavLink {
+  href: string;
+  label: string;
+  isPage?: boolean;
+}
+
+const navLinks: NavLink[] = [
   { href: '#about', label: 'About' },
   { href: '#skills', label: 'Skills' },
   { href: '#projects', label: 'Projects' },
   { href: '#education', label: 'Education' },
-  { href: '/blog', label: 'Blog', isPage: true },
+  // { href: '/blog', label: 'Blog', isPage: true }, // TODO: Enable when blog content is ready
   { href: '#contact', label: 'Contact' },
 ];
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // Hidden on Hero, visible on scroll
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [isShaking, setIsShaking] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const scrollY = window.scrollY;
+      const heroHeight = window.innerHeight * 0.8; // 80% of viewport = past Hero
+
+      setIsScrolled(scrollY > 20);
+      setIsVisible(scrollY > heroHeight); // Show navbar after scrolling past Hero
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Easter Egg B: Logo shake on 10 rapid clicks
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // Count clicks
+    setLogoClickCount((prev) => prev + 1);
+
+    // Reset count after 2 seconds of no clicks
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      setLogoClickCount(0);
+    }, 2000);
+
+    // Trigger easter egg at 10 clicks
+    if (logoClickCount >= 9) {
+      setIsShaking(true);
+      setLogoClickCount(0);
+
+      // Show confetti-like effect by toggling theme rapidly
+      document.body.style.transition = 'filter 0.1s';
+      document.body.style.filter = 'hue-rotate(180deg)';
+      setTimeout(() => {
+        document.body.style.filter = 'hue-rotate(0deg)';
+      }, 500);
+
+      setTimeout(() => setIsShaking(false), 1000);
+      return;
+    }
+
+    // Normal click - scroll to hero
+    document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleNavClick = (href: string, isPage?: boolean) => {
     setIsMobileMenuOpen(false);
@@ -40,26 +90,33 @@ export function Header() {
     <motion.header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled
+        isScrolled && isVisible
           ? 'bg-background/80 backdrop-blur-lg border-b border-border shadow-sm'
           : 'bg-transparent'
       )}
       initial={{ y: -100 }}
-      animate={{ y: 0 }}
+      animate={{ y: isVisible ? 0 : -100 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={
+              isShaking
+                ? {
+                    x: [0, -5, 5, -5, 5, -3, 3, -2, 2, 0],
+                    rotate: [0, -2, 2, -2, 2, -1, 1, 0],
+                  }
+                : {}
+            }
+            transition={isShaking ? { duration: 0.5 } : {}}
+          >
             <a
               href="#hero"
-              onClick={(e) => {
-                e.preventDefault();
-                document
-                  .getElementById('hero')
-                  ?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer"
+              onClick={handleLogoClick}
+              className="text-xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer select-none"
             >
               <span className="text-muted-foreground">{'{'}</span>
               <span className="text-gradient"> Ghufron </span>
