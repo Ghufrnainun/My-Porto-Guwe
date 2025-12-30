@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghufron Ainun | Portfolio</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              background: '#020617', // slate-950
+              foreground: '#f8fafc', // slate-50
+              card: '#0f172a', // slate-900
+              'card-foreground': '#f8fafc',
+              muted: {
+                DEFAULT: '#1e293b', // slate-800
+                foreground: '#94a3b8', // slate-400
+              },
+              primary: {
+                DEFAULT: '#0d9488', // teal-600
+                foreground: '#ffffff',
+              },
+              secondary: {
+                DEFAULT: '#1e293b',
+                foreground: '#f8fafc',
+              },
+              border: '#1e293b',
+            },
+            animation: {
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      body {
+        background-color: #020617;
+        color: #f8fafc;
+      }
+      .text-gradient {
+        background: linear-gradient(135deg, #0d9488, #2dd4bf);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Scroll Reveal Animation Classes */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Staggered delays */
+      .delay-100 {
+        transition-delay: 0.1s;
+      }
+      .delay-200 {
+        transition-delay: 0.2s;
+      }
+      .delay-300 {
+        transition-delay: 0.3s;
+      }
+
+      /* blob bg */
+      .blob {
+        position: absolute;
+        filter: blur(80px);
+        border-radius: 9999px;
+        opacity: 0.4;
+        z-index: 0;
+      }
+    </style>
+  </head>
+  <body class="overflow-x-hidden">
+    <!-- Header -->
+    <header
+      id="header"
+      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-lg border-b border-border/50"
+    >
+      <div class="container mx-auto px-4">
+        <div class="flex h-16 items-center justify-between">
+          <!-- Logo -->
+          <a
+            href="#hero"
+            class="text-xl font-bold tracking-tight hover:text-teal-500 transition-colors cursor-pointer select-none"
+          >
+            <span class="text-slate-500">{</span>
+            <span class="text-gradient"> Ghufron </span>
+            <span class="text-slate-500">}</span>
+          </a>
+
+          <!-- Desktop Nav -->
+          <nav class="hidden md:flex items-center gap-6">
+            <a
+              href="#about"
+              class="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >About</a
+            >
+            <a
+              href="#skills"
+              class="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >Skills</a
+            >
+            <a
+              href="#projects"
+              class="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >Projects</a
+            >
+            <a
+              href="#education"
+              class="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >Education</a
+            >
+          </nav>
+
+          <!-- Mobile Menu Button -->
+          <button
+            onclick="toggleMobileMenu()"
+            class="md:hidden p-2 text-slate-400 hover:text-white"
+          >
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+
+        <!-- Mobile Nav -->
+        <div
+          id="mobile-menu"
+          class="hidden md:hidden py-4 border-t border-border"
+        >
+          <nav class="flex flex-col gap-2">
+            <a
+              href="#about"
+              onclick="toggleMobileMenu()"
+              class="block px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+              >About</a
+            >
+            <a
+              href="#skills"
+              onclick="toggleMobileMenu()"
+              class="block px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+              >Skills</a
+            >
+            <a
+              href="#projects"
+              onclick="toggleMobileMenu()"
+              class="block px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+              >Projects</a
+            >
+            <a
+              href="#education"
+              onclick="toggleMobileMenu()"
+              class="block px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+              >Education</a
+            >
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section
+      id="hero"
+      class="relative min-h-screen flex flex-col justify-center px-6 py-20 md:px-12 lg:px-24 overflow-hidden"
+    >
+      <!-- Background Elements -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div
+          class="blob bg-teal-600/20 w-96 h-96 top-0 left-0 animate-pulse-slow"
+        ></div>
+        <div
+          class="blob bg-blue-600/10 w-80 h-80 bottom-0 right-0 animate-pulse-slow"
+          style="animation-delay: 2s"
+        ></div>
+      </div>
+
+      <div class="max-w-5xl relative z-10 reveal">
+        <!-- Badge -->
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 mb-6"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-500 opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"
+            ></span>
+          </span>
+          <span
+            class="text-xs font-mono font-medium text-teal-500 uppercase tracking-wider"
+          >
+            Open to Work
+          </span>
+        </div>
+
+        <!-- Heading -->
+        <h1
+          class="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-white mb-8 leading-[0.9]"
+        >
+          Ghufron <br />
+          <span class="text-slate-500/30">Ainun Najib</span>
+        </h1>
+
+        <div class="max-w-2xl mb-10">
+          <h2
+            class="text-xl md:text-2xl font-medium text-slate-200 leading-snug"
+          >
+            Building high-performance
+            <span class="text-teal-500 italic font-serif"
+              >web architectures</span
+            >
+            with Laravel and React. Currently a Computer Engineering student at
+            Polines.
+          </h2>
+        </div>
+
+        <!-- CTAs -->
+        <div class="flex flex-wrap items-center gap-4">
+          <a
+            href="#projects"
+            class="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium transition-all hover:bg-teal-500 hover:scale-105"
+          >
+            View Projects
+          </a>
+          <a
+            href="mailto:ghufrnainunajib@gmail.com"
+            class="group flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-white hover:text-teal-400 transition-colors"
+          >
+            Email Me
+            <i
+              data-lucide="arrow-right"
+              class="w-4 h-4 transition-transform group-hover:translate-x-1"
+            ></i>
+          </a>
+
+          <div class="w-px h-6 bg-slate-800 mx-2 hidden sm:block"></div>
+
+          <!-- Socials -->
+          <a
+            href="https://github.com/Ghufrnainun"
+            target="_blank"
+            class="p-2 rounded-full bg-slate-800 hover:bg-teal-500/10 text-slate-400 hover:text-teal-500 transition-colors"
+          >
+            <i data-lucide="github" class="w-5 h-5"></i>
+          </a>
+          <a
+            href="https://linkedin.com/in/ghufronainun"
+            target="_blank"
+            class="p-2 rounded-full bg-slate-800 hover:bg-teal-500/10 text-slate-400 hover:text-teal-500 transition-colors"
+          >
+            <i data-lucide="linkedin" class="w-5 h-5"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-24 md:py-32 relative bg-slate-950">
+      <div class="container mx-auto px-6 md:px-12 lg:px-24">
+        <div class="max-w-4xl mx-auto">
+          <div class="mb-12 reveal">
+            <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              About Me
+            </h2>
+            <p class="text-lg text-slate-400">
+              Developer • Student • Problem Solver
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <!-- Avatar -->
+            <div class="lg:col-span-3 flex lg:justify-center reveal">
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop"
+                alt="Profile"
+                class="w-28 h-28 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-teal-500/20"
+              />
+            </div>
+
+            <!-- Content -->
+            <div
+              class="lg:col-span-9 space-y-5 text-slate-400 text-lg leading-relaxed reveal delay-200"
+            >
+              <p>
+                I build web applications that people actually use — from
+                certification platforms to election systems. Focused on Laravel
+                back-end, React front-end, and MySQL databases.
+              </p>
+              <p>
+                Currently leading a 5-person dev team for my polytechnic's
+                certification website. I handle Git architecture, auth modules,
+                and make sure we ship on time.
+              </p>
+              <p>
+                Also active in campus organizations — managing websites, running
+                social media, and doing tech support. Still a student, but
+                already solving real problems with code.
+              </p>
+
+              <!-- Badges -->
+              <div class="mt-8 flex flex-wrap gap-3 pt-4">
+                <div
+                  class="flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-full text-sm font-medium border border-slate-800"
+                >
+                  <i data-lucide="map-pin" class="h-4 w-4 text-teal-500"></i>
+                  <span>Semarang, Indonesia</span>
+                </div>
+                <div
+                  class="flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-full text-sm font-medium border border-slate-800"
+                >
+                  <i
+                    data-lucide="graduation-cap"
+                    class="h-4 w-4 text-teal-500"
+                  ></i>
+                  <span>Computer Engineering</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="py-24 md:py-32 bg-slate-950 relative">
+      <div class="container mx-auto px-6 md:px-12 lg:px-24">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            Tech Stack
+          </h2>
+          <p class="text-lg text-slate-400">
+            Technologies I actively use to build robust and scalable
+            applications
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 max-w-4xl mx-auto reveal delay-200"
+        >
+          <!-- Skill Items -->
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Next.js</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">React</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/laravel/laravel-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Laravel</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Tailwind</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">MySQL</span>
+          </div>
+          <!-- Row 2 -->
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">PHP</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">JavaScript</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Python</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Vue.js</span>
+          </div>
+          <div
+            class="p-5 bg-card rounded-2xl border border-border flex flex-col items-center gap-3 hover:border-teal-500/50 transition-colors group"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg"
+              class="w-12 h-12 grayscale group-hover:grayscale-0 transition-all"
+            />
+            <span class="text-sm font-medium text-slate-400">Git</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-24 md:py-32 bg-slate-950 relative">
+      <div class="container mx-auto px-6 md:px-12 lg:px-24">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            What I've Built
+          </h2>
+          <p class="text-lg text-slate-400">
+            Real projects solving real problems
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <!-- Project 1 -->
+          <div
+            class="bg-card rounded-2xl border border-border overflow-hidden hover:border-teal-500/30 transition-all hover:-translate-y-2 duration-300 reveal delay-100"
+          >
+            <div class="aspect-video overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-3 text-white">
+                LSP Polines Certification Platform
+              </h3>
+              <p class="text-slate-400 text-sm mb-4 line-clamp-3">
+                Led a 5-person team to build the official certification website.
+                Built the auth system and shipped on deadline.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Laravel</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Livewire</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >MySQL</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 2 -->
+          <div
+            class="bg-card rounded-2xl border border-border overflow-hidden hover:border-teal-500/30 transition-all hover:-translate-y-2 duration-300 reveal delay-200"
+          >
+            <div class="aspect-video overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-3 text-white">
+                UKM PCC Online Election System
+              </h3>
+              <p class="text-slate-400 text-sm mb-4 line-clamp-3">
+                Built a secure voting platform with one-time vote validation.
+                Zero disputes on election day with 300+ votes.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Laravel</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Alpine.js</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >MySQL</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 3 -->
+          <div
+            class="bg-card rounded-2xl border border-border overflow-hidden hover:border-teal-500/30 transition-all hover:-translate-y-2 duration-300 reveal delay-300 md:col-span-2 md:w-1/2 md:mx-auto"
+          >
+            <div class="aspect-video overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-3 text-white">
+                IMPP Organization Website
+              </h3>
+              <p class="text-slate-400 text-sm mb-4 line-clamp-3">
+                Full development and maintenance of official site. Increased
+                member engagement by 40%.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >React</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Tailwind</span
+                >
+                <span
+                  class="text-xs px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-500 font-medium"
+                  >Vite</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-12 reveal">
+          <a
+            href="https://github.com/Ghufrnainun"
+            target="_blank"
+            class="inline-flex items-center gap-2 px-6 py-3 border border-slate-700 hover:border-teal-500 rounded-lg text-sm font-medium transition-colors"
+          >
+            <i data-lucide="github" class="w-4 h-4"></i>
+            View More on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Education & Achievements -->
+    <section id="education" class="py-24 md:py-32 bg-slate-950 overflow-hidden">
+      <div class="container mx-auto px-6 md:px-12 lg:px-24">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            Education & Achievements
+          </h2>
+          <p class="text-lg text-slate-400">
+            Academic foundation and professional milestones
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <!-- Education Card -->
+          <div
+            class="lg:col-span-2 h-full p-6 bg-card rounded-xl border border-border reveal"
+          >
+            <div class="flex items-start gap-4 mb-6">
+              <div
+                class="w-12 h-12 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0"
+              >
+                <i
+                  data-lucide="graduation-cap"
+                  class="h-6 w-6 text-teal-500"
+                ></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold text-white">
+                  Bachelor in Computer Engineering
+                </h3>
+                <p class="text-slate-400">
+                  Semarang State Polytechnic (Polines)
+                </p>
+                <div class="flex gap-4 mt-2 text-sm">
+                  <span class="text-slate-500">Aug 2024 - 2028 (Expected)</span>
+                  <span class="text-teal-500 font-medium">GPA: 3.85/4.00</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4
+                class="font-medium mb-3 flex items-center gap-2 text-sm text-slate-400"
+              >
+                <i data-lucide="book-open" class="h-4 w-4"></i> Relevant
+                Coursework
+              </h4>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300"
+                  >Back-End Dev</span
+                >
+                <span
+                  class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300"
+                  >Software Engineering</span
+                >
+                <span
+                  class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300"
+                  >Database Mgmt</span
+                >
+                <span
+                  class="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300"
+                  >AI/ML</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Achievements Card -->
+          <div
+            class="h-full p-6 bg-card rounded-xl border border-border reveal delay-100"
+          >
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center"
+              >
+                <i data-lucide="award" class="h-5 w-5 text-teal-500"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-white">Acknowledgments</h3>
+            </div>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-2 text-sm text-slate-400">
+                <span class="text-teal-500">•</span> Team Lead - LSP
+                Certification Project
+              </li>
+              <li class="flex items-start gap-2 text-sm text-slate-400">
+                <span class="text-teal-500">•</span> Coordinator - Info Division
+                (IMPP)
+              </li>
+              <li class="flex items-start gap-2 text-sm text-slate-400">
+                <span class="text-teal-500">•</span> Standardized Git Workflows
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Minimal CTA (Final Section) -->
+    <section class="py-24 border-t border-slate-800/40 bg-slate-950">
+      <div class="container mx-auto px-6 md:px-12 lg:px-24">
+        <div class="max-w-2xl mx-auto text-center reveal">
+          <h2
+            class="text-2xl md:text-3xl font-semibold tracking-tight mb-4 text-slate-50"
+          >
+            Interested in collaboration?
+          </h2>
+
+          <p class="text-slate-400 leading-relaxed mb-8 text-base">
+            I’m currently open for internship and full-time opportunities. If
+            you have a technical challenge or an engineering role to discuss,
+            I’d love to chat.
+          </p>
+
+          <div
+            class="flex flex-col sm:flex-row items-center justify-center gap-6"
+          >
+            <button
+              onclick="location.href='mailto:ghufrnainunajib@gmail.com'"
+              class="group inline-flex items-center gap-2 text-teal-500 font-medium hover:text-teal-400 transition-colors"
+            >
+              Start a Conversation
+              <i
+                data-lucide="arrow-right"
+                class="w-4 h-4 transition-transform group-hover:translate-x-1"
+              ></i>
+            </button>
+            <!-- <a href="mailto:ghufrnainunajib@gmail.com" class="text-sm font-semibold uppercase tracking-widest text-slate-200 hover:text-teal-500 transition-colors">Or email directly</a> -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative overflow-hidden bg-slate-950">
+      <!-- Decor -->
+      <div
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 pointer-events-none opacity-20"
+      >
+        <div
+          class="absolute top-0 right-0 w-96 h-96 bg-teal-600/30 rounded-full blur-[100px] animate-pulse"
+        ></div>
+        <div
+          class="absolute bottom-0 left-0 w-96 h-96 bg-teal-600/20 rounded-full blur-[100px] animate-pulse delay-700"
+        ></div>
+      </div>
+
+      <div
+        class="bg-slate-900/50 backdrop-blur-md border-t border-slate-800/50 py-16"
+      >
+        <div class="container mx-auto px-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <!-- Brand -->
+            <div class="md:col-span-2">
+              <a href="#" class="inline-block group mb-6">
+                <h3 class="text-2xl font-bold tracking-tighter">
+                  <span
+                    class="text-gradient group-hover:opacity-80 transition-opacity"
+                    >Ghufron</span
+                  >
+                  <span class="ml-2 text-slate-50">Ainun Najib</span>
+                </h3>
+              </a>
+              <p class="text-slate-400 max-w-sm mb-8 leading-relaxed">
+                Building premium digital experiences with modern technologies.
+                Focused on performance, aesthetics, and user impact.
+              </p>
+              <div class="flex gap-5">
+                <a
+                  href="https://github.com/Ghufrnainun"
+                  class="text-slate-400 hover:text-teal-500 hover:scale-110 transition-all"
+                  ><i data-lucide="github" class="w-5 h-5"></i
+                ></a>
+                <a
+                  href="https://linkedin.com/in/ghufronainun"
+                  class="text-slate-400 hover:text-teal-500 hover:scale-110 transition-all"
+                  ><i data-lucide="linkedin" class="w-5 h-5"></i
+                ></a>
+                <a
+                  href="mailto:ghufrnainunajib@gmail.com"
+                  class="text-slate-400 hover:text-teal-500 hover:scale-110 transition-all"
+                  ><i data-lucide="mail" class="w-5 h-5"></i
+                ></a>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div>
+              <h4
+                class="text-xs font-semibold uppercase tracking-wider mb-6 text-slate-500"
+              >
+                Navigation
+              </h4>
+              <ul class="space-y-3">
+                <li>
+                  <a
+                    href="#about"
+                    class="text-slate-400 hover:text-slate-50 transition-colors"
+                    >About</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#skills"
+                    class="text-slate-400 hover:text-slate-50 transition-colors"
+                    >Skills</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#projects"
+                    class="text-slate-400 hover:text-slate-50 transition-colors"
+                    >Projects</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="#education"
+                    class="text-slate-400 hover:text-slate-50 transition-colors"
+                    >Education</a
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+              <h4
+                class="text-xs font-semibold uppercase tracking-wider mb-6 text-slate-500"
+              >
+                Get in touch
+              </h4>
+              <div class="space-y-3">
+                <a
+                  href="mailto:ghufrnainunajib@gmail.com"
+                  class="text-slate-400 hover:text-slate-50 transition-colors block"
+                  >ghufrnainunajib@gmail.com</a
+                >
+                <p class="text-slate-400 text-sm">Semarang, Indonesia</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="pt-8 border-t border-slate-800/30 flex flex-col md:flex-row justify-between items-center gap-4"
+          >
+            <p class="text-sm text-slate-500">
+              © 2025 Ghufron Ainun. All rights reserved.
+            </p>
+            <p class="text-sm text-slate-500">
+              Built with React & Tailwind CSS.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Icons
+      lucide.createIcons();
+
+      // Mobile Menu
+      function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+      }
+
+      // Scroll Reveal Observer
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('active');
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      document
+        .querySelectorAll('.reveal')
+        .forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>

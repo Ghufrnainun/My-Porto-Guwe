@@ -134,7 +134,7 @@ export function Skills() {
       id="skills"
       className="py-24 md:py-32 bg-background relative overflow-hidden"
     >
-      <ParallaxBackground variant="grid" />
+      {/* Clean background - no blobs */}
 
       <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         <motion.div

@@ -1,12 +1,12 @@
 import { Header } from '@/components/Header';
-import { CursorFollower } from '@/components/CursorFollower';
 import { Hero } from '@/components/Hero';
 import { About } from '@/components/About';
 import { Skills } from '@/components/Skills';
 import { Projects } from '@/components/Projects';
+import { Experiments } from '@/components/Experiments';
 import { Education } from '@/components/Education';
 // import { BlogPreview } from '@/components/BlogPreview'; // TODO: Enable when blog content is ready
-import { Contact } from '@/components/Contact';
+// import { Contact } from '@/components/Contact';
 import { Footer } from '@/components/Footer';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 import { useEasterEggs } from '@/hooks/useEasterEggs';
@@ -20,7 +20,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <CursorFollower />
       <Header />
       <main>
         <section id="hero">
@@ -29,9 +28,10 @@ const Index = () => {
         <About />
         <Skills />
         <Projects />
+        <Experiments />
         <Education />
         {/* <BlogPreview /> */} {/* TODO: Enable when blog content is ready */}
-        <Contact />
+        {/* <Contact /> */}
       </main>
       <Footer />
     </div>

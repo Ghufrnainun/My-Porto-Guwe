@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Github, Linkedin, Mail } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavLink {
@@ -17,239 +15,270 @@ const navLinks: NavLink[] = [
   { href: '#skills', label: 'Skills' },
   { href: '#projects', label: 'Projects' },
   { href: '#education', label: 'Education' },
-  // { href: '/blog', label: 'Blog', isPage: true }, // TODO: Enable when blog content is ready
-  { href: '#contact', label: 'Contact' },
 ];
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isVisible, setIsVisible] = useState(false); // Hidden on Hero, visible on scroll
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [logoClickCount, setLogoClickCount] = useState(0);
-  const [isShaking, setIsShaking] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      const heroHeight = window.innerHeight * 0.8; // 80% of viewport = past Hero
+      setIsVisible(scrollY > window.innerHeight * 0.6);
 
-      setIsScrolled(scrollY > 20);
-      setIsVisible(scrollY > heroHeight); // Show navbar after scrolling past Hero
+      // Detect active section
+      const sections = navLinks.map((link) => link.href.replace('#', ''));
+      for (const section of sections.reverse()) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 150) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Easter Egg B: Logo shake on 10 rapid clicks
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    // Count clicks
-    setLogoClickCount((prev) => prev + 1);
-
-    // Reset count after 2 seconds of no clicks
-    if (clickTimeoutRef.current) {
-      clearTimeout(clickTimeoutRef.current);
-    }
-    clickTimeoutRef.current = setTimeout(() => {
-      setLogoClickCount(0);
-    }, 2000);
-
-    // Trigger easter egg at 10 clicks
-    if (logoClickCount >= 9) {
-      setIsShaking(true);
-      setLogoClickCount(0);
-
-      // Show confetti-like effect by toggling theme rapidly
-      document.body.style.transition = 'filter 0.1s';
-      document.body.style.filter = 'hue-rotate(180deg)';
-      setTimeout(() => {
-        document.body.style.filter = 'hue-rotate(0deg)';
-      }, 500);
-
-      setTimeout(() => setIsShaking(false), 1000);
-      return;
-    }
-
-    // Normal click - scroll to hero
-    document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleNavClick = (href: string, isPage?: boolean) => {
+  const handleNavClick = (href: string) => {
     setIsMobileMenuOpen(false);
-    if (!isPage && !isHomePage) {
+    if (!isHomePage) {
       window.location.href = '/' + href;
     }
   };
 
   return (
-    <motion.header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled && isVisible
-          ? 'bg-background/80 backdrop-blur-lg border-b border-border shadow-sm'
-          : 'bg-transparent'
-      )}
-      initial={{ y: -100 }}
-      animate={{ y: isVisible ? 0 : -100 }}
-      transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            animate={
-              isShaking
-                ? {
-                    x: [0, -5, 5, -5, 5, -3, 3, -2, 2, 0],
-                    rotate: [0, -2, 2, -2, 2, -1, 1, 0],
-                  }
-                : {}
-            }
-            transition={isShaking ? { duration: 0.5 } : {}}
-          >
-            <a
-              href="#hero"
-              onClick={handleLogoClick}
-              className="text-xl font-bold tracking-tight hover:text-primary transition-colors cursor-pointer select-none"
-            >
-              <span className="text-muted-foreground">{'{'}</span>
-              <span className="text-gradient"> Ghufron </span>
-              <span className="text-muted-foreground">{'}'}</span>
-            </a>
-          </motion.div>
+    <>
+      {/* ==================== DESKTOP LAYOUT ==================== */}
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link, index) => (
-              <motion.div
-                key={link.href}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {link.isPage ? (
-                  <Link
-                    to={link.href}
-                    className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
-                  >
-                    {link.label}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-full h-0.5 bg-primary origin-left"
-                      initial={{ scaleX: 0 }}
-                      whileHover={{ scaleX: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </Link>
-                ) : (
-                  <a
-                    href={isHomePage ? link.href : '/' + link.href}
-                    className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
-                  >
-                    {link.label}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-full h-0.5 bg-primary origin-left"
-                      initial={{ scaleX: 0 }}
-                      whileHover={{ scaleX: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </a>
-                )}
-              </motion.div>
-            ))}
-            <motion.div
-              className="ml-2"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <ThemeToggle />
-            </motion.div>
-          </nav>
+      {/* Zone 1: Logo (Top Left) - Desktop Only */}
+      <motion.a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        className="fixed top-6 left-8 z-50 hidden md:block font-bold text-xl text-foreground tracking-tight hover:opacity-80 transition-opacity cursor-pointer select-none"
+        initial={{ opacity: 0, y: -20 }}
+        animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        Ghufron A.N.
+      </motion.a>
 
-          {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
-            <motion.div whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                <AnimatePresence mode="wait">
-                  {isMobileMenuOpen ? (
-                    <motion.div
-                      key="close"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <X className="h-5 w-5" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="menu"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Menu className="h-5 w-5" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </motion.div>
-          </div>
-        </div>
+      {/* Zone 2: Glass Pill Navbar (Center) - Desktop Only */}
+      <motion.nav
+        className="fixed top-6 inset-x-0 mx-auto w-fit z-50 hidden md:flex h-12 items-center gap-1 bg-card/80 backdrop-blur-md border border-border rounded-full px-6 py-2 shadow-2xl"
+        initial={{ y: -100, opacity: 0 }}
+        animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        {navLinks.map((link) => {
+          const sectionId = link.href.replace('#', '');
+          const isActive = activeSection === sectionId;
 
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.nav
-              className="md:hidden py-4 border-t border-border overflow-hidden"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {navLinks.map((link, index) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: index * 0.05 }}
+          return (
+            <motion.div key={link.href} whileHover={{ scale: 1.02 }}>
+              {link.isPage ? (
+                <Link
+                  to={link.href}
+                  className={`relative px-4 py-2 font-mono text-xs font-medium rounded-full transition-all ${
+                    isActive
+                      ? 'text-foreground bg-secondary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  }`}
                 >
-                  {link.isPage ? (
-                    <Link
-                      to={link.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  ) : (
-                    <a
-                      href={isHomePage ? link.href : '/' + link.href}
-                      onClick={() => handleNavClick(link.href, link.isPage)}
-                      className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                    >
-                      {link.label}
-                    </a>
+                  {link.label}
+                  {isActive && (
+                    <motion.span
+                      className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
+                      layoutId="activeIndicator"
+                    />
                   )}
-                </motion.div>
+                </Link>
+              ) : (
+                <a
+                  href={isHomePage ? link.href : '/' + link.href}
+                  className={`relative px-4 py-2 font-mono text-xs font-medium rounded-full transition-all ${
+                    isActive
+                      ? 'text-foreground bg-secondary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.span
+                      className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
+                      layoutId="activeIndicator"
+                    />
+                  )}
+                </a>
+              )}
+            </motion.div>
+          );
+        })}
+      </motion.nav>
+
+      {/* Zone 3: Actions (Top Right) - Desktop Only */}
+      <motion.div
+        className="fixed top-6 right-8 z-50 hidden md:flex items-center gap-3"
+        initial={{ opacity: 0, y: -20 }}
+        animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <a
+          href="/resume.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border border-border hover:border-primary text-foreground text-xs font-mono px-4 py-2 rounded-full transition-all bg-card/50 backdrop-blur-md"
+        >
+          Resume
+        </a>
+        <ThemeToggle />
+      </motion.div>
+
+      {/* ==================== MOBILE LAYOUT ==================== */}
+
+      {/* Mobile Header Bar - Hidden on Hero, shows after scroll */}
+      <motion.header
+        className="fixed top-0 left-0 right-0 z-50 md:hidden h-16 flex items-center justify-between px-6 bg-background/80 backdrop-blur-lg border-b border-border"
+        initial={{ y: -100, opacity: 0 }}
+        animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        {/* Logo */}
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="font-bold text-lg text-foreground tracking-tight"
+        >
+          Ghufron A.N.
+        </a>
+
+        {/* Right Side - Menu Button Only */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex items-center justify-center w-10 h-10 text-foreground rounded-lg hover:bg-secondary active:bg-secondary/80 transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </motion.header>
+
+      {/* Premium Full-Screen Overlay Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 z-[999] bg-background flex flex-col"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3, ease: 'easeInOut' }}
+          >
+            {/* Close Button - Top Right */}
+            <div className="flex justify-end p-6">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-foreground p-2 hover:bg-secondary rounded-full transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
+
+            {/* Navigation Links - Center */}
+            <nav className="flex-1 flex flex-col items-center justify-center space-y-8">
+              {navLinks.map((link, index) => (
+                <motion.a
+                  key={link.href}
+                  href={isHomePage ? link.href : '/' + link.href}
+                  onClick={() => handleNavClick(link.href)}
+                  className="text-4xl font-bold text-foreground tracking-tight hover:text-primary transition-colors"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + index * 0.05 }}
+                >
+                  {link.label}
+                </motion.a>
               ))}
-            </motion.nav>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.header>
+            </nav>
+
+            {/* Bottom Section - Social & Resume */}
+            <motion.div
+              className="p-8 flex flex-col items-center gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Social Icons */}
+              <div className="flex items-center gap-6">
+                <a
+                  href="https://github.com/Ghufrnainun"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="GitHub"
+                >
+                  <Github className="w-6 h-6" />
+                </a>
+                <a
+                  href="https://linkedin.com/in/ghufronainun"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-6 h-6" />
+                </a>
+                <a
+                  href="mailto:ghufrnainunajib@gmail.com"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Email"
+                >
+                  <Mail className="w-6 h-6" />
+                </a>
+              </div>
+
+              {/* Resume Button */}
+              <a
+                href="/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-border hover:border-primary text-foreground text-sm font-mono px-8 py-3 rounded-full transition-all"
+              >
+                Download Resume
+              </a>
+
+              {/* Theme Toggle */}
+              <div className="pt-4">
+                <ThemeToggle />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
