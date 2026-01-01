@@ -1,14 +1,14 @@
 import { Github, Linkedin, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ContactModal } from './ContactModal';
 import { ContactCTA } from './ContactCTA';
 
 const navLinks = [
-  { href: '#about', label: 'About' },
-  { href: '#skills', label: 'Skills' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#education', label: 'Education' },
+  { href: '/about', label: 'About' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 const socialLinks = [
@@ -21,7 +21,11 @@ const socialLinks = [
   { href: 'mailto:ghufrnainunajib@gmail.com', icon: Mail, label: 'Email' },
 ];
 
-export function Footer() {
+interface FooterProps {
+  showCTA?: boolean;
+}
+
+export function Footer({ showCTA = true }: FooterProps) {
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [hasShownOnce, setHasShownOnce] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -51,8 +55,10 @@ export function Footer() {
   return (
     <>
       <footer className="relative bg-background">
-        {/* PART 1: The CTA (Mic Drop) */}
-        <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
+        {/* PART 1: The CTA (Mic Drop) - Only on landing page */}
+        {showCTA && (
+          <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
+        )}
 
         {/* PART 2: Utility Footer */}
         <div className="border-t border-border">
@@ -78,12 +84,12 @@ export function Footer() {
                 <ul className="space-y-2">
                   {navLinks.map((link) => (
                     <li key={link.label}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="font-mono text-sm hover:text-primary transition-colors"
                       >
                         {link.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>

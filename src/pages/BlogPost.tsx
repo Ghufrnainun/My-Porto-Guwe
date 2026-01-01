@@ -1,14 +1,14 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, Tag } from "lucide-react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { usePostBySlug } from "@/hooks/useBlogPosts";
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Calendar, Tag } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePostBySlug } from '@/hooks/useBlogPosts';
 
 export default function BlogPost() {
   const { id: slug } = useParams<{ id: string }>();
-  const { data: post, isLoading, error } = usePostBySlug(slug || "");
+  const { data: post, isLoading, error } = usePostBySlug(slug || '');
 
   if (isLoading) {
     return (
@@ -27,7 +27,7 @@ export default function BlogPost() {
             </div>
           </article>
         </main>
-        <Footer />
+        <Footer showCTA={false} />
       </div>
     );
   }
@@ -42,32 +42,32 @@ export default function BlogPost() {
             ← Back to blog
           </Link>
         </main>
-        <Footer />
+        <Footer showCTA={false} />
       </div>
     );
   }
 
   // Simple markdown-like rendering
   const renderContent = (content: string) => {
-    return content.split("\n\n").map((paragraph, i) => {
+    return content.split('\n\n').map((paragraph, i) => {
       // Check for headers
-      if (paragraph.startsWith("## ")) {
+      if (paragraph.startsWith('## ')) {
         return (
           <h2 key={i} className="text-2xl font-bold mt-8 mb-4">
-            {paragraph.replace("## ", "")}
+            {paragraph.replace('## ', '')}
           </h2>
         );
       }
-      if (paragraph.startsWith("### ")) {
+      if (paragraph.startsWith('### ')) {
         return (
           <h3 key={i} className="text-xl font-semibold mt-6 mb-3">
-            {paragraph.replace("### ", "")}
+            {paragraph.replace('### ', '')}
           </h3>
         );
       }
       // Check for code blocks
-      if (paragraph.startsWith("```")) {
-        const code = paragraph.replace(/```\w*\n?/g, "");
+      if (paragraph.startsWith('```')) {
+        const code = paragraph.replace(/```\w*\n?/g, '');
         return (
           <pre key={i} className="bg-muted p-4 rounded-lg overflow-x-auto my-4">
             <code className="text-sm font-mono">{code}</code>
@@ -101,10 +101,12 @@ export default function BlogPost() {
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                {new Date(post.published_at || post.created_at).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
+                {new Date(
+                  post.published_at || post.created_at
+                ).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
                 })}
               </span>
               {post.category && (
@@ -139,7 +141,7 @@ export default function BlogPost() {
           </div>
         </article>
       </main>
-      <Footer />
+      <Footer showCTA={false} />
     </div>
   );
 }

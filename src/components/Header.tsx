@@ -11,10 +11,10 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: '#about', label: 'About' },
-  { href: '#skills', label: 'Skills' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#education', label: 'Education' },
+  { href: '/', label: 'Overview', isPage: true },
+  { href: '/about', label: 'About', isPage: true },
+  { href: '/projects', label: 'Projects', isPage: true },
+  { href: '/blog', label: 'Blog', isPage: true },
 ];
 
 export function Header() {
@@ -39,9 +39,18 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      setIsVisible(scrollY > window.innerHeight * 0.6);
 
-      // Detect active section
+      // On homepage, show only after scrolling down
+      // On subpages, always show (or at least show at top)
+      if (isHomePage) {
+        setIsVisible(scrollY > window.innerHeight * 0.6);
+      } else {
+        setIsVisible(true);
+      }
+
+      // Detect active section logic (mostly for homepage scroll anchors if needed,
+      // but we are using page routes now so this might be less relevant,
+      // keeping it simple for now)
       const sections = navLinks.map((link) => link.href.replace('#', ''));
       for (const section of sections.reverse()) {
         const element = document.getElementById(section);
@@ -55,9 +64,12 @@ export function Header() {
       }
     };
 
+    // Initial check
+    handleScroll();
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   const handleNavClick = (href: string) => {
     setIsMobileMenuOpen(false);
@@ -71,19 +83,18 @@ export function Header() {
       {/* ==================== DESKTOP LAYOUT ==================== */}
 
       {/* Zone 1: Logo (Top Left) - Desktop Only */}
-      <motion.a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+      <Link
+        to="/"
         className="fixed top-6 left-8 z-50 hidden md:block font-bold text-xl text-foreground tracking-tight hover:opacity-80 transition-opacity cursor-pointer select-none"
-        initial={{ opacity: 0, y: -20 }}
-        animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
       >
-        Ghufron A.N.
-      </motion.a>
+        <motion.span
+          initial={{ opacity: 0, y: -20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          Ghufron A.N.
+        </motion.span>
+      </Link>
 
       {/* Zone 2: Glass Pill Navbar (Center) - Desktop Only */}
       <motion.nav
@@ -93,8 +104,7 @@ export function Header() {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         {navLinks.map((link) => {
-          const sectionId = link.href.replace('#', '');
-          const isActive = activeSection === sectionId;
+          const isActive = location.pathname === link.href;
 
           return (
             <motion.div key={link.href} whileHover={{ scale: 1.02 }}>

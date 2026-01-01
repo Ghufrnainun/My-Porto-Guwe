@@ -1,17 +1,19 @@
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
-import { About } from '@/components/About';
+import { AboutPreview } from '@/components/AboutPreview';
 import { Skills } from '@/components/Skills';
-import { Projects } from '@/components/Projects';
-import { Experiments } from '@/components/Experiments';
-import { Education } from '@/components/Education';
-// import { BlogPreview } from '@/components/BlogPreview'; // TODO: Enable when blog content is ready
-// import { Contact } from '@/components/Contact';
+import { ProjectsPreview } from '@/components/ProjectsPreview';
+import { BlogPreview } from '@/components/BlogPreview';
+import { ContactCTA } from '@/components/ContactCTA';
 import { Footer } from '@/components/Footer';
+import { ContactModal } from '@/components/ContactModal';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 import { useEasterEggs } from '@/hooks/useEasterEggs';
+import { useState } from 'react';
 
 const Index = () => {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
   // Enable keyboard shortcuts (1-6 for section navigation)
   useKeyboardNavigation();
 
@@ -25,15 +27,17 @@ const Index = () => {
         <section id="hero">
           <Hero />
         </section>
-        <About />
+        <AboutPreview />
         <Skills />
-        <Projects />
-        <Experiments />
-        <Education />
-        {/* <BlogPreview /> */} {/* TODO: Enable when blog content is ready */}
-        {/* <Contact /> */}
+        <ProjectsPreview />
+        <BlogPreview />
+        <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
       </main>
-      <Footer />
+      <Footer showCTA={false} />
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onOpenChange={setIsContactModalOpen}
+      />
     </div>
   );
 };
