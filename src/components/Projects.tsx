@@ -1,6 +1,6 @@
-import { ExternalLink, Github } from 'lucide-react';
-import { ProjectModal } from '@/components/ProjectModal';
-import { useState, useRef } from 'react';
+import { Github } from 'lucide-react';
+import { ProjectCard } from './ProjectCard';
+import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 
 interface Project {
@@ -39,20 +39,8 @@ const projects: Project[] = [
 ];
 
 export function Projects() {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
-
-  const handleProjectClick = (project: Project) => {
-    setSelectedProject(project);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
 
   return (
     <section
@@ -68,206 +56,26 @@ export function Projects() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="text-muted-foreground font-mono text-sm mb-2">
+          {/* Numbering */}
+          <div className="mb-6">
+            <span className="font-serif text-6xl md:text-8xl text-muted-foreground/10 font-bold leading-none select-none">
+              04
+            </span>
+          </div>
+
+          <p className="text-primary font-mono text-sm mb-2 tracking-wider uppercase">
             What I've Built
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-foreground">
             Featured Projects
           </h2>
         </motion.div>
 
         {/* Projects Container */}
         <div ref={ref} className="space-y-32">
-          {projects.map((project, index) => {
-            const isReversed = index % 2 !== 0;
-            const isHovered = hoveredIndex === index;
-
-            return (
-              <motion.div
-                key={project.title}
-                className="relative"
-                initial={{ opacity: 0, y: 50 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-              >
-                {/* Desktop Layout */}
-                <div className="hidden md:block relative">
-                  {/* Image - Positioned to left or right */}
-                  <div
-                    className={`relative w-[60%] ${
-                      isReversed ? 'ml-auto' : ''
-                    }`}
-                  >
-                    <a
-                      href="#"
-                      className="block relative rounded-2xl overflow-hidden"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleProjectClick(project);
-                      }}
-                    >
-                      <div className="aspect-[16/10] relative">
-                        <img
-                          src={project.image}
-                          alt={project.title}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Teal Overlay - fades on hover */}
-                        <div
-                          className="absolute inset-0 bg-primary/40 mix-blend-multiply transition-opacity duration-300"
-                          style={{ opacity: isHovered ? 0 : 1 }}
-                        />
-                      </div>
-                    </a>
-                  </div>
-
-                  {/* Content - Absolute positioned to overlap */}
-                  <div
-                    className={`absolute top-1/2 -translate-y-1/2 w-[50%] ${
-                      isReversed ? 'left-0 text-left' : 'right-0 text-right'
-                    }`}
-                  >
-                    <p className="text-muted-foreground font-mono text-xs mb-2">
-                      Featured Project
-                    </p>
-
-                    <h3
-                      className="text-2xl lg:text-3xl font-bold text-foreground mb-5 cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => handleProjectClick(project)}
-                    >
-                      {project.title}
-                    </h3>
-
-                    {/* Description Card */}
-                    <div className="bg-card p-6 rounded shadow-xl mb-5">
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {project.description}
-                      </p>
-                    </div>
-
-                    {/* Tech Stack */}
-                    <div
-                      className={`flex flex-wrap gap-4 mb-4 ${
-                        isReversed ? 'justify-start' : 'justify-end'
-                      }`}
-                    >
-                      {project.technologies.map((tech) => (
-                        <span
-                          key={tech}
-                          className="text-xs font-mono text-muted-foreground"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Links */}
-                    <div
-                      className={`flex gap-4 ${
-                        isReversed ? 'justify-start' : 'justify-end'
-                      }`}
-                    >
-                      <a
-                        href={project.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-foreground hover:text-primary transition-colors"
-                        aria-label="GitHub"
-                      >
-                        <Github className="w-5 h-5" />
-                      </a>
-                      {project.demo && (
-                        <a
-                          href={project.demo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-foreground hover:text-primary transition-colors"
-                          aria-label="External Link"
-                        >
-                          <ExternalLink className="w-5 h-5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile Layout - Stacked */}
-                <div className="md:hidden">
-                  {/* Image */}
-                  <div
-                    className="relative rounded-2xl overflow-hidden mb-6"
-                    onClick={() => handleProjectClick(project)}
-                  >
-                    <div className="aspect-video relative">
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div
-                        className="absolute inset-0 bg-primary/40 mix-blend-multiply transition-opacity duration-300"
-                        style={{ opacity: isHovered ? 0 : 1 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div>
-                    <p className="text-muted-foreground font-mono text-xs mb-2">
-                      Featured Project
-                    </p>
-
-                    <h3
-                      className="text-xl font-bold text-foreground mb-4 cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => handleProjectClick(project)}
-                    >
-                      {project.title}
-                    </h3>
-
-                    <div className="bg-card p-5 rounded shadow-lg mb-4">
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {project.description}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      {project.technologies.map((tech) => (
-                        <span
-                          key={tech}
-                          className="text-xs font-mono text-muted-foreground"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-4">
-                      <a
-                        href={project.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-foreground hover:text-primary transition-colors"
-                      >
-                        <Github className="w-5 h-5" />
-                      </a>
-                      {project.demo && (
-                        <a
-                          href={project.demo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-foreground hover:text-primary transition-colors"
-                        >
-                          <ExternalLink className="w-5 h-5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+          {projects.map((project, index) => (
+            <ProjectCard key={project.title} project={project} index={index} />
+          ))}
         </div>
 
         {/* GitHub CTA */}
@@ -289,12 +97,6 @@ export function Projects() {
           </a>
         </motion.div>
       </div>
-
-      <ProjectModal
-        project={selectedProject}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
     </section>
   );
 }

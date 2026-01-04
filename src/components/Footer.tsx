@@ -37,15 +37,6 @@ export function Footer({ showCTA = true }: FooterProps) {
       const clientHeight = window.innerHeight;
 
       const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
-
-      if (isAtBottom && !hasShownOnce) {
-        setShowEasterEgg(true);
-        setHasShownOnce(true);
-
-        setTimeout(() => {
-          setShowEasterEgg(false);
-        }, 3000);
-      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -151,61 +142,6 @@ export function Footer({ showCTA = true }: FooterProps) {
           </div>
         </div>
       </footer>
-
-      {/* Easter Egg */}
-      <AnimatePresence>
-        {showEasterEgg && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-card border border-border rounded-2xl p-6 shadow-2xl max-w-md mx-4 pointer-events-auto font-mono"
-              initial={{ scale: 0.5, y: 50, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.5, y: 50, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            >
-              <div className="text-xs text-gray-500 mb-2 flex items-center justify-between">
-                <span>// easter_egg.ts</span>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                  <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-                  <div className="w-2 h-2 rounded-full bg-green-500/50" />
-                </div>
-              </div>
-              <div className="bg-secondary rounded-lg p-4 border border-border">
-                <pre className="text-sm text-left">
-                  <code>
-                    <span className="text-muted-foreground">const</span>{' '}
-                    <span className="text-foreground">visitor</span> = {'{'}"
-                    {'\n'} scrolledToBottom:{' '}
-                    <span className="text-muted-foreground">true</span>,{'\n'}{' '}
-                    status: <span className="text-green-400">"awesome"</span>,
-                    {'\n'} action:{' '}
-                    <span className="text-green-400">"hire_me()"</span>
-                    {'\n'}
-                    {'}'};
-                  </code>
-                </pre>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                <span className="text-primary font-bold">Tip:</span> Press{' '}
-                <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground border border-border">
-                  G
-                </kbd>
-                {' + '}
-                <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground border border-border">
-                  A
-                </kbd>{' '}
-                to visit GitHub
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <ContactModal
         isOpen={isContactModalOpen}

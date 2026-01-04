@@ -17,8 +17,9 @@ export function Hero() {
       className="relative min-h-screen flex flex-col justify-center px-6 py-20 md:px-12 lg:px-24 overflow-hidden bg-background"
     >
       {/* Editorial Numbering - Giant ghost "01" */}
-      <div className="absolute top-1/2 -translate-y-1/2 right-0 lg:right-12 pointer-events-none select-none hidden lg:block">
-        <span className="text-[20rem] font-serif font-bold text-muted-foreground/[0.03] leading-none">
+      {/* Editorial Numbering - Giant ghost "01" */}
+      <div className="absolute top-1/2 -translate-y-1/2 right-4 lg:right-12 pointer-events-none select-none overflow-hidden opacity-50 md:opacity-100">
+        <span className="text-[10rem] md:text-[20rem] font-serif font-bold text-muted-foreground/[0.03] leading-none mix-blend-difference">
           01
         </span>
       </div>
@@ -36,7 +37,7 @@ export function Hero() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
           <span className="text-xs font-display font-medium text-foreground uppercase tracking-wider">
-            Open to Work
+            FullStack Developer
           </span>
         </div>
       </motion.div>
@@ -79,7 +80,7 @@ export function Hero() {
       >
         {/* Name - Viewport-Relative, Dramatic Serif */}
         <h1 className="font-serif tracking-tight text-foreground dark:text-white mb-6 leading-[0.85]">
-          <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal">
+          <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal italic">
             Ghufron
           </span>
           <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors duration-500 cursor-default">

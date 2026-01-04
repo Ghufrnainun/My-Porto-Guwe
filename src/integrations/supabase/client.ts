@@ -5,13 +5,42 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Mock client for development without credentials
+const createMockClient = () => {
+  console.warn('Supabase credentials missing. Using mock client.');
+  return {
+    auth: {
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => {} } },
+      }),
+      getSession: async () => ({ data: { session: null } }),
+      signInWithPassword: async () => ({
+        error: new Error('Supabase not configured'),
+      }),
+      signOut: async () => {},
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+        }),
+      }),
+    }),
+  } as unknown as ReturnType<typeof createClient<Database>>;
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+export const supabase =
+  SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
+    ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: {
+          storage: localStorage,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      })
+    : createMockClient();

@@ -8,7 +8,7 @@ import { ContactCTA } from '@/components/ContactCTA';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
-import { useEasterEggs } from '@/hooks/useEasterEggs';
+
 import { useState } from 'react';
 
 const Index = () => {
@@ -16,9 +16,6 @@ const Index = () => {
 
   // Enable keyboard shortcuts (1-6 for section navigation)
   useKeyboardNavigation();
-
-  // Enable easter eggs (console message, G+A shortcut)
-  useEasterEggs();
 
   return (
     <div className="min-h-screen bg-background">

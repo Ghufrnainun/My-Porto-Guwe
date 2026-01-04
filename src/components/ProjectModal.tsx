@@ -19,7 +19,7 @@ interface Project {
   demo: string;
   image: string;
   images?: string[];
-  color: string;
+  color?: string;
 }
 
 interface ProjectModalProps {

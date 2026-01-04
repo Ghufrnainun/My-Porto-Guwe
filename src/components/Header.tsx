@@ -111,7 +111,7 @@ export function Header() {
               {link.isPage ? (
                 <Link
                   to={link.href}
-                  className={`relative px-4 py-2 font-mono text-xs font-medium rounded-full transition-all ${
+                  className={`relative px-5 py-2 font-mono text-sm font-medium rounded-full transition-all ${
                     isActive
                       ? 'text-foreground bg-secondary'
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
@@ -128,7 +128,7 @@ export function Header() {
               ) : (
                 <a
                   href={isHomePage ? link.href : '/' + link.href}
-                  className={`relative px-4 py-2 font-mono text-xs font-medium rounded-full transition-all ${
+                  className={`relative px-5 py-2 font-mono text-sm font-medium rounded-full transition-all ${
                     isActive
                       ? 'text-foreground bg-secondary'
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
@@ -159,7 +159,7 @@ export function Header() {
           href="/resume.pdf"
           target="_blank"
           rel="noopener noreferrer"
-          className="border border-border hover:border-primary text-foreground text-xs font-mono px-4 py-2 rounded-full transition-all bg-card/50 backdrop-blur-md"
+          className="border border-border hover:border-primary text-foreground text-sm font-mono px-5 py-2 rounded-full transition-all bg-card/50 backdrop-blur-md"
         >
           Resume
         </a>
