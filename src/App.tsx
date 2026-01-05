@@ -14,10 +14,15 @@ import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import PostEditor from './pages/PostEditor';
 import NotFound from './pages/NotFound';
+import LoadingScreen from '@/components/LoadingScreen';
+import { AnimatePresence } from 'framer-motion';
+import React from 'react';
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -25,19 +30,28 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:id" element={<BlogPost />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/posts/:id" element={<PostEditor />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <LoadingScreen
+                  key="loading"
+                  onLoadingComplete={() => setIsLoading(false)}
+                />
+              ) : (
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:id" element={<BlogPost />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/posts/:id" element={<PostEditor />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              )}
+            </AnimatePresence>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>

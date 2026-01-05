@@ -254,7 +254,7 @@ export function Header() {
                   <Github className="w-6 h-6" />
                 </a>
                 <a
-                  href="https://linkedin.com/in/ghufronainun"
+                  href="https://www.linkedin.com/in/ghufronainun-najib/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-foreground transition-colors"

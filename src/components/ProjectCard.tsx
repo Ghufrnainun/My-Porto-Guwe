@@ -30,7 +30,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
         className="relative group"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-100px' }}
+        viewport={{ once: true, amount: 0.1 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

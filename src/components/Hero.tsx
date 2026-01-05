@@ -60,7 +60,7 @@ export function Hero() {
           <Github className="w-5 h-5" />
         </a>
         <a
-          href="https://linkedin.com/in/ghufronainun"
+          href="https://www.linkedin.com/in/ghufronainun-najib/"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -83,7 +83,7 @@ export function Hero() {
           <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal italic">
             Ghufron
           </span>
-          <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors duration-500 cursor-default">
+          <span className="block text-[12vw] md:text-[10vw] lg:text-[8vw] font-normal text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors duration-500 cursor-default">
             Ainun Najib
           </span>
         </h1>
@@ -137,7 +137,7 @@ export function Hero() {
               <Github className="w-5 h-5" />
             </a>
             <a
-              href="https://linkedin.com/in/ghufronainun"
+              href="https://www.linkedin.com/in/ghufronainun-najib/"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors"
@@ -152,7 +152,7 @@ export function Hero() {
       {/* Scroll Hint - Bottom Left on Desktop */}
       <motion.a
         href="#about"
-        className="absolute bottom-8 left-6 md:left-12 lg:left-24 flex items-center gap-3 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer"
+        className="absolute bottom-8 left-6 md:left-12 lg:left-24 flex items-center gap-3 text-muted-foreground/70 dark:text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 0.5 }}

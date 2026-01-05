@@ -11,59 +11,59 @@
 
 @layer base {
   :root {
-    /* Light Mode - Warm Gray/Off-White that complements Matte Black */
+    /* Light Mode - Improved Readability */
     --background: 0 0% 98%; /* #fafafa - Warm off-white */
-    --foreground: 0 0% 9%; /* #171717 - Near black text */
+    --foreground: 0 0% 6%; /* #0f0f0f - Darker for better contrast */
 
     --card: 0 0% 100%; /* Pure white cards */
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 0 0% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 6%;
 
-    --primary: 171 77% 36%; /* Teal - slightly darker for light mode */
+    --primary: 171 77% 30%; /* Teal - darker for light mode accessibility */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 94%; /* #f0f0f0 - Light gray */
-    --secondary-foreground: 0 0% 15%;
+    --secondary-foreground: 0 0% 12%;
 
     --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%; /* Medium gray text */
+    --muted-foreground: 0 0% 32%; /* Darker gray for readable secondary text */
 
-    --accent: 171 77% 36%;
+    --accent: 171 77% 30%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 55%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%; /* Light gray border */
-    --input: 0 0% 88%;
-    --ring: 171 77% 36%;
+    --border: 0 0% 85%; /* Slightly darker border */
+    --input: 0 0% 85%;
+    --ring: 171 77% 30%;
 
     --radius: 0.5rem;
 
     /* Custom tokens */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(171, 77%, 36%),
-      hsl(171, 60%, 45%)
+      hsl(171, 77%, 30%),
+      hsl(171, 60%, 40%)
     );
     --gradient-accent: linear-gradient(
       135deg,
-      hsl(171, 60%, 40%),
-      hsl(171, 50%, 50%)
+      hsl(171, 60%, 35%),
+      hsl(171, 50%, 45%)
     );
-    --shadow-soft: 0 4px 20px -2px hsl(171 77% 36% / 0.15);
-    --shadow-card: 0 2px 10px -2px hsl(0 0% 0% / 0.08);
+    --shadow-soft: 0 4px 20px -2px hsl(171 77% 30% / 0.15);
+    --shadow-card: 0 2px 10px -2px hsl(0 0% 0% / 0.1);
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 171 77% 36%;
+    --sidebar-foreground: 0 0% 6%;
+    --sidebar-primary: 171 77% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 94%;
-    --sidebar-accent-foreground: 171 77% 28%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 171 77% 36%;
+    --sidebar-accent-foreground: 171 77% 25%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 171 77% 30%;
   }
 
   .dark {
