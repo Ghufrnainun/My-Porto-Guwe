@@ -26,14 +26,13 @@ const featuredProjects: Project[] = [
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop',
   },
   {
-    title: 'UKM PCC Online Election System',
+    title: 'IMPP Organization Website',
     description:
-      'A secure voting platform with one-time vote validation. Handled complex auth logic and real-time dashboard updates with zero disputes.',
-    technologies: ['Laravel', 'Alpine.js', 'MySQL'],
+      'Landing page & CMS for Ikatan Mahasiswa Pemalang Polines. Solo developed with admin panel to manage structure, activities, and gallery.',
+    technologies: ['Laravel', 'MySQL', 'Tailwind CSS'],
     github: 'https://github.com/Ghufrnainun',
-    demo: '',
-    image:
-      'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=500&fit=crop',
+    demo: 'https://imppolines.my.id/',
+    image: '/impp-screenshot.png',
   },
 ];
 
@@ -44,7 +43,7 @@ export function ProjectsPreview() {
       className="py-24 md:py-32 bg-background relative overflow-hidden"
     >
       <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start mb-10">
           {/* Header Column */}
           <div className="lg:col-span-4">
             <motion.div
@@ -69,10 +68,10 @@ export function ProjectsPreview() {
             </motion.div>
           </div>
 
-          {/* Description Column */}
-          <div className="lg:col-span-8 flex items-end">
+          {/* Description Column + CTA */}
+          <div className="lg:col-span-8 flex flex-col gap-4">
             <motion.p
-              className="text-muted-foreground text-lg leading-relaxed max-w-2xl"
+              className="text-muted-foreground text-lg leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -81,34 +80,32 @@ export function ProjectsPreview() {
               Highlights of my recent development work. Each project represents
               a unique challenge and a tailored solution.
             </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Link
+                to="/projects"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-secondary/50 hover:bg-secondary text-foreground rounded-full font-mono text-xs uppercase tracking-wide transition-all border border-border hover:border-foreground/20"
+              >
+                View All
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </motion.div>
           </div>
         </div>
 
         {/* Projects List */}
-        <div className="space-y-32 mb-24">
+        <div className="space-y-32">
           {featuredProjects.map((project, index) => (
             <div key={project.title}>
               <ProjectCard project={project} index={index} />
             </div>
           ))}
         </div>
-
-        {/* CTA to Full Projects Page */}
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-        >
-          <Link
-            to="/projects"
-            className="group inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background rounded-full font-display font-medium text-sm uppercase tracking-wide transition-all hover:bg-foreground/90 active:scale-[0.98]"
-          >
-            View All Projects
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </motion.div>
       </div>
     </section>
   );

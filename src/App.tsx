@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import PostEditor from './pages/PostEditor';
 import NotFound from './pages/NotFound';
 import LoadingScreen from '@/components/LoadingScreen';
+import ScrollToTop from '@/components/ScrollToTop';
 import { AnimatePresence } from 'framer-motion';
 import React from 'react';
 
@@ -37,7 +38,13 @@ const App = () => {
                   onLoadingComplete={() => setIsLoading(false)}
                 />
               ) : (
-                <BrowserRouter>
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
+                  <ScrollToTop />
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/about" element={<About />} />

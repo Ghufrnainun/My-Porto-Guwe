@@ -10,7 +10,7 @@ const Projects = () => {
       <Header />
       <main className="pt-20">
         {/* Page Header */}
-        <section className="py-16 md:py-24">
+        <section className="pt-16 pb-0 md:pt-24 md:pb-0">
           <div className="container mx-auto px-6 md:px-12 lg:px-24">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -31,7 +31,7 @@ const Projects = () => {
         </section>
 
         {/* Featured Projects */}
-        <ProjectsSection />
+        <ProjectsSection className="pt-0 md:pt-0" />
 
         {/* Side Projects / Experiments */}
         <Experiments />

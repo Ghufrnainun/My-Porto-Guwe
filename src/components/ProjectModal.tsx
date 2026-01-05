@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X,
   Github,
@@ -37,15 +37,10 @@ const projectDetails: Record<
     impact: '1,000+ Users',
     timeline: '6 Months',
   },
-  'UKM PCC Online Election System': {
-    role: 'Full-Stack Dev',
-    impact: '300+ Votes',
-    timeline: '2 Months',
-  },
   'IMPP Organization Website': {
     role: 'Solo Developer',
-    impact: '+40% Engagement',
-    timeline: 'Ongoing',
+    impact: '60+ Members',
+    timeline: '1 Month',
   },
 };
 
@@ -62,6 +57,15 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
   // Use images array if available, otherwise use single image
   const images = project.images || [project.image];
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -84,12 +88,13 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Modal Wrapper - Handles Backdrop Click */}
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={onClose}
           >
             <motion.div
               className="relative w-full max-w-5xl max-h-[90vh] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
@@ -99,6 +104,14 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Mobile Close Button (Floating) */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 z-[60] p-2 bg-black/50 hover:bg-black/70 rounded-full text-white lg:hidden"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
               {/* Split Layout: Image Left, Content Right */}
               <div className="flex flex-col lg:flex-row h-full max-h-[90vh]">
                 {/* Left Column - Visual Showcase (60%) */}
@@ -168,7 +181,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                   </div>
 
                   {/* Description */}
-                  <p className="text-gray-400 leading-relaxed mb-6">
+                  <p className="text-muted-foreground leading-relaxed mb-6">
                     {project.description}
                   </p>
 
@@ -177,10 +190,10 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-lg border border-border">
                       <Users className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">
                           Role
                         </p>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {details.role}
                         </p>
                       </div>
@@ -188,10 +201,10 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-lg border border-border">
                       <Zap className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">
                           Impact
                         </p>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {details.impact}
                         </p>
                       </div>
@@ -199,7 +212,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     <div className="flex items-center gap-3 p-4 bg-secondary/50 rounded-lg border border-border">
                       <Calendar className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">
                           Timeline
                         </p>
                         <p className="text-sm font-medium text-white">
@@ -211,7 +224,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
 
                   {/* Tech Stack */}
                   <div className="mb-8">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
                       Technologies
                     </p>
                     <div className="flex flex-wrap gap-2">

@@ -135,7 +135,9 @@ export function Education() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold mb-1">{education.degree}</h3>
-                  <p className="text-gray-400">{education.university}</p>
+                  <p className="text-muted-foreground">
+                    {education.university}
+                  </p>
                   <div className="flex flex-wrap items-center gap-4 mt-3">
                     <span className="text-muted-foreground font-mono text-sm">
                       {education.period}
@@ -150,7 +152,7 @@ export function Education() {
 
             {/* Right: Focus Areas (1 col) */}
             <div>
-              <p className="text-xs uppercase text-gray-500 tracking-wider mb-3">
+              <p className="text-xs uppercase text-muted-foreground tracking-wider mb-3">
                 Focus Areas
               </p>
               <div className="flex flex-wrap gap-2">
@@ -206,7 +208,9 @@ export function Education() {
                     {/* Header */}
                     <div className="mb-3">
                       <h4 className="text-lg font-bold">{exp.role}</h4>
-                      <p className="text-gray-400">{exp.organization}</p>
+                      <p className="text-muted-foreground">
+                        {exp.organization}
+                      </p>
                       <p className="text-muted-foreground font-mono text-sm mt-1">
                         {exp.period}
                       </p>
@@ -217,7 +221,7 @@ export function Education() {
                       {exp.responsibilities.map((resp, idx) => (
                         <li
                           key={idx}
-                          className="flex items-start gap-2 text-gray-400 text-sm"
+                          className="flex items-start gap-2 text-muted-foreground text-sm"
                         >
                           <span className="text-gray-600 mt-1.5">•</span>
                           <span>{resp}</span>
@@ -261,8 +265,10 @@ export function Education() {
                 <h4 className="font-medium text-sm mb-1 line-clamp-2">
                   {cert.title}
                 </h4>
-                <p className="text-xs text-gray-500">{cert.issuer}</p>
-                <p className="text-xs text-gray-600 mt-1">{cert.year}</p>
+                <p className="text-xs text-muted-foreground">{cert.issuer}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {cert.year}
+                </p>
               </motion.div>
             ))}
           </div>

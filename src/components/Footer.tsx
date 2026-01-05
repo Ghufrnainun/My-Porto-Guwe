@@ -51,8 +51,11 @@ export function Footer({ showCTA = true }: FooterProps) {
           <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
         )}
 
+        {/* Visual Break - Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
         {/* PART 2: Utility Footer */}
-        <div className="border-t border-border">
+        <div className="pt-12">
           <div className="container mx-auto px-6 md:px-12 lg:px-24 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
               {/* Column 1: Identity */}
@@ -114,13 +117,13 @@ export function Footer({ showCTA = true }: FooterProps) {
                   Status
                 </h4>
                 <div className="flex items-center gap-2">
-                  {/* Pulsing green dot */}
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                  {/* Subtle pulsing dot */}
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400/60 opacity-50" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500/80" />
                   </span>
-                  <span className="font-mono text-sm">
-                    Open for opportunities
+                  <span className="font-mono text-sm text-muted-foreground">
+                    Available for opportunities
                   </span>
                 </div>
               </div>

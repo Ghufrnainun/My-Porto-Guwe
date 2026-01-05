@@ -1,5 +1,6 @@
 import { Github } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface Experiment {
   title: string;
@@ -7,6 +8,7 @@ interface Experiment {
   stack: string;
   year: string;
   link: string;
+  category: 'web' | 'backend' | 'tools';
 }
 
 const experiments: Experiment[] = [
@@ -17,6 +19,7 @@ const experiments: Experiment[] = [
     stack: 'Laravel • Redis',
     year: '2024',
     link: 'https://github.com/Ghufrnainun',
+    category: 'backend',
   },
   {
     title: 'LSP Certification Tracker',
@@ -24,6 +27,7 @@ const experiments: Experiment[] = [
     stack: 'Laravel Reverb • React',
     year: '2024',
     link: 'https://github.com/Ghufrnainun',
+    category: 'web',
   },
   {
     title: 'CLI Dev Scaffolder',
@@ -32,6 +36,7 @@ const experiments: Experiment[] = [
     stack: 'Node.js • TypeScript',
     year: '2023',
     link: 'https://github.com/Ghufrnainun',
+    category: 'tools',
   },
   {
     title: 'First Portfolio',
@@ -39,26 +44,62 @@ const experiments: Experiment[] = [
     stack: 'HTML • CSS • Tailwind CSS',
     year: '2022',
     link: 'https://github.com/Ghufrnainun/Portfolio-tailwind-web',
+    category: 'web',
   },
 ];
 
+const filters = [
+  { key: 'all', label: 'All' },
+  { key: 'web', label: 'Web' },
+  { key: 'backend', label: 'Backend' },
+  { key: 'tools', label: 'Tools' },
+] as const;
+
+type FilterKey = (typeof filters)[number]['key'];
+
 export function Experiments() {
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+
+  const filteredExperiments =
+    activeFilter === 'all'
+      ? experiments
+      : experiments.filter((exp) => exp.category === activeFilter);
+
   return (
     <section id="experiments" className="py-24 bg-background">
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
         {/* Header */}
-        <div className="flex items-end justify-between mb-12 border-b border-border pb-6">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-            Side Projects
-          </h2>
-          <span className="hidden md:block font-mono text-sm text-muted-foreground">
-            // engineering_logs
-          </span>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 border-b border-border pb-6 gap-4">
+          <div className="flex items-end gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+              Side Projects
+            </h2>
+            <span className="hidden md:block font-mono text-sm text-muted-foreground">
+              // engineering_logs
+            </span>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex gap-1 bg-secondary/30 p-1 rounded-lg">
+            {filters.map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setActiveFilter(filter.key)}
+                className={`px-3 py-1.5 text-xs font-mono rounded-md transition-all ${
+                  activeFilter === filter.key
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* List */}
         <div className="flex flex-col">
-          {experiments.map((item, index) => (
+          {filteredExperiments.map((item, index) => (
             <motion.a
               key={item.title}
               href={item.link}

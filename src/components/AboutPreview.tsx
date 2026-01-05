@@ -25,7 +25,10 @@ export function AboutPreview() {
           >
             {/* Numbering */}
             <div className="mb-6 md:mb-12">
-              <span className="font-serif text-6xl md:text-8xl text-muted-foreground/10 font-bold leading-none select-none">
+              <p className="text-sm font-mono text-primary mb-2 tracking-wider uppercase">
+                About Me
+              </p>
+              <span className="font-serif text-6xl md:text-8xl text-muted-foreground/20 font-bold leading-none select-none">
                 02
               </span>
             </div>

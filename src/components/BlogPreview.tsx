@@ -18,7 +18,7 @@ export function BlogPreview() {
           <div className="text-center mb-16">
             {/* Numbering */}
             <div className="mb-6">
-              <span className="font-serif text-6xl md:text-8xl text-muted-foreground/10 font-bold leading-none select-none">
+              <span className="font-serif text-6xl md:text-8xl text-muted-foreground/20 font-bold leading-none select-none">
                 05
               </span>
             </div>
@@ -78,8 +78,17 @@ export function BlogPreview() {
               </ScrollReveal>
             ))
           ) : (
-            <div className="col-span-3 text-center py-8 text-muted-foreground">
-              Belum ada blog post
+            <div className="col-span-1 md:col-span-3">
+              <div className="flex flex-col items-center justify-center py-16 px-4 bg-secondary/30 border border-dashed border-border rounded-2xl text-center">
+                <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Coming Soon</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Sedang meracik konten menarik seputar web development dan
+                  system architecture. Stay tuned!
+                </p>
+              </div>
             </div>
           )}
         </div>

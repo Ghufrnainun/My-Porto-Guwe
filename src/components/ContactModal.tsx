@@ -20,7 +20,7 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 // Replace with your Formspree endpoint if needed
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xbdlwwlr';
 
 interface ContactModalProps {
   isOpen: boolean;

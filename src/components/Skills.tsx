@@ -1,7 +1,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
-// Simplified Skills Data with Grouping explicitly defined for layout
+// Skills Data with clear grouping for ecosystem view
 const skillGroups = {
   primary: [
     {
@@ -20,50 +20,58 @@ const skillGroups = {
       color: '#000000',
     },
   ],
-  secondary: [
-    {
-      name: 'PHP',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
-      color: '#777BB4',
+  supportStack: {
+    backend: {
+      label: 'Backend',
+      items: [
+        {
+          name: 'PHP',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
+          color: '#777BB4',
+        },
+        {
+          name: 'MySQL',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
+          color: '#4479A1',
+        },
+        {
+          name: 'MongoDB',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
+          color: '#47A248',
+        },
+      ],
     },
-    {
-      name: 'MySQL',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
-      color: '#4479A1',
+    frontend: {
+      label: 'Frontend',
+      items: [
+        {
+          name: 'JavaScript',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
+          color: '#F7DF1E',
+        },
+        {
+          name: 'Tailwind',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg',
+          color: '#06B6D4',
+        },
+      ],
     },
-    {
-      name: 'Tailwind',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg',
-      color: '#06B6D4',
+    infra: {
+      label: 'Infra / Tools',
+      items: [
+        {
+          name: 'Git',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',
+          color: '#F05032',
+        },
+        {
+          name: 'Python',
+          icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
+          color: '#3776AB',
+        },
+      ],
     },
-    {
-      name: 'JavaScript',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
-      color: '#F7DF1E',
-    },
-  ],
-  tools: [
-    {
-      name: 'Git',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',
-      color: '#F05032',
-    },
-    {
-      name: 'Python',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
-      color: '#3776AB',
-    },
-    {
-      name: 'MongoDB',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
-      color: '#47A248',
-    },
-    {
-      name: 'Vue.js',
-      icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg',
-      color: '#4FC08D',
-    },
-  ],
+  },
 };
 
 export function Skills() {
@@ -86,7 +94,7 @@ export function Skills() {
             >
               {/* Numbering */}
               <div className="mb-6">
-                <span className="font-serif text-6xl md:text-8xl text-muted-foreground/10 font-bold leading-none select-none">
+                <span className="font-serif text-6xl md:text-8xl text-muted-foreground/20 font-bold leading-none select-none">
                   03
                 </span>
               </div>
@@ -146,59 +154,46 @@ export function Skills() {
               ))}
             </div>
 
-            {/* Secondary Stack - Medium Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {skillGroups.secondary.map((skill) => (
-                <motion.div
-                  key={skill.name}
-                  className="group p-4 rounded-2xl bg-card border border-border flex flex-col items-center justify-center gap-3 hover:shadow-lg transition-all duration-300 cursor-default"
-                  whileHover={{
-                    y: -5,
-                    borderColor: skill.color,
-                    backgroundColor: 'hsl(var(--background))',
-                  }}
-                  style={
-                    { '--skill-color': skill.color } as React.CSSProperties
-                  }
-                >
-                  <img
-                    src={skill.icon}
-                    alt={skill.name}
-                    className="w-8 h-8 grayscale group-hover:grayscale-0 transition-all"
-                  />
-                  <span className="font-medium text-sm group-hover:text-[var(--skill-color)] transition-colors">
-                    {skill.name}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+            {/* Support Stack - Grouped by Category */}
+            <div className="space-y-6">
+              {Object.entries(skillGroups.supportStack).map(([key, group]) => (
+                <div key={key} className="space-y-3">
+                  {/* Group Label */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                      {group.label}
+                    </span>
+                    <div className="flex-1 h-px bg-border/50" />
+                  </div>
 
-            {/* Tools - Standardized Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {skillGroups.tools.map((skill) => (
-                <motion.div
-                  key={skill.name}
-                  className="group p-4 rounded-2xl bg-card border border-border flex flex-col items-center justify-center gap-3 hover:shadow-lg transition-all duration-300 cursor-default"
-                  whileHover={{
-                    y: -5,
-                    scale: 1.05,
-                    borderColor: skill.color,
-                    rotate: [0, -2, 2, 0],
-                  }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                  style={
-                    { '--skill-color': skill.color } as React.CSSProperties
-                  }
-                >
-                  <img
-                    src={skill.icon}
-                    alt={skill.name}
-                    className="w-8 h-8 grayscale group-hover:grayscale-0 transition-all"
-                  />
-                  <span className="font-medium text-sm group-hover:text-[var(--skill-color)] transition-colors">
-                    {skill.name}
-                  </span>
-                </motion.div>
+                  {/* Group Items */}
+                  <div className="flex flex-wrap gap-2">
+                    {group.items.map((skill) => (
+                      <motion.div
+                        key={skill.name}
+                        className="group px-3 py-2 rounded-xl bg-secondary/30 border border-border flex items-center gap-2 hover:shadow-md hover:bg-background transition-all duration-300 cursor-default"
+                        whileHover={{
+                          y: -2,
+                          borderColor: skill.color,
+                        }}
+                        style={
+                          {
+                            '--skill-color': skill.color,
+                          } as React.CSSProperties
+                        }
+                      >
+                        <img
+                          src={skill.icon}
+                          alt={skill.name}
+                          className="w-5 h-5 grayscale group-hover:grayscale-0 transition-all"
+                        />
+                        <span className="font-medium text-xs group-hover:text-[var(--skill-color)] transition-colors">
+                          {skill.name}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </motion.div>

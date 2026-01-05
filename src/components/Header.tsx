@@ -207,31 +207,37 @@ export function Header() {
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3, ease: 'easeInOut' }}
           >
-            {/* Close Button - Top Right */}
-            <div className="flex justify-end p-6">
+            {/* Header in Menu (Logo + Close) */}
+            <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <span className="font-bold text-lg text-foreground tracking-tight">
+                Ghufron A.N.
+              </span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-foreground p-2 hover:bg-secondary rounded-full transition-colors"
                 aria-label="Close menu"
               >
-                <X className="w-8 h-8" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Navigation Links - Center */}
             <nav className="flex-1 flex flex-col items-center justify-center space-y-8">
               {navLinks.map((link, index) => (
-                <motion.a
+                <motion.div
                   key={link.href}
-                  href={isHomePage ? link.href : '/' + link.href}
-                  onClick={() => handleNavClick(link.href)}
-                  className="text-4xl font-bold text-foreground tracking-tight hover:text-primary transition-colors"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                 >
-                  {link.label}
-                </motion.a>
+                  <Link
+                    to={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-4xl font-bold text-foreground tracking-tight hover:text-primary transition-colors text-center"
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
               ))}
             </nav>
 
@@ -248,7 +254,7 @@ export function Header() {
                   href="https://github.com/Ghufrnainun"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-foreground hover:text-primary transition-colors"
                   aria-label="GitHub"
                 >
                   <Github className="w-6 h-6" />
@@ -257,14 +263,14 @@ export function Header() {
                   href="https://www.linkedin.com/in/ghufronainun-najib/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-foreground hover:text-primary transition-colors"
                   aria-label="LinkedIn"
                 >
                   <Linkedin className="w-6 h-6" />
                 </a>
                 <a
                   href="mailto:ghufrnainunajib@gmail.com"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-foreground hover:text-primary transition-colors"
                   aria-label="Email"
                 >
                   <Mail className="w-6 h-6" />

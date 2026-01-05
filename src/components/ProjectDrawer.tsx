@@ -29,15 +29,10 @@ const projectDetails: Record<
     impact: 'Serving 1,000+ students and professionals',
     timeline: '6 months development cycle',
   },
-  'UKM PCC Online Election System': {
-    role: 'Full-stack Developer - Auth & Vote Logic',
-    impact: '300+ votes processed with 100% integrity',
-    timeline: '2 months rapid development',
-  },
   'IMPP Organization Website': {
-    role: 'Solo Developer & Content Manager',
-    impact: '40% increase in member engagement',
-    timeline: 'Ongoing maintenance',
+    role: 'Solo Developer & CMS Architect',
+    impact: 'Centralized org management for 60+ members',
+    timeline: '1 month development + ongoing maintenance',
   },
 };
 
