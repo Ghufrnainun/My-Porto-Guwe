@@ -42,25 +42,33 @@ const education: EducationData = {
 
 const experiences: OrganizationExperience[] = [
   {
-    organization: 'IMPP (Polytechnic Student Association)',
-    role: 'Communications Division Coordinator',
-    period: '2024 - Present',
+    organization: 'Ikatan Mahasiswa Pemalang Polines (IMPP)',
+    role: 'Coordinator, Communication & Info. Division',
+    period: 'June 2025 - Present',
     isCurrent: true,
     responsibilities: [
-      'Managed internal and external organizational communication strategies',
-      'Led the creative team in content production and public relations',
-      'Developed information systems to streamline organizational workflows',
+      'Leading and coordinating the division in managing all digital platforms, including Instagram strategy, feed creation, and organizational email operations',
+      'Currently spearheading the development and maintenance of the official organizational website (IMPP)',
     ],
   },
   {
-    organization: 'Polytechnic Computer Club (PCC)',
-    role: 'IT Staff & Developer',
-    period: '2024 - Present',
+    organization: 'UKM Polytechnic Computer Club (PCC)',
+    role: 'Staff, Maintenance Department',
+    period: 'May 2025 - Present',
+    isCurrent: true,
+    responsibilities: [
+      'Acting as department treasurer, responsible for managing activity funds and maintaining accurate financial records',
+      'Providing technical support and device servicing (PC, laptop, printer) for the general public through the maintenance division',
+    ],
+  },
+  {
+    organization: 'Ikatan Mahasiswa Pemalang Polines (IMPP)',
+    role: 'Staff, Communication & Info. Division',
+    period: 'Sept 2024 - May 2025',
     isCurrent: false,
     responsibilities: [
-      'Contributed to the development of internal club IT projects',
-      'Mentored new members in programming workshops and technical training',
-      "Maintained and optimized the club's technical infrastructure",
+      'Created and managed visual content for organizational social media, including Instagram feeds and stories for national holidays',
+      'Designed and edited campus materials for socialization and events, successfully increasing digital platform engagement',
     ],
   },
 ];
