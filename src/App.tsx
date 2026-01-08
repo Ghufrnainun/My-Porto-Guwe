@@ -14,6 +14,8 @@ import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import PostEditor from './pages/PostEditor';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import LoadingScreen from '@/components/LoadingScreen';
 import ScrollToTop from '@/components/ScrollToTop';
 import { AnimatePresence } from 'framer-motion';
@@ -45,17 +47,27 @@ const App = () => {
                   }}
                 >
                   <ScrollToTop />
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/projects" element={<Projects />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:id" element={<BlogPost />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/posts/:id" element={<PostEditor />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                  <ErrorBoundary>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/projects" element={<Projects />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:id" element={<BlogPost />} />
+                      <Route path="/auth" element={<Auth />} />
+
+                      {/* Protected Admin Routes */}
+                      <Route element={<ProtectedRoute />}>
+                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route
+                          path="/admin/posts/:id"
+                          element={<PostEditor />}
+                        />
+                      </Route>
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </ErrorBoundary>
                 </BrowserRouter>
               )}
             </AnimatePresence>

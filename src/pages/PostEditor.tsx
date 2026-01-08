@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { ArrowLeft, Upload, X, Loader2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Form,
   FormControl,
@@ -17,31 +17,37 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useAuth } from "@/hooks/useAuth";
+} from '@/components/ui/select';
+import { useAuth } from '@/hooks/useAuth';
 import {
   useCategories,
   useTags,
+  useCreateTag,
   useCreatePost,
   useUpdatePost,
   uploadBlogImage,
   BlogPost,
-} from "@/hooks/useBlogPosts";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/hooks/useBlogPosts';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const postSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200),
-  slug: z.string().min(1, "Slug is required").max(200).regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens only"),
-  content: z.string().min(1, "Content is required"),
+  title: z.string().min(1, 'Title is required').max(200),
+  slug: z
+    .string()
+    .min(1, 'Slug is required')
+    .max(200)
+    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with hyphens only'),
+  content: z.string().min(1, 'Content is required'),
   excerpt: z.string().max(500).optional(),
   category_id: z.string().optional(),
   published: z.boolean(),
@@ -49,47 +55,40 @@ const postSchema = z.object({
 
 type PostFormValues = z.infer<typeof postSchema>;
 
-
 export default function PostEditor() {
   const { id } = useParams<{ id: string }>();
-  const isNew = id === "new";
+  const isNew = id === 'new';
   const navigate = useNavigate();
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  
+
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isLoadingPost, setIsLoadingPost] = useState(!isNew);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [featuredImage, setFeaturedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories } = useCategories();
   const { data: tags } = useTags();
+  const createTag = useCreateTag();
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
 
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postSchema),
     defaultValues: {
-      title: "",
-      slug: "",
-      content: "",
-      excerpt: "",
-      category_id: "",
+      title: '',
+      slug: '',
+      content: '',
+      excerpt: '',
+      category_id: '',
       published: false,
     },
   });
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isAdmin) {
-        navigate("/");
-      }
-    }
-  }, [user, isAdmin, authLoading, navigate]);
+  // Auth check handled by ProtectedRoute
 
   useEffect(() => {
     if (!isNew && id) {
@@ -101,21 +100,23 @@ export default function PostEditor() {
     setIsLoadingPost(true);
     try {
       const { data, error } = await supabase
-        .from("blog_posts")
-        .select(`
+        .from('blog_posts')
+        .select(
+          `
           *,
           category:categories(name, slug)
-        `)
-        .eq("id", postId)
+        `
+        )
+        .eq('id', postId)
         .single();
 
       if (error) throw error;
 
       // Fetch tags
       const { data: tagData } = await supabase
-        .from("blog_post_tags")
-        .select("tag_id")
-        .eq("blog_post_id", postId);
+        .from('blog_post_tags')
+        .select('tag_id')
+        .eq('blog_post_id', postId);
 
       const postWithTags = {
         ...data,
@@ -130,18 +131,18 @@ export default function PostEditor() {
         title: data.title,
         slug: data.slug,
         content: data.content,
-        excerpt: data.excerpt || "",
-        category_id: data.category_id || "",
+        excerpt: data.excerpt || '',
+        category_id: data.category_id || '',
         published: data.published,
       });
     } catch (error) {
-      console.error("Error loading post:", error);
+      console.error('Error loading post:', error);
       toast({
-        title: "Error",
-        description: "Failed to load post",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load post',
+        variant: 'destructive',
       });
-      navigate("/admin");
+      navigate('/admin');
     } finally {
       setIsLoadingPost(false);
     }
@@ -150,16 +151,16 @@ export default function PostEditor() {
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
   };
 
   const handleTitleChange = (value: string) => {
-    form.setValue("title", value);
+    form.setValue('title', value);
     if (isNew || !post) {
-      form.setValue("slug", generateSlug(value));
+      form.setValue('slug', generateSlug(value));
     }
   };
 
@@ -167,11 +168,11 @@ export default function PostEditor() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith('image/')) {
       toast({
-        title: "Error",
-        description: "Please select an image file",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please select an image file',
+        variant: 'destructive',
       });
       return;
     }
@@ -181,15 +182,15 @@ export default function PostEditor() {
       const url = await uploadBlogImage(file);
       setFeaturedImage(url);
       toast({
-        title: "Success",
-        description: "Image uploaded successfully",
+        title: 'Success',
+        description: 'Image uploaded successfully',
       });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error('Upload error:', error);
       toast({
-        title: "Error",
-        description: "Failed to upload image",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to upload image',
+        variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
@@ -229,7 +230,7 @@ export default function PostEditor() {
         });
       }
 
-      navigate("/admin");
+      navigate('/admin');
     } catch (error) {
       // Error is handled in the mutation
     }
@@ -246,24 +247,23 @@ export default function PostEditor() {
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/admin" className="text-muted-foreground hover:text-foreground">
+            <Link
+              to="/admin"
+              className="text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-xl font-bold">
-              {isNew ? "New Post" : "Edit Post"}
+              {isNew ? 'New Post' : 'Edit Post'}
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate("/admin")}>
+            <Button variant="outline" onClick={() => navigate('/admin')}>
               Cancel
             </Button>
             <Button
@@ -276,7 +276,7 @@ export default function PostEditor() {
                   Saving...
                 </>
               ) : (
-                "Save"
+                'Save'
               )}
             </Button>
           </div>
@@ -362,7 +362,9 @@ export default function PostEditor() {
                     <FormControl>
                       <Input {...field} placeholder="my-awesome-blog-post" />
                     </FormControl>
-                    <FormDescription>URL: /blog/{field.value || "..."}</FormDescription>
+                    <FormDescription>
+                      URL: /blog/{field.value || '...'}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -383,7 +385,9 @@ export default function PostEditor() {
                       rows={2}
                     />
                   </FormControl>
-                  <FormDescription>Short description shown in blog listing</FormDescription>
+                  <FormDescription>
+                    Short description shown in blog listing
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -397,14 +401,14 @@ export default function PostEditor() {
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Write your blog post content here..."
-                      rows={15}
-                      className="font-mono text-sm"
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
-                  <FormDescription>Supports Markdown formatting</FormDescription>
+                  <FormDescription>
+                    Rich text editor with image support
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -418,10 +422,7 @@ export default function PostEditor() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -445,7 +446,9 @@ export default function PostEditor() {
                   {tags?.map((tag) => (
                     <Badge
                       key={tag.id}
-                      variant={selectedTags.includes(tag.id) ? "default" : "outline"}
+                      variant={
+                        selectedTags.includes(tag.id) ? 'default' : 'outline'
+                      }
                       className="cursor-pointer"
                       onClick={() => toggleTag(tag.id)}
                     >

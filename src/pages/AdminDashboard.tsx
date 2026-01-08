@@ -1,8 +1,17 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Plus, Edit, Trash2, Eye, EyeOff, LogOut, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  FileText,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -10,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,29 +30,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useAuth } from "@/hooks/useAuth";
-import { useAllPosts, useDeletePost } from "@/hooks/useBlogPosts";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { useAllPosts, useDeletePost } from '@/hooks/useBlogPosts';
+import { Skeleton } from '@/components/ui/skeleton';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 export default function AdminDashboard() {
-  const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: posts, isLoading: postsLoading } = useAllPosts();
   const deletePost = useDeletePost();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isAdmin) {
-        // Wait for admin check to complete before redirecting
-        // If not admin after loading, redirect to home
-        navigate("/");
-      }
-    }
-  }, [user, isAdmin, authLoading, navigate]);
+  // Auth checks handled by ProtectedRoute
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -51,64 +52,93 @@ export default function AdminDashboard() {
     setDeletingId(null);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
   if (authLoading || postsLoading) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-[400px] w-full" />
+      <DashboardLayout>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-[400px] w-full rounded-xl" />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
+  // If logged in but not admin, show access denied
+
+  const totalPosts = posts?.length || 0;
+  const publishedPosts = posts?.filter((p) => p.published).length || 0;
+  const draftPosts = totalPosts - publishedPosts;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-xl font-bold">Blog Admin</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+    <DashboardLayout>
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold">Blog Posts</h2>
-            <p className="text-muted-foreground">Manage your blog content</p>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your blog content and view performance.
+            </p>
           </div>
-          <Button onClick={() => navigate("/admin/posts/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Post
+          <Button
+            onClick={() => navigate('/admin/posts/new')}
+            size="lg"
+            className="shadow-lg hover:shadow-xl transition-all"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Create New Post
           </Button>
         </div>
 
-        {posts && posts.length > 0 ? (
-          <div className="border rounded-lg">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="hover:border-primary/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalPosts}</div>
+              <p className="text-xs text-muted-foreground">
+                All time blog posts
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="hover:border-green-500/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Published</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{publishedPosts}</div>
+              <p className="text-xs text-muted-foreground">Live on the blog</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:border-orange-500/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+              <Clock className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{draftPosts}</div>
+              <p className="text-xs text-muted-foreground">Work in progress</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Posts Table */}
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <h3 className="font-semibold text-lg">Recent Posts</h3>
+          </div>
+          {posts && posts.length > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[400px]">Title</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
@@ -117,48 +147,71 @@ export default function AdminDashboard() {
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
-                  <TableRow key={post.id}>
+                  <TableRow key={post.id} className="group">
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{post.title}</div>
-                        <div className="text-sm text-muted-foreground">/blog/{post.slug}</div>
+                      <div className="flex flex-col gap-1">
+                        <span
+                          className="font-medium group-hover:text-primary transition-colors cursor-pointer"
+                          onClick={() => navigate(`/admin/posts/${post.id}`)}
+                        >
+                          {post.title}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          /{post.slug}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       {post.category?.name ? (
-                        <Badge variant="secondary">{post.category.name}</Badge>
+                        <Badge variant="secondary" className="font-normal">
+                          {post.category.name}
+                        </Badge>
                       ) : (
-                        <span className="text-muted-foreground">-</span>
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {post.published ? (
-                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                        <Badge className="bg-green-500/15 text-green-600 hover:bg-green-500/25 border-green-500/20 font-normal">
                           <Eye className="h-3 w-3 mr-1" />
                           Published
                         </Badge>
                       ) : (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="font-normal">
                           <EyeOff className="h-3 w-3 mr-1" />
                           Draft
                         </Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      {new Date(post.created_at).toLocaleDateString()}
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(post.created_at).toLocaleDateString(
+                          undefined,
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => navigate(`/admin/posts/${post.id}`)}
+                          className="h-8 w-8 hover:text-primary hover:bg-primary/10"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
@@ -166,17 +219,20 @@ export default function AdminDashboard() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete post?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the blog post.
+                                This action cannot be undone. This will
+                                permanently delete the blog post "{post.title}".
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDelete(post.id)}
-                                className="bg-destructive text-destructive-foreground"
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 disabled={deletingId === post.id}
                               >
-                                {deletingId === post.id ? "Deleting..." : "Delete"}
+                                {deletingId === post.id
+                                  ? 'Deleting...'
+                                  : 'Delete'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -187,17 +243,24 @@ export default function AdminDashboard() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-        ) : (
-          <div className="text-center py-12 border rounded-lg bg-muted/30">
-            <p className="text-muted-foreground mb-4">No blog posts yet</p>
-            <Button onClick={() => navigate("/admin/posts/new")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first post
-            </Button>
-          </div>
-        )}
-      </main>
-    </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="bg-muted/50 p-4 rounded-full mb-4">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold">No posts yet</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                Get started by creating your first blog post. It will show up
+                here.
+              </p>
+              <Button onClick={() => navigate('/admin/posts/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create your first post
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }

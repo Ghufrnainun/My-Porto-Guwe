@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export interface BlogPost {
   id: string;
@@ -35,16 +35,18 @@ export interface Tag {
 // Fetch published blog posts for public view
 export function usePublishedPosts() {
   return useQuery({
-    queryKey: ["blog-posts", "published"],
+    queryKey: ['blog-posts', 'published'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("blog_posts")
-        .select(`
+        .from('blog_posts')
+        .select(
+          `
           *,
           category:categories(name, slug)
-        `)
-        .eq("published", true)
-        .order("published_at", { ascending: false });
+        `
+        )
+        .eq('published', true)
+        .order('published_at', { ascending: false });
 
       if (error) throw error;
 
@@ -52,9 +54,9 @@ export function usePublishedPosts() {
       const postsWithTags = await Promise.all(
         (data || []).map(async (post) => {
           const { data: tagData } = await supabase
-            .from("blog_post_tags")
-            .select("tag_id, tags(id, name, slug)")
-            .eq("blog_post_id", post.id);
+            .from('blog_post_tags')
+            .select('tag_id, tags(id, name, slug)')
+            .eq('blog_post_id', post.id);
 
           return {
             ...post,
@@ -71,24 +73,26 @@ export function usePublishedPosts() {
 // Fetch all blog posts for admin
 export function useAllPosts() {
   return useQuery({
-    queryKey: ["blog-posts", "all"],
+    queryKey: ['blog-posts', 'all'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("blog_posts")
-        .select(`
+        .from('blog_posts')
+        .select(
+          `
           *,
           category:categories(name, slug)
-        `)
-        .order("created_at", { ascending: false });
+        `
+        )
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const postsWithTags = await Promise.all(
         (data || []).map(async (post) => {
           const { data: tagData } = await supabase
-            .from("blog_post_tags")
-            .select("tag_id, tags(id, name, slug)")
-            .eq("blog_post_id", post.id);
+            .from('blog_post_tags')
+            .select('tag_id, tags(id, name, slug)')
+            .eq('blog_post_id', post.id);
 
           return {
             ...post,
@@ -105,15 +109,17 @@ export function useAllPosts() {
 // Fetch single blog post by slug
 export function usePostBySlug(slug: string) {
   return useQuery({
-    queryKey: ["blog-post", slug],
+    queryKey: ['blog-post', slug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("blog_posts")
-        .select(`
+        .from('blog_posts')
+        .select(
+          `
           *,
           category:categories(name, slug)
-        `)
-        .eq("slug", slug)
+        `
+        )
+        .eq('slug', slug)
         .maybeSingle();
 
       if (error) throw error;
@@ -121,9 +127,9 @@ export function usePostBySlug(slug: string) {
 
       // Fetch tags
       const { data: tagData } = await supabase
-        .from("blog_post_tags")
-        .select("tag_id, tags(id, name, slug)")
-        .eq("blog_post_id", data.id);
+        .from('blog_post_tags')
+        .select('tag_id, tags(id, name, slug)')
+        .eq('blog_post_id', data.id);
 
       return {
         ...data,
@@ -137,12 +143,12 @@ export function usePostBySlug(slug: string) {
 // Fetch categories
 export function useCategories() {
   return useQuery({
-    queryKey: ["categories"],
+    queryKey: ['categories'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
+        .from('categories')
+        .select('*')
+        .order('name');
 
       if (error) throw error;
       return data as Category[];
@@ -153,15 +159,55 @@ export function useCategories() {
 // Fetch tags
 export function useTags() {
   return useQuery({
-    queryKey: ["tags"],
+    queryKey: ['tags'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tags")
-        .select("*")
-        .order("name");
+        .from('tags')
+        .select('*')
+        .order('name');
 
       if (error) throw error;
       return data as Tag[];
+    },
+  });
+}
+
+// Create tag
+export function useCreateTag() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+
+      const { data, error } = await supabase
+        .from('tags')
+        .insert({ name, slug })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      toast({
+        title: 'Success',
+        description: 'Tag created successfully',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to create tag. It might already exist.',
+        variant: 'destructive',
+      });
     },
   });
 }
@@ -182,13 +228,15 @@ export function useCreatePost() {
       published?: boolean;
       tag_ids?: string[];
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { tag_ids, ...postData } = post;
 
       const { data, error } = await supabase
-        .from("blog_posts")
+        .from('blog_posts')
         .insert({
           ...postData,
           author_id: user.id,
@@ -202,11 +250,13 @@ export function useCreatePost() {
       // Insert tags
       if (tag_ids && tag_ids.length > 0) {
         const { error: tagError } = await supabase
-          .from("blog_post_tags")
-          .insert(tag_ids.map(tagId => ({
-            blog_post_id: data.id,
-            tag_id: tagId,
-          })));
+          .from('blog_post_tags')
+          .insert(
+            tag_ids.map((tagId) => ({
+              blog_post_id: data.id,
+              tag_id: tagId,
+            }))
+          );
 
         if (tagError) throw tagError;
       }
@@ -214,17 +264,17 @@ export function useCreatePost() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
       toast({
-        title: "Success",
-        description: "Blog post created successfully",
+        title: 'Success',
+        description: 'Blog post created successfully',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -255,13 +305,15 @@ export function useUpdatePost() {
       // Handle published_at
       const updateData: any = { ...postData };
       if (post.published !== undefined) {
-        updateData.published_at = post.published ? new Date().toISOString() : null;
+        updateData.published_at = post.published
+          ? new Date().toISOString()
+          : null;
       }
 
       const { data, error } = await supabase
-        .from("blog_posts")
+        .from('blog_posts')
         .update(updateData)
-        .eq("id", id)
+        .eq('id', id)
         .select()
         .single();
 
@@ -270,19 +322,18 @@ export function useUpdatePost() {
       // Update tags
       if (tag_ids !== undefined) {
         // Remove existing tags
-        await supabase
-          .from("blog_post_tags")
-          .delete()
-          .eq("blog_post_id", id);
+        await supabase.from('blog_post_tags').delete().eq('blog_post_id', id);
 
         // Insert new tags
         if (tag_ids.length > 0) {
           const { error: tagError } = await supabase
-            .from("blog_post_tags")
-            .insert(tag_ids.map(tagId => ({
-              blog_post_id: id,
-              tag_id: tagId,
-            })));
+            .from('blog_post_tags')
+            .insert(
+              tag_ids.map((tagId) => ({
+                blog_post_id: id,
+                tag_id: tagId,
+              }))
+            );
 
           if (tagError) throw tagError;
         }
@@ -291,18 +342,18 @@ export function useUpdatePost() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["blog-post"] });
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['blog-post'] });
       toast({
-        title: "Success",
-        description: "Blog post updated successfully",
+        title: 'Success',
+        description: 'Blog post updated successfully',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -315,25 +366,22 @@ export function useDeletePost() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("blog_posts")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from('blog_posts').delete().eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
       toast({
-        title: "Success",
-        description: "Blog post deleted successfully",
+        title: 'Success',
+        description: 'Blog post deleted successfully',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -341,18 +389,18 @@ export function useDeletePost() {
 
 // Upload image to storage
 export async function uploadBlogImage(file: File): Promise<string> {
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(7)}.${fileExt}`;
 
   const { error } = await supabase.storage
-    .from("blog-images")
+    .from('blog-images')
     .upload(fileName, file);
 
   if (error) throw error;
 
-  const { data } = supabase.storage
-    .from("blog-images")
-    .getPublicUrl(fileName);
+  const { data } = supabase.storage.from('blog-images').getPublicUrl(fileName);
 
   return data.publicUrl;
 }
