@@ -14,7 +14,7 @@ const navLinks = [
 const socialLinks = [
   { href: 'https://github.com/Ghufrnainun', icon: Github, label: 'GitHub' },
   {
-    href: 'https://www.linkedin.com/in/ghufronainun-najib/',
+    href: 'https://www.linkedin.com/in/ghufronainunnajib/',
     icon: Linkedin,
     label: 'LinkedIn',
   },

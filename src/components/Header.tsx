@@ -155,14 +155,12 @@ export function Header() {
         animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
       >
-        <a
-          href="/resume.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          to="/resume"
           className="border border-border hover:border-primary text-foreground text-sm font-mono px-5 py-2 rounded-full transition-all bg-card/50 backdrop-blur-md"
         >
           Resume
-        </a>
+        </Link>
         <ThemeToggle />
       </motion.div>
 
@@ -260,7 +258,7 @@ export function Header() {
                   <Github className="w-6 h-6" />
                 </a>
                 <a
-                  href="https://www.linkedin.com/in/ghufronainun-najib/"
+                  href="https://www.linkedin.com/in/ghufronainunnajib/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-primary transition-colors"
@@ -278,14 +276,12 @@ export function Header() {
               </div>
 
               {/* Resume Button */}
-              <a
-                href="/resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/resume"
                 className="border border-border hover:border-primary text-foreground text-sm font-mono px-8 py-3 rounded-full transition-all"
               >
                 Download Resume
-              </a>
+              </Link>
 
               {/* Theme Toggle */}
               <div className="pt-4">

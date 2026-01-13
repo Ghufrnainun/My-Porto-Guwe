@@ -60,7 +60,7 @@ export function Hero() {
           <Github className="w-5 h-5" />
         </a>
         <a
-          href="https://www.linkedin.com/in/ghufronainun-najib/"
+          href="https://www.linkedin.com/in/ghufronainunnajib/"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -137,7 +137,7 @@ export function Hero() {
               <Github className="w-5 h-5" />
             </a>
             <a
-              href="https://www.linkedin.com/in/ghufronainun-najib/"
+              href="https://www.linkedin.com/in/ghufronainunnajib/"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors"

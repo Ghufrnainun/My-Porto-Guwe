@@ -14,6 +14,7 @@ import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import PostEditor from './pages/PostEditor';
 import NotFound from './pages/NotFound';
+import Resume from './pages/Resume';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -55,6 +56,7 @@ const App = () => {
                       <Route path="/blog" element={<Blog />} />
                       <Route path="/blog/:id" element={<BlogPost />} />
                       <Route path="/auth" element={<Auth />} />
+                      <Route path="/resume" element={<Resume />} />
 
                       {/* Protected Admin Routes */}
                       <Route element={<ProtectedRoute />}>
