@@ -1,16 +1,7 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Global crawling policy
 User-agent: *
 Allow: /
 
+# Canonical host + sitemap
+Host: ghufronainun.tech
 Sitemap: https://ghufronainun.tech/sitemap.xml
