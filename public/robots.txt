@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://ghufronainun.web.id/sitemap.xml
+Sitemap: https://ghufronainun.tech/sitemap.xml
