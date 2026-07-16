@@ -45,14 +45,14 @@ export function Footer({ showCTA = true }: FooterProps) {
 
   return (
     <>
-      <footer className="relative bg-background">
+      <footer className="relative bg-transparent">
         {/* PART 1: The CTA (Mic Drop) - Only on landing page */}
         {showCTA && (
           <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
         )}
 
         {/* Visual Break - Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
         {/* PART 2: Utility Footer */}
         <div className="pt-12">
@@ -138,6 +138,9 @@ export function Footer({ showCTA = true }: FooterProps) {
               <p className="text-sm text-gray-600 font-mono">
                 © 2026 Ghufron Ainun Najib.
               </p>
+              <div className="text-[10px] text-gray-600/40 hover:text-primary transition-colors font-mono cursor-default">
+                Psst... type any color to change the vibe ✨
+              </div>
               <p className="text-sm text-gray-600 font-mono">
                 Built with React & Tailwind.
               </p>

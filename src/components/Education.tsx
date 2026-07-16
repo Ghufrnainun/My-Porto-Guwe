@@ -195,7 +195,7 @@ export function Education() {
             <div className="space-y-12">
               {experiences.map((exp, index) => (
                 <motion.div
-                  key={exp.organization}
+                  key={`${exp.organization}-${exp.role}-${exp.period}`}
                   className="relative pl-10"
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}

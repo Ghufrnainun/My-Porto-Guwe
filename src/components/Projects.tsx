@@ -55,25 +55,23 @@ export function Projects({ className = '' }: { className?: string }) {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          {/* Numbering */}
-          <div className="mb-6">
-            <span className="font-serif text-6xl md:text-8xl text-muted-foreground/20 font-bold leading-none select-none">
-              04
-            </span>
+          {/* Section Header */}
+          <div className="mb-2">
+            <p className="text-primary font-mono text-sm mb-2 tracking-wider uppercase">
+              What I've Built
+            </p>
           </div>
-
-          <p className="text-primary font-mono text-sm mb-2 tracking-wider uppercase">
-            What I've Built
-          </p>
           <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-foreground">
             Featured Projects
           </h2>
         </motion.div>
 
-        {/* Projects Container */}
-        <div ref={ref} className="space-y-32">
+        {/* Projects Container (Simple Modern Layout) */}
+        <div ref={ref} className="flex flex-col gap-12 md:gap-20">
           {projects.map((project, index) => (
-            <ProjectCard key={project.title} project={project} index={index} />
+            <div key={project.title} className="w-full">
+              <ProjectCard project={project} index={index} />
+            </div>
           ))}
         </div>
 

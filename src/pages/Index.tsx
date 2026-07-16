@@ -7,6 +7,7 @@ import { BlogPreview } from '@/components/BlogPreview';
 import { ContactCTA } from '@/components/ContactCTA';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
+import { HomeCanvas } from '@/components/HomeCanvas';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 
 import { useState } from 'react';
@@ -18,24 +19,34 @@ const Index = () => {
   useKeyboardNavigation();
 
   return (
-    <div className="min-h-screen bg-background">
+    <HomeCanvas>
       <Header />
-      <main>
-        <section id="hero">
+      <div className="home-sections">
+        <section id="hero" className="home-panel home-panel-hero">
           <Hero />
         </section>
-        <AboutPreview />
-        <Skills />
-        <ProjectsPreview />
-        <BlogPreview />
-        <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
-      </main>
+        <div className="home-panel">
+          <AboutPreview />
+        </div>
+        <div className="home-panel">
+          <Skills />
+        </div>
+        <div className="home-panel home-panel-feature">
+          <ProjectsPreview />
+        </div>
+        <div className="home-panel home-panel-compact">
+          <BlogPreview />
+        </div>
+        <div className="home-panel home-panel-compact">
+          <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
+        </div>
+      </div>
       <Footer showCTA={false} />
       <ContactModal
         isOpen={isContactModalOpen}
         onOpenChange={setIsContactModalOpen}
       />
-    </div>
+    </HomeCanvas>
   );
 };
 

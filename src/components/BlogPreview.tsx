@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { ParallaxBackground } from '@/components/ParallaxBackground';
 import { usePublishedPosts } from '@/hooks/useBlogPosts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -11,22 +10,19 @@ export function BlogPreview() {
   const recentPosts = posts?.slice(0, 3) || [];
 
   return (
-    <section id="blog" className="py-20 md:py-32 relative overflow-hidden">
-      {/* ParallaxBackground removed as requested */}
-      <div className="container mx-auto px-4 relative z-10">
+    <section id="blog" className="relative bg-transparent py-16 md:py-24">
+      <div className="container relative z-10 mx-auto px-6 md:px-12 lg:px-24">
         <ScrollReveal>
-          <div className="text-center mb-16">
-            {/* Numbering */}
-            <div className="mb-6">
-              <span className="font-serif text-6xl md:text-8xl text-muted-foreground/20 font-bold leading-none select-none">
-                05
-              </span>
-            </div>
-
-            <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-foreground">
+          <div className="mb-10 grid gap-5 md:grid-cols-[0.75fr_1fr] md:items-end">
+            <div>
+              <p className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+                Writing log
+              </p>
+              <h2 className="font-serif text-4xl font-bold leading-tight text-foreground md:text-5xl">
               Blog
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            </div>
+            <p className="max-w-xl text-base leading-8 text-muted-foreground md:text-lg">
               Tulisan tentang coding, belajar, dan hal-hal yang lagi gue explore
             </p>
           </div>
@@ -79,22 +75,27 @@ export function BlogPreview() {
             ))
           ) : (
             <div className="col-span-1 md:col-span-3">
-              <div className="flex flex-col items-center justify-center py-16 px-4 bg-secondary/30 border border-dashed border-border rounded-2xl text-center">
-                <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center mb-4 shadow-sm">
-                  <Calendar className="w-8 h-8 text-muted-foreground" />
+              <div className="group flex flex-col justify-between gap-8 rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 text-left shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] md:flex-row md:items-center md:p-8">
+                <div className="flex items-start gap-5">
+                  <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-secondary/70 text-primary transition-transform duration-700 ease-premium group-hover:-translate-y-1">
+                    <Calendar className="size-5" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">Coming Soon</h3>
+                    <p className="mt-2 max-w-xl text-sm leading-7 text-muted-foreground md:text-base">
+                      Sedang meracik konten seputar web development dan system
+                      architecture. Nanti bagian ini masuk flow tulisan pendek,
+                      bukan block kosong yang motong halaman.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Sedang meracik konten menarik seputar web development dan
-                  system architecture. Stay tuned!
-                </p>
               </div>
             </div>
           )}
         </div>
 
         <ScrollReveal delay={300}>
-          <div className="text-center mt-12">
+          <div className="mt-8 flex justify-center">
             <Button variant="outline" asChild>
               <Link to="/blog" className="flex items-center gap-2">
                 Lihat Semua Tulisan

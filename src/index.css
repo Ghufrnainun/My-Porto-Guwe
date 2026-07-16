@@ -141,6 +141,100 @@
 }
 
 @layer utilities {
+  .portfolio-flow {
+    position: relative;
+    overflow: clip;
+  }
+
+  .portfolio-flow::before,
+  .home-ambient {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .portfolio-flow::before {
+    background:
+      radial-gradient(circle at 18% 8%, hsl(var(--primary) / 0.07), transparent 24rem),
+      radial-gradient(circle at 80% 24%, hsl(var(--primary) / 0.05), transparent 26rem),
+      radial-gradient(circle at 44% 44%, hsl(var(--primary) / 0.085), transparent 34rem),
+      radial-gradient(circle at 14% 66%, hsl(var(--primary) / 0.06), transparent 30rem),
+      radial-gradient(circle at 66% 84%, hsl(var(--primary) / 0.055), transparent 30rem),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
+  }
+
+  .portfolio-flow::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, hsl(var(--background) / 0.78), transparent 12rem),
+      radial-gradient(circle at 50% 50%, transparent 0, hsl(var(--background) / 0.34) 72%);
+    z-index: 0;
+  }
+
+  .home-ambient {
+    z-index: 0;
+    background:
+      linear-gradient(180deg, transparent 0, hsl(var(--background) / 0.72) 10%, transparent 20%),
+      linear-gradient(180deg, transparent 18%, hsl(var(--background) / 0.58) 26%, transparent 36%),
+      linear-gradient(180deg, transparent 38%, hsl(var(--background) / 0.5) 48%, transparent 58%),
+      linear-gradient(180deg, transparent 60%, hsl(var(--background) / 0.54) 72%, transparent 84%);
+  }
+
+  .home-sections {
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-panel {
+    position: relative;
+    scroll-margin-top: 7rem;
+  }
+
+  .portfolio-flow #hero,
+  .portfolio-flow #about,
+  .portfolio-flow #skills,
+  .portfolio-flow #projects,
+  .portfolio-flow #blog {
+    scroll-margin-top: 7rem;
+  }
+
+  .home-panel:not(.home-panel-hero) {
+    margin-top: clamp(-1.5rem, -2vw, -0.5rem);
+  }
+
+  .home-panel::before {
+    content: '';
+    position: absolute;
+    inset: -4rem 0;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      hsl(var(--background) / 0.34) 18%,
+      hsl(var(--background) / 0.24) 72%,
+      transparent
+    );
+    z-index: -1;
+  }
+
+  .home-panel-feature::before {
+    background: linear-gradient(
+      180deg,
+      transparent,
+      hsl(var(--primary) / 0.055) 20%,
+      hsl(var(--background) / 0.28) 72%,
+      transparent
+    );
+  }
+
+  .home-panel-compact {
+    margin-top: clamp(-2rem, -2.5vw, -1rem);
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
@@ -189,6 +283,27 @@
   .delay-500 {
     animation-delay: 500ms;
   }
+  
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .ease-out-spring {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .ease-premium {
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
 }
 
 @keyframes fade-up {
@@ -230,5 +345,24 @@
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Accessibility: Respect system preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+  .noise-overlay,
+  canvas {
+    display: none !important;
   }
 }
