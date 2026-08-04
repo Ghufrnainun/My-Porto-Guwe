@@ -1,43 +1,101 @@
-export interface FeaturedProject {
+export interface PortfolioProject {
   title: string;
-  description: string;
-  technologies: string[];
-  github: string;
-  demo: string;
-  image: string;
-  images?: string[];
-  color: string;
-  role: string;
+  slug: string;
+  summary: string;
   year: string;
-  metric: string;
+  role: string;
+  team: {
+    size: number;
+    label: string;
+  };
+  visibility: 'public' | 'private';
+  problem: string;
+  contributions: string[];
+  outcomes: string[];
+  technologies: string[];
+  image?: string;
+  gallery?: string[];
+  color: string;
+  repository?: string;
+  demo?: string;
 }
 
-export const featuredProjects: FeaturedProject[] = [
+export const featuredProjects: PortfolioProject[] = [
+  {
+    title: 'SewaInAja',
+    slug: 'sewainaja',
+    summary:
+      'A rental platform spanning a Flutter mobile experience and a Next.js 16 admin and API surface, built with TypeScript 5, Firebase, and Midtrans.',
+    year: '2026',
+    role: 'Full-Stack Developer',
+    team: { size: 4, label: '4-person team' },
+    visibility: 'public',
+    problem:
+      'The product needed one connected workflow for renters, owners, administrators, and payment handling across mobile and web surfaces.',
+    contributions: [
+      'Built customer-facing mobile flows with Flutter.',
+      'Worked across the Next.js 16 administration and API surface with TypeScript 5.',
+      'Integrated Firebase services and Midtrans payment handling.',
+    ],
+    outcomes: [
+      'Connected the mobile product with the administration workflow.',
+      'Delivered the project as a shared, publicly documented codebase.',
+    ],
+    technologies: ['Flutter', 'Next.js 16', 'TypeScript 5', 'Firebase', 'Midtrans'],
+    color: '#14b8a6',
+    repository: 'https://github.com/sewainaja-pbl',
+  },
   {
     title: 'LSP Polines Certification Platform',
-    description:
-      'Led a 5-person team to build the official certification website. Engineered the auth system from scratch and optimized Git workflows for 4 development teams.',
-    technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
-    github: 'https://github.com/Ghufrnainun',
-    demo: '',
-    image:
-      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=900&fit=crop',
-    color: '#22d3c5',
-    role: 'Lead developer',
+    slug: 'lsp-polines',
+    summary:
+      'A certification website developed with a five-person team, with ownership across team leadership, authentication, and Git workflow setup.',
     year: '2025',
-    metric: '5-person team',
+    role: 'Team Lead',
+    team: { size: 5, label: '5-person team' },
+    visibility: 'private',
+    problem:
+      'The team needed to deliver a certification platform while keeping authentication work and collaborative development coordinated.',
+    contributions: [
+      'Led a five-person team through analysis, design, and implementation.',
+      'Developed the authentication module.',
+      'Set up repository rules, branching strategy, and the shared Git workflow.',
+    ],
+    outcomes: [
+      'Delivered the certification website as a coordinated team project.',
+      'Established a repeatable contribution workflow for the development team.',
+    ],
+    technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
+    color: '#22d3c5',
   },
   {
     title: 'IMPP Organization Website',
-    description:
-      'Landing page and CMS for Ikatan Mahasiswa Pemalang Polines. Solo developed with admin panel to manage structure, activities, and gallery.',
-    technologies: ['Laravel', 'MySQL', 'Tailwind CSS'],
-    github: 'https://github.com/Ghufrnainun',
-    demo: 'https://imppolines.my.id/',
-    image: '/impp-screenshot.png',
-    color: '#38bdf8',
-    role: 'Solo developer',
+    slug: 'impp-website',
+    summary:
+      'The public website and CMS for Ikatan Mahasiswa Pemalang Polines, built independently with tools for managing organization content.',
     year: '2025',
-    metric: 'CMS + gallery',
+    role: 'Solo Developer',
+    team: { size: 1, label: 'Solo project' },
+    visibility: 'private',
+    problem:
+      'The organization needed a maintained public presence and a practical way to update its structure, activities, and gallery.',
+    contributions: [
+      'Designed and developed the public-facing website independently.',
+      'Built the CMS and administration workflow for organization content.',
+      'Implemented content management for activities, structure, and the gallery.',
+    ],
+    outcomes: [
+      'Published the organization website for public access.',
+      'Centralized routine website updates in a dedicated CMS.',
+    ],
+    technologies: ['Laravel', 'MySQL', 'Tailwind CSS'],
+    image: '/impp-screenshot.png',
+    gallery: ['/impp-screenshot.png'],
+    color: '#38bdf8',
+    demo: 'https://imppolines.my.id/',
   },
 ];
+
+export function getPortfolioProject(slug: string) {
+  return featuredProjects.find((project) => project.slug === slug);
+}

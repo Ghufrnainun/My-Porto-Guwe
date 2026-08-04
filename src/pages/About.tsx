@@ -37,7 +37,7 @@ const About = () => {
         {/* Education & Experience Section */}
         <Education />
       </main>
-      <Footer showCTA={false} />
+      <Footer />
     </div>
   );
 };

@@ -1,527 +1,207 @@
 import { useState } from 'react';
-
-import { useForm } from 'react-hook-form';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-
+import { CheckCircle, Loader2, Send } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { Send, Loader2, CheckCircle, X } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-
 import { Textarea } from '@/components/ui/textarea';
-
+import { profile } from '@/data/profile';
 import { useToast } from '@/hooks/use-toast';
 
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-
-
-
-// Zod validation schema
-
 const contactSchema = z.object({
-
   name: z.string().min(1, 'Name is required'),
-
   email: z.string().email('Please enter a valid email'),
-
   subject: z.string().optional(),
-
   message: z.string().min(10, 'Message must be at least 10 characters'),
-
 });
-
-
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
-
-
-// Replace with your Formspree endpoint if needed
-
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xbdlwwlr';
 
-
-
 interface ContactModalProps {
-
   isOpen: boolean;
-
   onOpenChange: (open: boolean) => void;
-
 }
-
-
 
 export function ContactModal({ isOpen, onOpenChange }: ContactModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
-
   const [isSuccess, setIsSuccess] = useState(false);
-
+  const [submitError, setSubmitError] = useState(false);
   const { toast } = useToast();
-
-
-
   const {
-
     register,
-
     handleSubmit,
-
     reset,
-
     formState: { errors },
+  } = useForm<ContactFormData>({ resolver: zodResolver(contactSchema) });
 
-  } = useForm<ContactFormData>({
-
-    resolver: zodResolver(contactSchema),
-
-  });
-
-
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      reset();
+      setIsSuccess(false);
+      setSubmitError(false);
+    }
+    onOpenChange(open);
+  };
 
   const onSubmit = async (data: ContactFormData) => {
-
     setIsSubmitting(true);
-
-    setIsSuccess(false);
-
-
+    setSubmitError(false);
 
     try {
-
       const response = await fetch(FORMSPREE_ENDPOINT, {
-
         method: 'POST',
-
-        headers: {
-
-          'Content-Type': 'application/json',
-
-        },
-
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-
       });
 
+      if (!response.ok) throw new Error('Failed to send message');
 
-
-      if (response.ok) {
-
-        setIsSuccess(true);
-
-        toast({
-
-          title: 'Message sent!',
-
-          description: "Thank you for reaching out. I'll get back to you soon.",
-
-        });
-
-        reset();
-
-
-
-        setTimeout(() => {
-
-          setIsSuccess(false);
-
-          onOpenChange(false);
-
-        }, 2000);
-
-      } else {
-
-        throw new Error('Failed to send message');
-
-      }
-
-    } catch (error) {
-
+      setIsSuccess(true);
+      reset();
+      toast({ title: 'Message sent!', description: 'Thank you for reaching out.' });
+    } catch {
+      setSubmitError(true);
       toast({
-
-        title: 'Error',
-
-        description:
-
-          'Failed to send message. Please try again or email me directly.',
-
+        title: 'Message not sent',
+        description: 'Please try again or email me directly.',
         variant: 'destructive',
-
       });
-
     } finally {
-
       setIsSubmitting(false);
-
     }
-
   };
-
-
-
-  const handleClose = () => {
-
-    onOpenChange(false);
-
-    reset();
-
-    setIsSuccess(false);
-
-  };
-
-
 
   return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border-border bg-card p-0 shadow-2xl">
+        {isSuccess ? (
+          <div className="flex flex-col items-center p-6 text-center sm:p-10">
+            <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <CheckCircle className="size-8" aria-hidden="true" />
+            </div>
+            <DialogHeader className="items-center text-center">
+              <DialogTitle className="text-xl">Message sent!</DialogTitle>
+              <DialogDescription className="max-w-xs leading-relaxed">
+                Thank you for reaching out. Your message has been sent.
+              </DialogDescription>
+            </DialogHeader>
+            <Button className="mt-8" onClick={() => handleOpenChange(false)} autoFocus>
+              Close
+            </Button>
+          </div>
+        ) : (
+          <>
+            <DialogHeader className="px-5 pb-2 pt-8 text-left sm:px-8">
+              <DialogTitle className="text-2xl">Send Message</DialogTitle>
+              <DialogDescription>
+                Share the role, project, or problem you want to discuss.
+              </DialogDescription>
+            </DialogHeader>
 
-    <AnimatePresence>
-
-      {isOpen && (
-
-        <motion.div
-
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-
-          initial={{ opacity: 0 }}
-
-          animate={{ opacity: 1 }}
-
-          exit={{ opacity: 0 }}
-
-        >
-
-          {/* Backdrop */}
-
-          <motion.div
-
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-
-            initial={{ opacity: 0 }}
-
-            animate={{ opacity: 1 }}
-
-            exit={{ opacity: 0 }}
-
-            onClick={handleClose}
-
-          />
-
-
-
-          {/* Modal */}
-
-          <motion.div
-
-            className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
-
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 15 }}
-            transition={shouldReduceMotion ? { duration: 0.15 } : { type: 'spring', stiffness: 300, damping: 30 }}
-
-          >
-
-            {/* Close Button */}
-
-            <button
-
-              onClick={handleClose}
-
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors z-10"
-
-              aria-label="Close modal"
-
-            >
-
-              <X className="w-4 h-4" />
-
-            </button>
-
-
-
-            <AnimatePresence mode="wait" initial={false}>
-
-              {isSuccess ? (
-
-                <motion.div
-
-                  key="success"
-
-                  initial={{ opacity: 0, scale: 0.95 }}
-
-                  animate={{ opacity: 1, scale: 1 }}
-
-                  exit={{ opacity: 0, scale: 0.95 }}
-
-                  transition={{ duration: 0.3 }}
-
-                  className="flex flex-col items-center justify-center p-12 text-center"
-
-                >
-
-                  <motion.div
-
-                    initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
-                    animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-                    transition={shouldReduceMotion ? { duration: 0.2, delay: 0.1 } : { type: "spring", stiffness: 200, damping: 15, delay: 0.15 }}
-
-                    className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6"
-
-                  >
-
-                    <CheckCircle className="w-8 h-8 text-primary" />
-
-                  </motion.div>
-
-                  <h3 className="text-xl font-bold mb-2">Message Sent!</h3>
-
-                  <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
-
-                    Thank you for reaching out. I'll get back to you soon.
-
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-5 pb-6 sm:px-8 sm:pb-8" noValidate>
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Name
+                </label>
+                <Input
+                  id="name"
+                  autoComplete="name"
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
+                  className="h-12 bg-secondary"
+                  {...register('name')}
+                />
+                {errors.name && (
+                  <p id="name-error" className="mt-1 text-xs text-destructive">
+                    {errors.name.message}
                   </p>
-
-                </motion.div>
-
-              ) : (
-
-                <motion.div
-
-                  key="form"
-
-                  initial={{ opacity: 0 }}
-
-                  animate={{ opacity: 1 }}
-
-                  exit={{ opacity: 0 }}
-
-                  transition={{ duration: 0.2 }}
-
-                >
-
-                  {/* Header */}
-
-                  <div className="px-8 pt-8 pb-4 text-center">
-
-                    <h2 className="text-2xl font-bold mb-1">Send Message</h2>
-
-                    <p className="text-muted-foreground text-sm">
-
-                      Usually respond within 24 hours
-
-                    </p>
-
-                  </div>
-
-
-
-                  {/* Form */}
-
-                  <form onSubmit={handleSubmit(onSubmit)} className="px-8 pb-8">
-
-                    <div className="space-y-4">
-
-                      {/* Name */}
-
-                      <motion.div
-
-                        animate={errors.name && !shouldReduceMotion ? { x: [-6, 6, -6, 6, 0] } : {}}
-
-                        transition={{ duration: 0.4 }}
-
-                      >
-
-                        <Input
-
-                          id="name"
-
-                          placeholder="Your name"
-
-                          className="bg-secondary border-border placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
-
-                          {...register('name')}
-
-                        />
-
-                        {errors.name && (
-
-                          <p className="text-red-400 text-xs mt-1">
-
-                            {errors.name.message}
-
-                          </p>
-
-                        )}
-
-                      </motion.div>
-
-
-
-                      {/* Email */}
-
-                      <motion.div
-
-                        animate={errors.email && !shouldReduceMotion ? { x: [-6, 6, -6, 6, 0] } : {}}
-
-                        transition={{ duration: 0.4 }}
-
-                      >
-
-                        <Input
-
-                          id="email"
-
-                          type="email"
-
-                          placeholder="your@email.com"
-
-                          className="bg-secondary border-border placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
-
-                          {...register('email')}
-
-                        />
-
-                        {errors.email && (
-
-                          <p className="text-red-400 text-xs mt-1">
-
-                            {errors.email.message}
-
-                          </p>
-
-                        )}
-
-                      </motion.div>
-
-
-
-                      {/* Subject */}
-
-                      <div>
-
-                        <Input
-
-                          id="subject"
-
-                          placeholder="Subject (optional)"
-
-                          className="bg-secondary border-border placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
-
-                          {...register('subject')}
-
-                        />
-
-                      </div>
-
-
-
-                      {/* Message */}
-
-                      <motion.div
-
-                        animate={errors.message && !shouldReduceMotion ? { x: [-6, 6, -6, 6, 0] } : {}}
-
-                        transition={{ duration: 0.4 }}
-
-                      >
-
-                        <Textarea
-
-                          id="message"
-
-                          placeholder="Your message..."
-
-                          rows={4}
-
-                          className="bg-secondary border-border placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 resize-none"
-
-                          {...register('message')}
-
-                        />
-
-                        {errors.message && (
-
-                          <p className="text-red-400 text-xs mt-1">
-
-                            {errors.message.message}
-
-                          </p>
-
-                        )}
-
-                      </motion.div>
-
-
-
-                      {/* Submit Button */}
-
-                      <Button
-
-                        type="submit"
-
-                        className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-semibold transition-all"
-
-                        disabled={isSubmitting || isSuccess}
-
-                      >
-
-                        {isSubmitting ? (
-
-                          <>
-
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-
-                            Sending...
-
-                          </>
-
-                        ) : isSuccess ? (
-
-                          <>
-
-                            <CheckCircle className="mr-2 h-4 w-4" />
-
-                            Sent!
-
-                          </>
-
-                        ) : (
-
-                          <>
-
-                            Send Message
-
-                            <Send className="ml-2 h-4 w-4" />
-
-                          </>
-
-                        )}
-
-                      </Button>
-
-                    </div>
-
-                  </form>
-
-                </motion.div>
-
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  className="h-12 bg-secondary"
+                  {...register('email')}
+                />
+                {errors.email && (
+                  <p id="email-error" className="mt-1 text-xs text-destructive">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="subject" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Subject <span className="text-muted-foreground">(optional)</span>
+                </label>
+                <Input id="subject" className="h-12 bg-secondary" {...register('subject')} />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Message
+                </label>
+                <Textarea
+                  id="message"
+                  rows={4}
+                  aria-invalid={Boolean(errors.message)}
+                  aria-describedby={errors.message ? 'message-error' : undefined}
+                  className="resize-none bg-secondary"
+                  {...register('message')}
+                />
+                {errors.message && (
+                  <p id="message-error" className="mt-1 text-xs text-destructive">
+                    {errors.message.message}
+                  </p>
+                )}
+              </div>
+
+              {submitError && (
+                <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-foreground">
+                  Message could not be sent. Try again or{' '}
+                  <a className="font-semibold text-primary underline underline-offset-4" href={`mailto:${profile.email}`}>
+                    email me directly
+                  </a>
+                  .
+                </p>
               )}
 
-            </AnimatePresence>
-
-          </motion.div>
-
-        </motion.div>
-
-      )}
-
-    </AnimatePresence>
-
+              <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send className="ml-2 size-4" aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
-
 }
-

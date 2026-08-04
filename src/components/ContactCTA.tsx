@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 interface ContactCTAProps {
@@ -7,31 +6,28 @@ interface ContactCTAProps {
 
 export function ContactCTA({ onGetInTouch }: ContactCTAProps) {
   return (
-    <section className="relative bg-transparent py-16 md:py-24">
+    <section className="relative bg-transparent py-24 md:py-32 border-t border-border/40">
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="max-w-4xl mx-auto text-center"
-        >
-          {/* Massive Headline */}
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-            Let's build something epic.
+        <div className="max-w-3xl">
+          <div className="mb-6 flex items-center gap-4">
+            <span className="h-px w-8 bg-primary/50" />
+            <span className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              Work With Me
+            </span>
+          </div>
+          
+          <h2 className="text-5xl md:text-7xl font-serif font-bold tracking-tight mb-10 text-foreground leading-[1.05]">
+            Ready to build something that works?
           </h2>
 
-          {/* Massive Button */}
-          <motion.button
+          <button
             onClick={onGetInTouch}
-            className="inline-flex items-center gap-3 bg-white text-black hover:bg-gray-200 px-8 py-4 rounded-full font-bold text-lg transition-all"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
+            className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 rounded-full font-bold text-sm md:text-base uppercase tracking-widest transition-[transform,shadow] duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
           >
             Start a Conversation
-            <ArrowRight className="w-5 h-5" />
-          </motion.button>
-        </motion.div>
+            <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+          </button>
+        </div>
       </div>
     </section>
   );

@@ -8,20 +8,16 @@ import { ContactCTA } from '@/components/ContactCTA';
 import { Footer } from '@/components/Footer';
 import { ContactModal } from '@/components/ContactModal';
 import { HomeCanvas } from '@/components/HomeCanvas';
-import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 
 import { useState } from 'react';
 
 const Index = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  // Enable keyboard shortcuts (1-6 for section navigation)
-  useKeyboardNavigation();
-
   return (
     <HomeCanvas>
       <Header />
-      <div className="home-sections">
+      <main className="home-sections">
         <section id="hero" className="home-panel home-panel-hero">
           <Hero />
         </section>
@@ -40,7 +36,7 @@ const Index = () => {
         <div className="home-panel home-panel-compact">
           <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
         </div>
-      </div>
+      </main>
       <Footer showCTA={false} />
       <ContactModal
         isOpen={isContactModalOpen}

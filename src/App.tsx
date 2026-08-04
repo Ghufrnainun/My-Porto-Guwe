@@ -6,104 +6,84 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 import Index from './pages/Index';
-import About from './pages/About';
-import Projects from './pages/Projects';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import Auth from './pages/Auth';
-import AdminDashboard from './pages/AdminDashboard';
-import PostEditor from './pages/PostEditor';
-import NotFound from './pages/NotFound';
-import Resume from './pages/Resume';
-import ProjectSectionPreview from './pages/ProjectSectionPreview';
-import TestAnimate from './pages/TestAnimate';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import LoadingScreen from '@/components/LoadingScreen';
 import ScrollToTop from '@/components/ScrollToTop';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
-import { CursorFollower } from '@/components/CursorFollower';
 import { useDelight } from '@/hooks/useDelight';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+
+const About = lazy(() => import('./pages/About'));
+const Projects = lazy(() => import('./pages/Projects'));
+const ProjectCaseStudy = lazy(() => import('./pages/ProjectCaseStudy'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const Auth = lazy(() => import('./pages/Auth'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const PostEditor = lazy(() => import('./pages/PostEditor'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Resume = lazy(() => import('./pages/Resume'));
+const TestAnimate = lazy(() => import('./pages/TestAnimate'));
 
 const queryClient = new QueryClient();
 
-const AnimatedAppContent = ({
-  isLoading,
-  setIsLoading,
-}: {
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-}) => {
+const AnimatedAppContent = () => {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait">
-      {isLoading ? (
-        <LoadingScreen
-          key="loading"
-          onLoadingComplete={() => setIsLoading(false)}
-        />
-      ) : (
-        <motion.div
-          key="content"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="w-full min-h-screen"
-        >
-          <ScrollToTop />
-          <ErrorBoundary>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={location.pathname}
-                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15 }}
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0.15 }
-                    : { duration: 0.42, ease: [0.22, 1, 0.36, 1] }
-                }
-                className="w-full"
-              >
-                <Routes location={location} key={location.pathname}>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:id" element={<BlogPost />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/resume" element={<Resume />} />
-                  <Route path="/test-animate" element={<TestAnimate />} />
+    <motion.div
+      key="content"
+      initial={{ opacity: 1 }}
+      className="w-full min-h-screen"
+    >
+      <ScrollToTop />
+      <ErrorBoundary>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0.15 }
+                : { duration: 0.42, ease: [0.22, 1, 0.36, 1] }
+            }
+            className="w-full"
+          >
+            <Suspense fallback={null}>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:id" element={<BlogPost />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/resume" element={<Resume />} />
+                <Route path="/test-animate" element={<TestAnimate />} />
+                {/* Protected Admin Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
                   <Route
-                    path="/project-section-preview"
-                    element={<ProjectSectionPreview />}
+                    path="/admin/posts/:id"
+                    element={<PostEditor />}
                   />
+                </Route>
 
-                  {/* Protected Admin Routes */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route
-                      path="/admin/posts/:id"
-                      element={<PostEditor />}
-                    />
-                  </Route>
-
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </motion.div>
-            </AnimatePresence>
-          </ErrorBoundary>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </motion.div>
+        </AnimatePresence>
+      </ErrorBoundary>
+    </motion.div>
   );
 };
 
 const App = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
   useDelight();
 
   return (
@@ -112,7 +92,6 @@ const App = () => {
         <AuthProvider>
           <TooltipProvider>
             <InteractiveBackground />
-            <CursorFollower />
             <div className="noise-overlay" />
             <Toaster />
             <Sonner />
@@ -122,7 +101,7 @@ const App = () => {
                 v7_relativeSplatPath: true,
               }}
             >
-              <AnimatedAppContent isLoading={isLoading} setIsLoading={setIsLoading} />
+              <AnimatedAppContent />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

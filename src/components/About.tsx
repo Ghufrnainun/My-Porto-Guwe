@@ -23,7 +23,7 @@ export function About() {
           >
             <div className="relative">
               <img
-                src="/Photo.png"
+                src="/Photo.webp"
                 alt="Ghufron Ainun Najib"
                 className="w-full aspect-[3/4] object-cover rounded-2xl grayscale hover:grayscale-0 transition-all duration-700"
               />
@@ -48,39 +48,34 @@ export function About() {
 
             {/* Editorial Text */}
             <div className="space-y-6 text-lg md:text-xl text-muted-foreground leading-relaxed">
-              {/* Paragraph 1: What problems I like solving */}
               <p>
-                I'm drawn to problems where{' '}
+                I enjoy projects where{' '}
                 <span className="text-foreground">
-                  messy operations meet code
+                  real workflows meet thoughtful software
                 </span>
-                —the kind where spreadsheets pile up, processes break down, and
-                people waste hours on things that should be automated. Building
-                systems that actually get used in production, not just demo'd,
-                is what keeps me going.
+                . As a semester-five Computer Engineering student, I work across
+                interfaces, APIs, databases, and the practical details that make
+                a product useful.
               </p>
 
-              {/* Paragraph 2: How I think / work */}
               <p>
-                My approach is pragmatic:{' '}
+                That work has taken different forms:{' '}
                 <span className="text-foreground">
-                  ship fast, refactor later, document always
+                  team leadership, independent delivery, and full-stack collaboration
                 </span>
-                . I believe in readable code over clever code, and in
-                understanding the problem deeply before writing the first line.
-                Whether leading a team or working solo, I optimize for
-                momentum—small wins compound.
+                . I led a five-person team for the LSP Polines certification
+                platform, built the IMPP public website and CMS independently,
+                and contributed to the SewaInAja rental platform across its
+                Flutter and Next.js surfaces.
               </p>
 
-              {/* Paragraph 3: Where I'm going */}
               <p>
-                Right now I'm finishing my studies while building production
-                systems for real organizations. What's next?{' '}
+                I'm currently open to{' '}
                 <span className="text-foreground">
-                  Roles where I can own problems end-to-end
+                  internships, freelance work, and collaborative product projects
                 </span>
-                —from architecture decisions to shipping and iterating based on
-                user feedback.
+                where I can keep learning while contributing dependable,
+                maintainable work.
               </p>
             </div>
 

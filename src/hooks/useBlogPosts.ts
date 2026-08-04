@@ -60,7 +60,7 @@ export function usePublishedPosts() {
 
           return {
             ...post,
-            tags: tagData?.map((t: any) => t.tags) || [],
+            tags: tagData?.map((t) => t.tags) || [],
           };
         })
       );
@@ -96,7 +96,7 @@ export function useAllPosts() {
 
           return {
             ...post,
-            tags: tagData?.map((t: any) => t.tags) || [],
+            tags: tagData?.map((t) => t.tags) || [],
           };
         })
       );
@@ -133,7 +133,7 @@ export function usePostBySlug(slug: string) {
 
       return {
         ...data,
-        tags: tagData?.map((t: any) => t.tags) || [],
+        tags: tagData?.map((t) => t.tags) || [],
       } as BlogPost;
     },
     enabled: !!slug,
@@ -303,7 +303,7 @@ export function useUpdatePost() {
       const { tag_ids, ...postData } = post;
 
       // Handle published_at
-      const updateData: any = { ...postData };
+      const updateData: Partial<BlogPost> = { ...postData };
       if (post.published !== undefined) {
         updateData.published_at = post.published
           ? new Date().toISOString()

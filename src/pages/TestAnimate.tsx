@@ -2,6 +2,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Github,
+  LockKeyhole,
   Mail,
   Sparkles,
 } from 'lucide-react';
@@ -16,6 +17,7 @@ import {
 import { MouseEvent, ReactNode, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { featuredProjects } from '@/data/featuredProjects';
+import { ProjectCover } from '@/components/ProjectCover';
 import { useLenisScroll } from '@/hooks/useLenisScroll';
 
 const ease = [0.32, 0.72, 0, 1] as const;
@@ -366,7 +368,7 @@ function Hero() {
             >
               <div className="relative h-full overflow-hidden rounded-[calc(3.2rem-0.5rem)] border border-white/10 bg-[#0a0a0a] shadow-[inset_0_1px_1px_rgba(255,255,255,0.16)]">
                 <img
-                  src="/Photo.png"
+                  src="/Photo.webp"
                   alt=""
                   className="h-full w-full object-cover object-[50%_20%] grayscale-[25%] contrast-110 saturate-[0.86]"
                   width="1519"
@@ -569,19 +571,15 @@ function WorkSection() {
                 <div className="rounded-[2.4rem] border border-white/10 bg-white/[0.055] p-2 shadow-[0_45px_130px_-78px_hsl(var(--primary)/0.75)] transition-transform duration-700 ease-premium group-hover:-translate-y-3 group-hover:rotate-0">
                   <div className="overflow-hidden rounded-[calc(2.4rem-0.5rem)] border border-white/10 bg-card shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
                     <a
-                      href={project.demo || project.github}
+                      href={project.demo || project.repository || `/projects/${project.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`${project.title} project preview`}
                       className="relative block aspect-[4/3] w-full overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      <img
-                        src={project.image}
-                        alt={project.title}
+                      <ProjectCover
+                        project={project}
                         className="absolute inset-0 size-full object-cover transition-transform duration-1000 ease-premium group-hover:scale-105"
-                        width="1200"
-                        height="900"
-                        loading="lazy"
                       />
                       <div
                         className="absolute inset-0 opacity-60 mix-blend-screen"
@@ -616,15 +614,23 @@ function WorkSection() {
                           </h3>
                         </div>
                         <div className="flex items-center gap-2">
-                          <a
-                            href={project.github}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`${project.title} GitHub`}
-                            className="grid size-9 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white/70 outline-none transition-colors duration-500 ease-premium hover:border-primary/30 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98]"
-                          >
-                            <Github className="size-4" strokeWidth={1.35} />
-                          </a>
+                          {project.repository && (
+                            <a
+                              href={project.repository}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${project.title} GitHub`}
+                              className="grid size-9 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white/70 outline-none transition-colors duration-500 ease-premium hover:border-primary/30 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98]"
+                            >
+                              <Github className="size-4" strokeWidth={1.35} />
+                            </a>
+                          )}
+                          {project.visibility === 'private' && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
+                              <LockKeyhole className="size-3" />
+                              Private repository
+                            </span>
+                          )}
                           {project.demo && (
                             <a
                               href={project.demo}
@@ -640,7 +646,7 @@ function WorkSection() {
                       </div>
 
                       <p className="mt-5 text-sm leading-7 text-white/55">
-                        {project.description}
+                        {project.summary}
                       </p>
 
                       <div className="mt-6 flex flex-wrap gap-2">
@@ -655,7 +661,7 @@ function WorkSection() {
                       </div>
 
                       <div className="mt-7 font-mono text-[10px] uppercase tracking-[0.18em] text-white/42">
-                        {project.metric} / {project.year}
+                        {project.team.label} / {project.year}
                       </div>
                     </div>
                   </div>

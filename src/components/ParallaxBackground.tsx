@@ -11,20 +11,28 @@ export function ParallaxBackground({
 }: ParallaxBackgroundProps) {
   const offset = useParallax(0.2);
 
-  // Unified ambient glow - visible in both light and dark mode
-  // Light mode: uses higher opacity for visibility on white
-  // Dark mode: uses existing HSL variables
+  // Ambient glow — uses radial-gradient natural falloff instead of filter:blur().
+  // blur-[80-120px] on large elements forces GPU to repaint every frame = major lag.
+  // radial-gradient achieves the same visual for free (no filter cost).
   const ambientGlow = (
     <>
       {/* Primary glow orb - top right */}
       <div
-        className="absolute -top-20 -right-20 w-[450px] h-[450px] rounded-full blur-[100px] bg-primary/15 dark:bg-primary/10"
-        style={{ transform: `translateY(${-offset * 0.15}px)` }}
+        className="absolute -top-20 -right-20 w-[450px] h-[450px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--primary) / 0.18) 0%, hsl(var(--primary) / 0.07) 45%, transparent 70%)',
+          transform: `translateY(${-offset * 0.15}px)`,
+          willChange: 'transform',
+        }}
       />
       {/* Secondary glow orb - bottom left */}
       <div
-        className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full blur-[80px] bg-accent/12 dark:bg-accent/8"
-        style={{ transform: `translateY(${offset * 0.1}px)` }}
+        className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--accent) / 0.14) 0%, hsl(var(--accent) / 0.05) 45%, transparent 70%)',
+          transform: `translateY(${offset * 0.1}px)`,
+          willChange: 'transform',
+        }}
       />
     </>
   );
@@ -76,10 +84,11 @@ export function ParallaxBackground({
     waves: (
       <>
         {ambientGlow}
-        {/* Center glow for waves */}
+        {/* Center glow for waves — radial-gradient, no filter:blur() */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] bg-primary/10 dark:bg-primary/5"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
           style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.14) 0%, hsl(var(--primary) / 0.05) 45%, transparent 70%)',
             transform: `translate(-50%, -50%) translateY(${offset * 0.05}px)`,
           }}
         />

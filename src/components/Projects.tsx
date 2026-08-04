@@ -2,40 +2,7 @@ import { Github } from 'lucide-react';
 import { ProjectCard } from './ProjectCard';
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-
-interface Project {
-  title: string;
-  description: string;
-  technologies: string[];
-  github: string;
-  demo: string;
-  image: string;
-  color: string;
-}
-
-const projects: Project[] = [
-  {
-    title: 'LSP Polines Certification Platform',
-    description:
-      'Led a 5-person team to build the official certification website. Engineered the auth system from scratch and optimized Git workflows for 4 development teams. Now serving 1,000+ students and professionals seeking industry certifications.',
-    technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
-    github: 'https://github.com/Ghufrnainun',
-    demo: '',
-    image:
-      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop',
-    color: '#10B981',
-  },
-  {
-    title: 'IMPP Organization Website',
-    description:
-      'Landing page & CMS for Ikatan Mahasiswa Pemalang Polines. Solo developed with custom admin panel to manage organizational structure, activities, and photo gallery. Built to strengthen member engagement and public visibility.',
-    technologies: ['Laravel', 'MySQL', 'Tailwind CSS'],
-    github: 'https://github.com/Ghufrnainun',
-    demo: 'https://imppolines.my.id/',
-    image: '/impp-screenshot.png',
-    color: '#0ea5e9',
-  },
-];
+import { featuredProjects } from '@/data/featuredProjects';
 
 export function Projects({ className = '' }: { className?: string }) {
   const ref = useRef(null);
@@ -68,7 +35,7 @@ export function Projects({ className = '' }: { className?: string }) {
 
         {/* Projects Container (Simple Modern Layout) */}
         <div ref={ref} className="flex flex-col gap-12 md:gap-20">
-          {projects.map((project, index) => (
+          {featuredProjects.map((project, index) => (
             <div key={project.title} className="w-full">
               <ProjectCard project={project} index={index} />
             </div>

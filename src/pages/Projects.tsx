@@ -1,7 +1,6 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Projects as ProjectsSection } from '@/components/Projects';
-import { Experiments } from '@/components/Experiments';
 import { motion } from 'framer-motion';
 
 const Projects = () => {
@@ -24,7 +23,8 @@ const Projects = () => {
                 Projects
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl">
-                A collection of featured projects and side experiments.
+                Three verified case studies covering mobile products, team delivery,
+                and independently built content systems.
               </p>
             </motion.div>
           </div>
@@ -33,10 +33,8 @@ const Projects = () => {
         {/* Featured Projects */}
         <ProjectsSection className="pt-0 md:pt-0" />
 
-        {/* Side Projects / Experiments */}
-        <Experiments />
       </main>
-      <Footer showCTA={false} />
+      <Footer />
     </div>
   );
 };

@@ -1,231 +1,128 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Printer, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { featuredProjects } from '@/data/featuredProjects';
+import {
+  certifications,
+  education,
+  organizationExperience,
+  profile,
+  skillTiers,
+} from '@/data/profile';
 
-const Resume = () => {
-  const handlePrint = () => {
-    window.print();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-zinc-950 py-8 print:p-0 print:bg-white text-black font-sans">
-      {/* Navigation UI - Hidden on Print */}
-      <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-50 print:hidden">
+const Resume = () => (
+  <div className="min-h-screen bg-gray-100 py-6 font-sans text-black dark:bg-zinc-950 print:bg-white print:p-0">
+    <nav className="fixed inset-x-0 top-0 z-50 flex flex-col gap-2 border-b border-gray-200 bg-white/90 p-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 dark:border-gray-800 dark:bg-zinc-900/90 print:hidden">
+      <Button variant="ghost" size="sm" className="w-full gap-2 sm:w-auto" asChild>
         <Link to="/">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Portfolio
-          </Button>
+          <ArrowLeft className="size-4" />
+          Back to Portfolio
         </Link>
-        <div className="flex gap-2">
-          <Button onClick={handlePrint} className="gap-2">
-            <Printer className="w-4 h-4" />
-            Print / Save as PDF
-          </Button>
+      </Button>
+      <Button onClick={() => window.print()} className="w-full gap-2 sm:w-auto">
+        <Printer className="size-4" />
+        Print / Save as PDF
+      </Button>
+    </nav>
+
+    <div className="h-28 sm:h-16 print:hidden" />
+
+    <main className="relative mx-auto min-h-[297mm] max-w-[210mm] bg-white p-5 text-[10.5pt] leading-relaxed shadow-xl sm:p-8 md:p-[20mm] print:w-full print:p-[15mm] print:shadow-none">
+      <header className="mb-6 text-center">
+        <h1 className="mb-2 text-2xl font-bold uppercase tracking-wide text-black sm:text-3xl">
+          {profile.name}
+        </h1>
+        <p className="mb-2 text-sm text-gray-800">
+          {profile.phone} | {profile.email} | {profile.location}
+        </p>
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm text-blue-700 underline">
+          <a href={profile.website}>ghufronainun.tech</a>
+          <a href={profile.github}>GitHub</a>
+          <a href={profile.linkedin}>LinkedIn</a>
         </div>
-      </div>
+      </header>
 
-      {/* spacer for navbar */}
-      <div className="h-16 print:hidden"></div>
+      <section className="mb-6">
+        <p className="text-justify text-gray-900">
+          Full-stack developer and semester-{profile.semester} Computer Engineering student building
+          responsive interfaces, APIs, and practical internal tools. Experienced in leading a
+          five-person project, delivering an organization website and CMS independently, and
+          contributing across Flutter and Next.js in a four-person product team. {profile.availability}.
+        </p>
+      </section>
 
-      {/* ATS Container - A4 constrained */}
-      <div className="mx-auto bg-white shadow-xl print:shadow-none print:w-full max-w-[210mm] min-h-[297mm] p-[15mm] md:p-[20mm] relative text-[11pt] leading-relaxed">
-        {/* HEADER */}
-        <header className="text-center mb-6">
-          <h1 className="text-3xl font-bold uppercase tracking-wide mb-2 text-black">
-            Ghufron Ainun Najib
-          </h1>
-          <div className="text-sm text-gray-800 mb-2 flex flex-wrap justify-center gap-x-1">
-            <span>+62 896 0759 3219</span>
-            <span>|</span>
-            <span>ghufrnainunajib@gmail.com</span>
-            <span>|</span>
-            <span>Semarang, Indonesia</span>
-          </div>
-          <a
-            href="https://www.linkedin.com/in/ghufronainunnajib/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-blue-700 underline block"
-          >
-            https://www.linkedin.com/in/ghufronainunnajib/
-          </a>
-        </header>
+      <section className="mb-6">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Education</h2>
+        <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
+          <span>{education.university}</span>
+          <span>{education.period}</span>
+        </div>
+        <p className="font-bold text-gray-900">{education.degree} - GPA {education.gpa}</p>
+        <p className="text-gray-900">Expected graduation: {education.expectedGraduation}</p>
+      </section>
 
-        {/* SUMMARY */}
-        <section className="mb-6">
-          <p className="text-justify text-gray-900">
-            A proactive and detail-oriented 3rd-Semester Computer Engineering
-            Student specializing in Back-End Development (PHP, Laravel, MySQL)
-            and Artificial Intelligence/Machine Learning. Experienced in
-            applying the principles of software analysis, design, development,
-            and testing in academic and organizational projects. A proven team
-            player and innovative problem-solver committed to meeting objectives
-            and delivering high-quality results.
-          </p>
-        </section>
+      <section className="mb-6">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Featured Projects</h2>
+        <div className="space-y-4">
+          {featuredProjects.map((project) => (
+            <article key={project.slug}>
+              <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
+                <span>{project.title}</span>
+                <span>{project.year}</span>
+              </div>
+              <p className="italic text-gray-800">
+                {project.role} | {project.team.label} | {project.visibility === 'private' ? 'Private repository' : 'Public repository'}
+              </p>
+              <p className="text-justify text-gray-900">{project.summary}</p>
+              <p className="text-gray-900"><strong>Technology:</strong> {project.technologies.join(', ')}</p>
+              {project.repository && <a className="text-blue-700 underline" href={project.repository}>{project.repository}</a>}
+              {project.demo && <a className="block text-blue-700 underline" href={project.demo}>{project.demo}</a>}
+            </article>
+          ))}
+        </div>
+      </section>
 
-        {/* EDUCATION */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold uppercase border-b-2 border-black mb-3">
-            Education
-          </h2>
-          <div className="mb-2">
-            <div className="flex justify-between font-bold text-gray-900">
-              <span>Semarang State Polytechnic</span>
-              <span>Aug 2024–2028</span>
-            </div>
-            <div className="font-bold text-gray-900">
-              Bachelor of Applied Science (Current GPA: 3.85/4.00)
-            </div>
-            <ul className="list-disc list-outside ml-5 mt-1 text-gray-900">
-              <li>
-                <span className="font-bold">Expected Graduation:</span> August
-                2028.
-              </li>
-              <li>
-                <span className="font-bold">Academic Focus:</span> Coursework
-                and projects centered on Back-End Development and AI/ML
-                Applications.
-              </li>
-            </ul>
-          </div>
-        </section>
+      <section className="mb-6">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Organizational Experience</h2>
+        <div className="space-y-4">
+          {organizationExperience.map((experience) => (
+            <article key={`${experience.organization}-${experience.role}`}>
+              <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
+                <span>{experience.organization}</span>
+                <span>{experience.period}</span>
+              </div>
+              <p className="italic text-gray-800">{experience.role}</p>
+              <ul className="ml-5 list-disc text-gray-900">
+                {experience.responsibilities.map((responsibility) => <li key={responsibility}>{responsibility}</li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
 
-        {/* FEATURED PROJECTS */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold uppercase border-b-2 border-black mb-3">
-            Featured Projects
-          </h2>
-          <div className="mb-4">
-            <div className="font-bold text-gray-900 text-[11.5pt]">
-              LSP Polines Certification Website (Project-Based Learning)
-            </div>
-            <div className="italic text-gray-800 mb-1">
-              Technology: Tailwind CSS, JavaScript, PHP Laravel, MySQL
-            </div>
-            <p className="text-justify text-gray-900">
-              Leading a team of 5 members in analyzing, designing, and
-              developing a comprehensive website for the Polines Professional
-              Certification Institute (LSP). Architected and configured the
-              project's Git version control system, including setting up
-              repository rules and branch strategies for a 4-team environment.
-              Responsible for developing the authentication module.
-            </p>
-          </div>
-        </section>
+      <section className="mb-6">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Skills</h2>
+        <div className="space-y-1 text-gray-900">
+          {skillTiers.map((tier) => (
+            <p key={tier.label}><strong>{tier.label}:</strong> {tier.skills.join(', ')}</p>
+          ))}
+        </div>
+      </section>
 
-        {/* ORGANIZATIONAL EXPERIENCE */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold uppercase border-b-2 border-black mb-3">
-            Organizational Experience
-          </h2>
+      <section>
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Verified Credentials</h2>
+        <ul className="ml-5 list-disc text-gray-900">
+          {certifications.map((certification) => (
+            <li key={certification.title}>{certification.title} - {certification.issuer}, {certification.year}</li>
+          ))}
+        </ul>
+      </section>
+    </main>
 
-          {/* IMPP 1 */}
-          <div className="mb-4">
-            <div className="flex justify-between font-bold text-gray-900">
-              <span>Ikatan Mahasiswa Pemalang Polines (IMPP)</span>
-              <span>June 2025 - Present</span>
-            </div>
-            <div className="italic text-gray-800 mb-1">
-              Coordinator, Communication & Info. Division
-            </div>
-            <ul className="list-disc list-outside ml-5 text-gray-900 space-y-1">
-              <li>
-                Leading and coordinating the division in managing all digital
-                platforms, including Instagram strategy, feed creation, and
-                organizational email operations.
-              </li>
-              <li>
-                Currently spearheading the development and maintenance of the
-                official organizational website (IMPP).
-              </li>
-            </ul>
-          </div>
-
-          {/* PCC */}
-          <div className="mb-4">
-            <div className="flex justify-between font-bold text-gray-900">
-              <span>UKM Polytechnic Computer Club (PCC)</span>
-              <span>May 2025 - Present</span>
-            </div>
-            <div className="italic text-gray-800 mb-1">
-              Staff, Maintenance Department
-            </div>
-            <ul className="list-disc list-outside ml-5 text-gray-900 space-y-1">
-              <li>
-                Acting as department treasurer, responsible for managing
-                activity funds and maintaining accurate financial records.
-              </li>
-              <li>
-                Providing technical support and device servicing (PC, laptop,
-                printer) for the general public through the maintenance
-                division.
-              </li>
-            </ul>
-          </div>
-
-          {/* IMPP 2 */}
-          <div className="mb-4">
-            <div className="flex justify-between font-bold text-gray-900">
-              <span>Ikatan Mahasiswa Pemalang Polines (IMPP)</span>
-              <span>Sept 2024 - May 2025</span>
-            </div>
-            <div className="italic text-gray-800 mb-1">
-              Staff, Communication & Info. Division
-            </div>
-            <ul className="list-disc list-outside ml-5 text-gray-900 space-y-1">
-              <li>
-                Created and managed visual content for organizational social
-                media, including Instagram feeds and stories for national
-                holidays.
-              </li>
-              <li>
-                Designed and edited campus materials for socialization and
-                events, successfully increasing digital platform engagement.
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* SKILLS AND LANGUAGE */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold uppercase border-b-2 border-black mb-3">
-            Skills and Language
-          </h2>
-          <div className="space-y-2 text-gray-900">
-            <div>
-              <span className="font-bold">Technical Skills: Languages:</span>{' '}
-              PHP, JavaScript, Python, SQL, HTML5, CSS3 |{' '}
-              <span className="font-bold">Frameworks:</span> Laravel, React.js,
-              Next.js, Vue.js, Tailwind CSS |{' '}
-              <span className="font-bold">Databases:</span> MySQL, MongoDB
-            </div>
-            <div>
-              <span className="font-bold">Soft Skills:</span> Teamwork &
-              Collaboration, Effective Communication, Time Management &
-              Deadline-Oriented, Adaptable & Fast Learner, Detail-Oriented,
-              Analytical & Problem-Solving.
-            </div>
-            <div>
-              <span className="font-bold">Language:</span> Indonesian (Native),{' '}
-              <span className="font-bold">English</span> (Professional Working
-              Proficiency | TEPPS Score: 580)
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <style type="text/css" media="print">
-        {`
-          @page { size: auto; margin: 0mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          html, body { height: 100%; overflow: visible !important; }
-        `}
-      </style>
-    </div>
-  );
-};
+    <style type="text/css" media="print">
+      {`@page { size: auto; margin: 0; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } html, body { height: auto; overflow: visible !important; }`}
+    </style>
+  </div>
+);
 
 export default Resume;

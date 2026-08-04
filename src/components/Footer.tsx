@@ -1,158 +1,62 @@
-import { Github, Linkedin, Mail } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Github, Linkedin, Mail, ArrowUpRight } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ContactModal } from './ContactModal';
+
 import { ContactCTA } from './ContactCTA';
-
-const navLinks = [
-  { href: '/about', label: 'About' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/blog', label: 'Blog' },
-];
-
-const socialLinks = [
-  { href: 'https://github.com/Ghufrnainun', icon: Github, label: 'GitHub' },
-  {
-    href: 'https://www.linkedin.com/in/ghufronainunnajib/',
-    icon: Linkedin,
-    label: 'LinkedIn',
-  },
-  { href: 'mailto:ghufrnainunajib@gmail.com', icon: Mail, label: 'Email' },
-];
+import { ContactModal } from './ContactModal';
 
 interface FooterProps {
   showCTA?: boolean;
 }
 
 export function Footer({ showCTA = true }: FooterProps) {
-  const [showEasterEgg, setShowEasterEgg] = useState(false);
-  const [hasShownOnce, setHasShownOnce] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.scrollY;
-      const clientHeight = window.innerHeight;
-
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasShownOnce]);
 
   return (
     <>
-      <footer className="relative bg-transparent">
-        {/* PART 1: The CTA (Mic Drop) - Only on landing page */}
-        {showCTA && (
-          <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
-        )}
+      <footer className="relative bg-background">
+        {showCTA && <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />}
 
-        {/* Visual Break - Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+        <div className="container mx-auto px-6 py-12 md:px-12 lg:px-24">
+          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-sm">
+              <Link to="/" className="group inline-block mb-4">
+                <h3 className="text-2xl font-serif font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                  Ghufron A.N.
+                </h3>
+              </Link>
+              <p className="font-sans text-base text-muted-foreground leading-relaxed text-wrap-pretty">
+                Engineering systems, not just interfaces. Based in Semarang, Indonesia.
+              </p>
+            </div>
 
-        {/* PART 2: Utility Footer */}
-        <div className="pt-12">
-          <div className="container mx-auto px-6 md:px-12 lg:px-24 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-              {/* Column 1: Identity */}
-              <div className="md:col-span-1">
-                <a href="#" className="inline-block group mb-4">
-                  <h3 className="text-xl font-bold tracking-tight">
-                    Ghufron <span className="text-gray-400">Ainun Najib</span>
-                  </h3>
-                </a>
-                <p className="text-gray-500 text-sm font-mono">
-                  Engineering systems, not just interfaces.
-                </p>
-              </div>
-
-              {/* Column 2: Navigation */}
-              <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider mb-4 text-gray-600">
-                  Navigation
-                </h4>
-                <ul className="space-y-2">
-                  {navLinks.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        to={link.href}
-                        className="font-mono text-sm hover:text-primary transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 3: Connect */}
-              <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider mb-4 text-gray-600">
-                  Connect
-                </h4>
-                <ul className="space-y-2">
-                  {socialLinks.map((link) => (
-                    <li key={link.label}>
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 font-mono text-sm hover:text-primary transition-colors"
-                      >
-                        <link.icon className="w-4 h-4" />
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Column 4: Status */}
-              <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider mb-4 text-gray-600">
-                  Status
-                </h4>
-                <div className="flex items-center gap-2">
-                  {/* Subtle pulsing dot */}
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400/60 opacity-50" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500/80" />
-                  </span>
-                  <span className="font-mono text-sm text-muted-foreground">
-                    Available for opportunities
-                  </span>
-                </div>
-              </div>
+            <div className="flex flex-wrap items-center gap-6 font-mono text-sm uppercase tracking-wider">
+              <a href="https://github.com/Ghufrnainun" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                GitHub <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+              <a href="https://www.linkedin.com/in/ghufronainunnajib/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                LinkedIn <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+              <a href="mailto:ghufrnainunajib@gmail.com" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                Email <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
             </div>
           </div>
-        </div>
-
-        {/* PART 3: Copyright Bar */}
-        <div className="border-t border-gray-900">
-          <div className="container mx-auto px-6 md:px-12 lg:px-24 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-gray-600 font-mono">
-                © 2026 Ghufron Ainun Najib.
-              </p>
-              <div className="text-[10px] text-gray-600/40 hover:text-primary transition-colors font-mono cursor-default">
-                Psst... type any color to change the vibe ✨
-              </div>
-              <p className="text-sm text-gray-600 font-mono">
-                Built with React & Tailwind.
-              </p>
+          
+          <div className="mt-16 pt-8 border-t border-border/40 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">
+            <p>© {new Date().getFullYear()} Ghufron Ainun Najib.</p>
+            <div className="flex items-center gap-2">
+              <span className="relative flex size-1.5" aria-hidden="true">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+              </span>
+              <span>Available for new opportunities</span>
             </div>
           </div>
         </div>
       </footer>
 
-      <ContactModal
-        isOpen={isContactModalOpen}
-        onOpenChange={setIsContactModalOpen}
-      />
+      <ContactModal isOpen={isContactModalOpen} onOpenChange={setIsContactModalOpen} />
     </>
   );
 }

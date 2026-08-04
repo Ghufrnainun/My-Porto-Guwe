@@ -94,6 +94,7 @@ export default function PostEditor() {
     if (!isNew && id) {
       loadPost(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isNew]);
 
   const loadPost = async (postId: string) => {
@@ -120,11 +121,11 @@ export default function PostEditor() {
 
       const postWithTags = {
         ...data,
-        tags: tagData?.map((t: any) => t.tag_id) || [],
+        tags: tagData?.map((t) => t.tag_id) || [],
       };
 
       setPost(postWithTags as BlogPost);
-      setSelectedTags(tagData?.map((t: any) => t.tag_id) || []);
+      setSelectedTags(tagData?.map((t) => t.tag_id) || []);
       setFeaturedImage(data.featured_image);
 
       form.reset({

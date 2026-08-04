@@ -1,26 +1,16 @@
-import { Github, ExternalLink } from 'lucide-react';
-import { ProjectModal } from './ProjectModal';
+import { Github, ExternalLink, ArrowUpRight, LockKeyhole } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-
-interface Project {
-  title: string;
-  description: string;
-  technologies: string[];
-  github: string;
-  demo: string;
-  image: string;
-  images?: string[];
-  color?: string;
-}
+import { PortfolioProject } from '@/data/featuredProjects';
+import { ProjectCover } from './ProjectCover';
 
 interface ProjectCardProps {
-  project: Project;
+  project: PortfolioProject;
   index: number;
 }
 
 export function ProjectCard({ project, index }: ProjectCardProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const isReversed = index % 2 !== 0;
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -42,8 +32,8 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
   const mouseYSpring = useSpring(y, { stiffness: 300, damping: 30 });
 
   // Rotate between -5deg and 5deg
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["5deg", "-5deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-5deg", "5deg"]);
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ['5deg', '-5deg']);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ['-5deg', '5deg']);
 
   const rectRef = useRef<DOMRect | null>(null);
 
@@ -74,7 +64,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
   const handleMouseLeave = () => {
     x.set(0);
     y.set(0);
-    rectRef.current = null; // Clear cache on leave
+    rectRef.current = null;
   };
 
   return (
@@ -87,7 +77,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
         style={{
           rotateX: prefersReducedMotion ? 0 : rotateX,
           rotateY: prefersReducedMotion ? 0 : rotateY,
-          transformStyle: "preserve-3d",
+          transformStyle: 'preserve-3d',
         }}
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -96,19 +86,21 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
         className="w-full group perspective-1000"
       >
         {/* Outer Shell - Double Bezel Layout */}
-        <div 
+        <div
           className="bg-secondary/15 p-1.5 md:p-2.5 rounded-[2rem] border border-border/10 w-full shadow-lg hover:shadow-soft transition-all duration-500"
-          style={{ transformStyle: "preserve-3d" }}
+          style={{ transformStyle: 'preserve-3d' }}
         >
           {/* Inner Core */}
-          <div 
+          <div
             className="bg-card p-5 md:p-8 rounded-[calc(2rem-0.5rem)] border border-border/40 relative overflow-hidden"
-            style={{ transformStyle: "preserve-3d" }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* Ambient Background Glow inside the card */}
+            {/* Ambient glow — radial-gradient, NO filter:blur() to avoid GPU repaint on hover */}
             <div
-              className="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-25 pointer-events-none group-hover:scale-150 transition-transform duration-700"
-              style={{ backgroundColor: project.color || 'var(--primary)' }}
+              className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{
+                background: `radial-gradient(circle, ${project.color || 'hsl(var(--primary))'}55 0%, ${project.color || 'hsl(var(--primary))'}18 55%, transparent 75%)`,
+              }}
             />
 
             <div
@@ -118,20 +110,18 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
             >
               {/* Image Container - Double Bezel Nested */}
               <div className="w-full md:w-[50%] flex-shrink-0 flex items-center justify-center">
-                <div
-                  className="bg-secondary/30 p-1.5 rounded-[1.5rem] border border-border/10 cursor-pointer overflow-hidden w-full h-full"
-                  onClick={() => setIsModalOpen(true)}
+                <Link
+                  to={`/projects/${project.slug}`}
+                  className="block bg-secondary/30 p-1.5 rounded-[1.5rem] border border-border/10 overflow-hidden w-full h-full"
                 >
                   <div className="aspect-[16/10] rounded-[calc(1.5rem-0.25rem)] overflow-hidden relative w-full h-full">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
-                      loading="lazy"
+                    <ProjectCover
+                      project={project}
+                      className="size-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* Content Column */}
@@ -141,16 +131,13 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
                     Featured Project
                   </p>
 
-                  <h3
-                    className="text-xl md:text-2xl lg:text-3xl font-serif font-bold text-foreground mb-4 cursor-pointer hover:text-primary transition-colors leading-tight tracking-tight"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    {project.title}
+                  <h3 className="text-xl md:text-2xl lg:text-3xl font-serif font-bold text-foreground mb-4 hover:text-primary transition-colors leading-tight tracking-tight">
+                    <Link to={`/projects/${project.slug}`}>{project.title}</Link>
                   </h3>
 
                   {/* Description Box */}
                   <div className="bg-secondary/40 p-4 md:p-5 rounded-xl border border-border/50 text-muted-foreground text-xs md:text-sm leading-relaxed mb-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)] text-wrap-pretty font-sans">
-                    <p>{project.description}</p>
+                    <p>{project.summary}</p>
                   </div>
                 </div>
 
@@ -169,15 +156,23 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
 
                   {/* Links Row */}
                   <div className="flex items-center gap-3">
-                    <a
-                      href={project.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2.5 rounded-md bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 border border-border/40"
-                      aria-label="GitHub"
-                    >
-                      <Github className="w-4 h-4" strokeWidth={1.5} />
-                    </a>
+                    {project.repository && (
+                      <a
+                        href={project.repository}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-md bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 border border-border/40"
+                        aria-label={`${project.title} GitHub`}
+                      >
+                        <Github className="w-4 h-4" strokeWidth={1.5} />
+                      </a>
+                    )}
+                    {project.visibility === 'private' && (
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-border/40 bg-secondary/80 px-2.5 py-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                        <LockKeyhole className="size-3" />
+                        Private repository
+                      </span>
+                    )}
                     {project.demo && (
                       <a
                         href={project.demo}
@@ -189,13 +184,13 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
                         <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
                       </a>
                     )}
-                    <button
-                      onClick={() => setIsModalOpen(true)}
+                    <Link
+                      to={`/projects/${project.slug}`}
                       className="ml-auto text-[10px] font-mono font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider flex items-center gap-1"
                     >
-                      <span>Details</span>
-                      <span className="text-xs">↗</span>
-                    </button>
+                      <span>Case study</span>
+                      <ArrowUpRight className="size-3" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -203,12 +198,6 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
           </div>
         </div>
       </motion.div>
-
-      <ProjectModal
-        project={project}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </>
   );
 }
