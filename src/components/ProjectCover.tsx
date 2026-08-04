@@ -13,6 +13,7 @@ export function ProjectCover({
         src={project.image}
         alt={`${project.title} cover`}
         className={className}
+        loading="lazy"
       />
     );
   }

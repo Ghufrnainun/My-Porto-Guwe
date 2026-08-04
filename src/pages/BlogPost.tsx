@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Tag } from 'lucide-react';
-import { Header } from '@/components/Header';
+
 import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +13,7 @@ export default function BlogPost() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        
         <main className="pt-24 pb-20">
           <article className="container mx-auto px-4 max-w-3xl">
             <Skeleton className="h-4 w-24 mb-8" />
@@ -35,7 +35,7 @@ export default function BlogPost() {
   if (error || !post) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        
         <main className="pt-24 pb-20 container mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold mb-4">Post not found</h1>
           <Link to="/blog" className="text-primary hover:underline">
@@ -85,7 +85,7 @@ export default function BlogPost() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      
       <main className="pt-24 pb-20">
         <article className="container mx-auto px-4 max-w-3xl">
           <Link

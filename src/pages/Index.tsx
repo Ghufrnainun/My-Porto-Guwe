@@ -1,4 +1,3 @@
-import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { AboutPreview } from '@/components/AboutPreview';
 import { Skills } from '@/components/Skills';
@@ -16,7 +15,6 @@ const Index = () => {
 
   return (
     <HomeCanvas>
-      <Header />
       <main className="home-sections">
         <section id="hero" className="home-panel home-panel-hero">
           <Hero />

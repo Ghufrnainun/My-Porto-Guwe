@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 
 import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
+
 import { ProjectCover } from '@/components/ProjectCover';
 import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
 import NotFound from './NotFound';
@@ -53,7 +53,7 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
 function CaseStudy({ project }: { project: PortfolioProject }) {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      
       <main className="overflow-hidden pt-24">
         <section className="relative py-16 md:py-24">
           {/* Decorative glow — radial-gradient, no filter:blur() */}

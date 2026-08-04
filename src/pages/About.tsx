@@ -1,4 +1,4 @@
-import { Header } from '@/components/Header';
+
 import { Footer } from '@/components/Footer';
 import { About as AboutSection } from '@/components/About';
 import { Skills } from '@/components/Skills';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      
       <main className="pt-20">
         {/* Page Header */}
         <section className="py-12 md:py-16">

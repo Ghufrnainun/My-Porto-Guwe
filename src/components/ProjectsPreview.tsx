@@ -6,10 +6,16 @@ import { ProjectCover } from './ProjectCover';
 
 const springEase = [0.32, 0.72, 0, 1] as const;
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: springEase } }
+};
+
 // ─── Project image block ──────────────────────────────────────────────────────
 function ProjectImage({ project, reversed }: { project: PortfolioProject; reversed: boolean }) {
   return (
-    <div
+    <motion.div
+      variants={itemVariants}
       className={`relative w-full md:w-[48%] flex-shrink-0 ${reversed ? 'md:order-2' : ''}`}
     >
       <Link
@@ -32,7 +38,7 @@ function ProjectImage({ project, reversed }: { project: PortfolioProject; revers
         {/* Bottom fade */}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/60 to-transparent" />
       </Link>
-    </div>
+    </motion.div>
   );
 }
 
@@ -47,7 +53,8 @@ function ProjectContent({
   reversed: boolean;
 }) {
   return (
-    <div
+    <motion.div
+      variants={itemVariants}
       className={`flex w-full flex-col justify-center gap-5 md:w-[48%] ${
         reversed ? 'md:order-1' : ''
       }`}
@@ -105,7 +112,7 @@ function ProjectContent({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${project.title} GitHub`}
-            className="grid size-9 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
+            className="grid size-11 md:size-10 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
           >
             <Github className="size-4" strokeWidth={1.35} />
           </a>
@@ -122,7 +129,7 @@ function ProjectContent({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${project.title} live demo`}
-            className="grid size-9 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
+            className="grid size-11 md:size-10 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
           >
             <ExternalLink className="size-4" strokeWidth={1.35} />
           </a>
@@ -137,7 +144,7 @@ function ProjectContent({
           <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.6} />
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -147,10 +154,12 @@ function ProjectRow({ project, index }: { project: PortfolioProject; index: numb
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial="hidden"
+      whileInView="visible"
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.75, delay: 0, ease: springEase }}
+      variants={{
+        visible: { transition: { staggerChildren: 0.15 } }
+      }}
       className="group relative border-t border-border/40 py-12 md:py-16"
     >
       {/* Row number */}

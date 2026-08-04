@@ -1,4 +1,4 @@
-import { Header } from '@/components/Header';
+
 import { Footer } from '@/components/Footer';
 import { Projects as ProjectsSection } from '@/components/Projects';
 import { motion } from 'framer-motion';
@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 const Projects = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      
       <main className="pt-20">
         {/* Page Header */}
         <section className="pt-16 pb-0 md:pt-24 md:pb-0">

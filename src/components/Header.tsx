@@ -119,7 +119,7 @@ export function Header() {
           </Link>
           <SheetTrigger asChild>
             <button
-              className="group flex flex-col gap-1.5 items-end justify-center w-10 h-10 text-foreground rounded-md hover:bg-secondary/80 active:bg-secondary/60 transition-colors pr-1"
+              className="group flex flex-col gap-1.5 items-end justify-center w-11 h-11 text-foreground rounded-md hover:bg-secondary/80 active:bg-secondary/60 transition-colors pr-1"
               aria-label="Open menu"
             >
               <span className="w-5 h-[1.5px] bg-foreground transition-all duration-300 group-hover:bg-primary" />

@@ -9,6 +9,7 @@ import Index from './pages/Index';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ScrollToTop from '@/components/ScrollToTop';
+import { Header } from '@/components/Header';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
@@ -39,17 +40,18 @@ const AnimatedAppContent = () => {
       className="w-full min-h-screen"
     >
       <ScrollToTop />
+      <Header />
       <ErrorBoundary>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15, filter: 'blur(4px)' }}
             transition={
               shouldReduceMotion
                 ? { duration: 0.15 }
-                : { duration: 0.42, ease: [0.22, 1, 0.36, 1] }
+                : { duration: 0.5, ease: [0.32, 0.72, 0, 1] }
             }
             className="w-full"
           >

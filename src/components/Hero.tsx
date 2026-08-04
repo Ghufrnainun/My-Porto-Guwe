@@ -139,11 +139,11 @@ export function Hero() {
           }}
         >
           <h2 className="text-lg md:text-xl lg:text-2xl font-sans font-normal text-foreground/80 leading-relaxed text-wrap-pretty">
-            Full-stack developer, semester five at Polines.{' '}
+            I engineer full-stack web products.{' '}
             <span className="font-serif text-foreground underline decoration-primary/40 decoration-2 underline-offset-8">
-              Building real web products
+              From robust backend architectures
             </span>{' '}
-            — from backend APIs to the UI that ships them.
+            to the tactile interfaces that ship them.
           </h2>
         </motion.div>
 

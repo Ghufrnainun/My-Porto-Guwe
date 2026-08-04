@@ -31,13 +31,13 @@ export function Footer({ showCTA = true }: FooterProps) {
             </div>
 
             <div className="flex flex-wrap items-center gap-6 font-mono text-sm uppercase tracking-wider">
-              <a href="https://github.com/Ghufrnainun" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <a href="https://github.com/Ghufrnainun" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 GitHub <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              <a href="https://www.linkedin.com/in/ghufronainunnajib/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <a href="https://www.linkedin.com/in/ghufronainunnajib/" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 LinkedIn <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-              <a href="mailto:ghufrnainunajib@gmail.com" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+              <a href="mailto:ghufrnainunajib@gmail.com" className="group flex items-center gap-2 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 Email <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
             </div>

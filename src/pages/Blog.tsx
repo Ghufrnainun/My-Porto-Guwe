@@ -1,13 +1,13 @@
 import { ArrowRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
+
 import { Button } from '@/components/ui/button';
 
 export default function Blog() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      
       <main className="px-6 pb-20 pt-28 md:px-12 md:pt-36 lg:px-24">
         <div className="mx-auto max-w-4xl">
           <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-primary">
