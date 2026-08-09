@@ -16,6 +16,22 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    chunkSizeWarningLimit: 500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Strictly isolate heavy packages that belong to lazy-loaded routes
+          if (id.includes('@tiptap') || id.includes('prosemirror')) {
+            return 'vendor-tiptap';
+          }
+          if (id.includes('recharts') || id.includes('d3-') || id.includes('victory-')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('@supabase')) {
+            return 'vendor-supabase';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
   },
 }));
