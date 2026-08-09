@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => ({
           // Framer Motion — large, separate chunk
           if (id.includes('framer-motion')) return 'vendor-motion';
           // React + router — always needed, keep together
-          if (id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
+          if (id.includes('/react/') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
           // All remaining node_modules → single vendor chunk
           if (id.includes('node_modules')) return 'vendor';
         },
