@@ -1,6 +1,5 @@
 import { ArrowRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Footer } from '@/components/Footer';
 
 import { Button } from '@/components/ui/button';
 
@@ -30,7 +29,6 @@ export default function Blog() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

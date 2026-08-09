@@ -3,15 +3,9 @@ import { AboutPreview } from '@/components/AboutPreview';
 import { Skills } from '@/components/Skills';
 import { ProjectsPreview } from '@/components/ProjectsPreview';
 import { BlogPreview } from '@/components/BlogPreview';
-import { ContactCTA } from '@/components/ContactCTA';
-import { Footer } from '@/components/Footer';
-import { ContactModal } from '@/components/ContactModal';
 import { HomeCanvas } from '@/components/HomeCanvas';
 
-import { useState } from 'react';
-
 const Index = () => {
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   return (
     <HomeCanvas>
@@ -31,15 +25,7 @@ const Index = () => {
         <div className="home-panel home-panel-compact">
           <BlogPreview />
         </div>
-        <div className="home-panel home-panel-compact">
-          <ContactCTA onGetInTouch={() => setIsContactModalOpen(true)} />
-        </div>
       </main>
-      <Footer showCTA={false} />
-      <ContactModal
-        isOpen={isContactModalOpen}
-        onOpenChange={setIsContactModalOpen}
-      />
     </HomeCanvas>
   );
 };

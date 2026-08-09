@@ -14,6 +14,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
 import React, { lazy, Suspense } from 'react';
+import { CinematicFooter } from '@/components/ui/motion-footer';
 
 const About = lazy(() => import('./pages/About'));
 const Projects = lazy(() => import('./pages/Projects'));
@@ -37,50 +38,53 @@ const AnimatedAppContent = () => {
     <motion.div
       key="content"
       initial={{ opacity: 1 }}
-      className="w-full min-h-screen"
+      className="relative w-full bg-background min-h-screen font-sans selection:bg-white/20 overflow-x-hidden"
     >
-      <ScrollToTop />
-      <Header />
-      <ErrorBoundary>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={location.pathname}
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15, filter: 'blur(4px)' }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0.15 }
-                : { duration: 0.5, ease: [0.32, 0.72, 0, 1] }
-            }
-            className="w-full"
-          >
-            <Suspense fallback={null}>
-              <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:id" element={<BlogPost />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/resume" element={<Resume />} />
-                <Route path="/test-animate" element={<TestAnimate />} />
-                {/* Protected Admin Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route
-                    path="/admin/posts/:id"
-                    element={<PostEditor />}
-                  />
-                </Route>
+      <main className="relative z-10 w-full min-h-screen bg-background border-b border-border shadow-md rounded-b-3xl pb-20">
+        <ScrollToTop />
+        <Header />
+        <ErrorBoundary>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15, filter: 'blur(4px)' }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0.15 }
+                  : { duration: 0.5, ease: [0.32, 0.72, 0, 1] }
+              }
+              className="w-full"
+            >
+              <Suspense fallback={null}>
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/projects" element={<Projects />} />
+                  <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:id" element={<BlogPost />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/resume" element={<Resume />} />
+                  <Route path="/test-animate" element={<TestAnimate />} />
+                  {/* Protected Admin Routes */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route
+                      path="/admin/posts/:id"
+                      element={<PostEditor />}
+                    />
+                  </Route>
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
-      </ErrorBoundary>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
+        </ErrorBoundary>
+      </main>
+      <CinematicFooter />
     </motion.div>
   );
 };

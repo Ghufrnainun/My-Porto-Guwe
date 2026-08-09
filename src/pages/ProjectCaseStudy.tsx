@@ -2,7 +2,6 @@ import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 
-import { Footer } from '@/components/Footer';
 
 import { ProjectCover } from '@/components/ProjectCover';
 import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
@@ -194,7 +193,6 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
           </section>
         )}
       </main>
-      <Footer />
     </div>
   );
 }

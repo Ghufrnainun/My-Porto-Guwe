@@ -76,10 +76,10 @@ export function AboutPreview() {
               </h2>
               <div className="prose prose-lg text-muted-foreground/90 leading-relaxed font-sans max-w-2xl text-wrap-pretty">
                 <p className="mb-6 text-base md:text-lg">
-                  I build full-stack applications from Semarang, Indonesia. I refuse to settle for defaults—focusing instead on the micro-interactions and performance details that make software feel physical, tactile, and instantly responsive.
+                  I build full-stack applications from Semarang, Indonesia. I refuse to settle for defaults&mdash;focusing instead on the micro-interactions and performance details that make software feel physical, tactile, and instantly responsive.
                 </p>
                 <p className="text-base md:text-lg">
-                  Currently leading a 5-person team to ship the official certification platform for my polytechnic. I write pragmatic code—prioritizing maintainable architecture over chasing the latest trends.
+                  Currently leading a 5-person team to ship the official certification platform for my polytechnic. I write pragmatic code&mdash;prioritizing maintainable architecture over chasing the latest trends.
                 </p>
               </div>
             </motion.div>

@@ -1,7 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Tag } from 'lucide-react';
 
-import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePostBySlug } from '@/hooks/useBlogPosts';
@@ -27,7 +26,6 @@ export default function BlogPost() {
             </div>
           </article>
         </main>
-        <Footer showCTA={false} />
       </div>
     );
   }
@@ -42,7 +40,6 @@ export default function BlogPost() {
             ← Back to blog
           </Link>
         </main>
-        <Footer showCTA={false} />
       </div>
     );
   }
@@ -141,7 +138,6 @@ export default function BlogPost() {
           </div>
         </article>
       </main>
-      <Footer showCTA={false} />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 
-import { Footer } from '@/components/Footer';
 import { Projects as ProjectsSection } from '@/components/Projects';
 import { motion } from 'framer-motion';
 
@@ -34,7 +33,6 @@ const Projects = () => {
         <ProjectsSection className="pt-0 md:pt-0" />
 
       </main>
-      <Footer />
     </div>
   );
 };

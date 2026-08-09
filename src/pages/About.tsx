@@ -1,5 +1,4 @@
 
-import { Footer } from '@/components/Footer';
 import { About as AboutSection } from '@/components/About';
 import { Skills } from '@/components/Skills';
 import { Education } from '@/components/Education';
@@ -37,7 +36,6 @@ const About = () => {
         {/* Education & Experience Section */}
         <Education />
       </main>
-      <Footer />
     </div>
   );
 };
