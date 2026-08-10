@@ -15,6 +15,7 @@ import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
 import React, { lazy, Suspense } from 'react';
 import { CinematicFooter } from '@/components/ui/motion-footer';
+import { AppPreloader } from '@/components/AppPreloader';
 
 const About = lazy(() => import('./pages/About'));
 const Projects = lazy(() => import('./pages/Projects'));
@@ -102,7 +103,9 @@ const App = () => {
                 v7_relativeSplatPath: true,
               }}
             >
-              <AnimatedAppContent />
+              <AppPreloader>
+                <AnimatedAppContent />
+              </AppPreloader>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
