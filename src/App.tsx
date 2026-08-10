@@ -35,26 +35,19 @@ const AnimatedAppContent = () => {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <motion.div
-      key="content"
-      initial={{ opacity: 1 }}
-      className="relative w-full bg-background min-h-screen font-sans selection:bg-white/20 overflow-x-hidden"
-    >
-      <main className="relative z-10 w-full min-h-screen bg-background border-b border-border shadow-md rounded-b-3xl pb-20">
+    // NOTE: overflow-x-hidden is on this wrapper (not on <main>)
+    <div className="relative w-full bg-background min-h-screen font-sans selection:bg-white/20 overflow-x-hidden">
+      <main className="relative z-10 w-full min-h-screen bg-transparent border-b border-border shadow-md rounded-b-3xl pb-20">
         <ScrollToTop />
         <Header />
         <ErrorBoundary>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -15, filter: 'blur(4px)' }}
-              transition={
-                shouldReduceMotion
-                  ? { duration: 0.15 }
-                  : { duration: 0.5, ease: [0.32, 0.72, 0, 1] }
-              }
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
               className="w-full"
             >
               <Suspense fallback={null}>
@@ -85,7 +78,7 @@ const AnimatedAppContent = () => {
         </ErrorBoundary>
       </main>
       <CinematicFooter />
-    </motion.div>
+    </div>
   );
 };
 

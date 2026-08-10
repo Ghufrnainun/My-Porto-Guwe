@@ -20,7 +20,7 @@ export function Hero() {
               as="h1"
               per="char"
               delay={0.1}
-              className="font-serif text-[18vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tight text-foreground font-bold uppercase"
+              className="font-sans text-[18vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow"
               text="GHUFRON"
             />
           </div>
@@ -31,8 +31,19 @@ export function Hero() {
               as="h1"
               per="char"
               delay={0.35}
-              className="font-serif text-[18vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tight text-foreground font-bold uppercase"
+              className="font-sans text-[18vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow"
               text="AINUN"
+            />
+          </div>
+
+          {/* Third Word (Accent) */}
+          <div className="relative z-0 mt-0 md:-mt-2 w-full flex justify-end px-2 md:px-12 lg:px-24">
+            <TextEffect
+              as="h2"
+              per="char"
+              delay={0.6}
+              className="font-sans text-[4vw] md:text-[3vw] lg:text-[2.5vw] leading-none tracking-[0.4em] text-foreground/40 font-bold uppercase"
+              text="NAJIB"
             />
           </div>
         </div>
