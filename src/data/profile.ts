@@ -81,34 +81,50 @@ export interface SkillTier {
 
 export const skillTiers: SkillTier[] = [
   {
-    label: 'Core',
+    label: 'Languages',
     skills: [
-      { name: 'Next.js',     icon: 'nextdotjs',   color: '#E2E8F0' },
-      { name: 'TypeScript',  icon: 'typescript',  color: '#3178C6' },
-      { name: 'React',       icon: 'react',       color: '#61DAFB' },
+      { name: 'JavaScript', icon: 'javascript', color: '#F7DF1E' },
+      { name: 'TypeScript', icon: 'typescript', color: '#3178C6' },
+      { name: 'PHP', icon: 'php', color: '#777BB4' },
+      { name: 'Python', icon: 'python', color: '#3776AB' },
+      { name: 'Dart', icon: 'dart', color: '#0175C2' },
+      { name: 'HTML', icon: 'html5', color: '#E34F26' },
+      { name: 'CSS', icon: 'css', color: '#663399' },
+      { name: 'SQL', icon: null, color: '#E2E8F0' },
     ],
   },
   {
-    label: 'Working',
+    label: 'Frontend',
     skills: [
-      { name: 'Node.js',     icon: 'nodedotjs',   color: '#339933' },
-      { name: 'Express.js',  icon: 'express',     color: '#E2E8F0' },
-      { name: 'Docker',      icon: 'docker',      color: '#2496ED' },
-      { name: 'Firebase',    icon: 'firebase',    color: '#FFCA28' },
-      { name: 'Supabase',    icon: 'supabase',    color: '#3ECF8E' },
-      { name: 'Convex',      icon: null,          color: '#F97316' },
-      { name: 'MongoDB',     icon: 'mongodb',     color: '#47A248' },
-      { name: 'PostgreSQL',  icon: 'postgresql',  color: '#4169E1' },
-      { name: 'Nginx',       icon: 'nginx',       color: '#009639' },
+      { name: 'React', icon: 'react', color: '#61DAFB' },
+      { name: 'Next.js', icon: 'nextdotjs', color: '#E2E8F0' },
+      { name: 'Tailwind CSS', icon: 'tailwindcss', color: '#06B6D4' },
     ],
   },
   {
-    label: 'Familiar',
+    label: 'Backend & data',
     skills: [
-      { name: 'PHP',     icon: 'php',     color: '#777BB4' },
-      { name: 'Python',  icon: 'python',  color: '#3776AB' },
-      { name: 'Dart',    icon: 'dart',    color: '#0175C2' },
-      { name: 'Flutter', icon: 'flutter', color: '#54C5F8' },
+      { name: 'Laravel', icon: 'laravel', color: '#FF2D20' },
+      { name: 'Node.js', icon: 'nodedotjs', color: '#339933' },
+      { name: 'Convex', icon: null, color: '#F97316' },
+      { name: 'Supabase', icon: 'supabase', color: '#3ECF8E' },
+      { name: 'Firebase', icon: 'firebase', color: '#FFCA28' },
+      { name: 'PostgreSQL', icon: 'postgresql', color: '#4169E1' },
+    ],
+  },
+  {
+    label: 'Mobile & AI',
+    skills: [
+      { name: 'Flutter', icon: 'flutter', color: '#02569B' },
+    ],
+  },
+  {
+    label: 'Workflow',
+    skills: [
+      { name: 'Git', icon: 'git', color: '#F05032' },
+      { name: 'GitHub', icon: 'github', color: '#E2E8F0' },
+      { name: 'Docker', icon: 'docker', color: '#2496ED' },
+      { name: 'Figma', icon: 'figma', color: '#F24E1E' },
     ],
   },
 ];

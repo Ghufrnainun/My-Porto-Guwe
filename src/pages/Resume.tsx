@@ -104,7 +104,7 @@ const Resume = () => (
         <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase">Skills</h2>
         <div className="space-y-1 text-gray-900">
           {skillTiers.map((tier) => (
-            <p key={tier.label}><strong>{tier.label}:</strong> {tier.skills.join(', ')}</p>
+            <p key={tier.label}><strong>{tier.label}:</strong> {tier.skills.map((skill) => skill.name).join(', ')}</p>
           ))}
         </div>
       </section>
