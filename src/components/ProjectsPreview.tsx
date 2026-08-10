@@ -1,64 +1,13 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, ExternalLink, Github, LockKeyhole } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
 import { PortfolioProject, featuredProjects } from '@/data/featuredProjects';
 import { ProjectCover } from './ProjectCover';
-
-const springEase = [0.32, 0.72, 0, 1] as const;
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: springEase } }
-};
-
-// ─── Project image block ──────────────────────────────────────────────────────
-function ProjectImage({ project, reversed }: { project: PortfolioProject; reversed: boolean }) {
-  return (
-    <motion.div
-      variants={itemVariants}
-      className={`relative w-full md:w-[48%] flex-shrink-0 ${reversed ? 'md:order-2' : ''}`}
-    >
-      <Link
-        to={`/projects/${project.slug}`}
-        className="group/img block relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/20 bg-card"
-        aria-label={`View ${project.title} case study`}
-        tabIndex={-1}
-      >
-        <ProjectCover
-          project={project}
-          className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-premium group-hover/img:scale-[1.04]"
-        />
-        {/* Colour overlay from project brand colour */}
-        <div
-          className="absolute inset-0 opacity-20 mix-blend-screen"
-          style={{
-            background: `radial-gradient(circle at 75% 20%, ${project.color}88, transparent 50%)`,
-          }}
-        />
-        {/* Bottom fade */}
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/60 to-transparent" />
-      </Link>
-    </motion.div>
-  );
-}
+import ScrollStack, { ScrollStackItem } from './ScrollStack';
 
 // ─── Project content block ────────────────────────────────────────────────────
-function ProjectContent({
-  project,
-  index,
-  reversed,
-}: {
-  project: PortfolioProject;
-  index: number;
-  reversed: boolean;
-}) {
+function ProjectContent({ project }: { project: PortfolioProject }) {
   return (
-    <motion.div
-      variants={itemVariants}
-      className={`flex w-full flex-col justify-center gap-5 md:w-[48%] ${
-        reversed ? 'md:order-1' : ''
-      }`}
-    >
+    <div className="flex w-full flex-col justify-center gap-5 md:w-[48%]">
       {/* Meta row */}
       <div className="flex items-center gap-3">
         <span
@@ -144,41 +93,61 @@ function ProjectContent({
           <ArrowUpRight className="size-3.5 text-primary transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.6} />
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-// ─── Individual project row ───────────────────────────────────────────────────
-function ProjectRow({ project, index }: { project: PortfolioProject; index: number }) {
-  const reversed = index % 2 !== 0;
-
+// ─── Stacked project card ─────────────────────────────────────────────────────
+function StackedProject({ project, index }: { project: PortfolioProject; index: number }) {
   return (
-    <motion.article
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-80px' }}
-      variants={{
-        visible: { transition: { staggerChildren: 0.15 } }
-      }}
-      className="group relative border-t border-border/40 py-12 md:py-16"
+    <article
+      className="group rounded-[2rem] border border-border/40 bg-background/95 p-5 shadow-[0_18px_80px_-48px_hsl(var(--foreground)/0.45)] backdrop-blur md:p-10"
+      style={{ zIndex: index + 1 }}
     >
-      {/* Row number */}
-      <span className="absolute -top-3 left-0 font-mono text-[10px] text-muted-foreground/40 uppercase tracking-widest">
-        /{String(index + 1).padStart(2, '0')}
-      </span>
+      <div className="mb-6 flex items-center justify-between gap-4 border-b border-border/40 pb-4">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/40">
+          /{String(index + 1).padStart(2, '0')}
+        </span>
+        <span
+          className="h-px flex-1 opacity-70"
+          style={{ backgroundColor: project.color }}
+          aria-hidden="true"
+        />
+        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50">
+          {project.visibility}
+        </span>
+      </div>
 
       <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
-        <ProjectImage project={project} reversed={reversed} />
-        <ProjectContent project={project} index={index} reversed={reversed} />
+        <div className="relative w-full flex-shrink-0 md:w-[48%]">
+          <Link
+            to={`/projects/${project.slug}`}
+            className="group/img relative block aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/20 bg-card"
+            aria-label={`View ${project.title} case study`}
+            tabIndex={-1}
+          >
+            <ProjectCover
+              project={project}
+              className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-premium group-hover/img:scale-[1.04]"
+            />
+            <div
+              className="absolute inset-0 opacity-20 mix-blend-screen"
+              style={{
+                background: `radial-gradient(circle at 75% 20%, ${project.color}88, transparent 50%)`,
+              }}
+            />
+            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/60 to-transparent" />
+          </Link>
+        </div>
+
+        <ProjectContent project={project} />
       </div>
-    </motion.article>
+    </article>
   );
 }
 
 // ─── Section ──────────────────────────────────────────────────────────────────
 export function ProjectsPreview() {
-  const shouldReduceMotion = useReducedMotion();
-
   return (
     <section id="projects" className="relative bg-transparent py-20 md:py-32">
       <div className="container relative z-10 mx-auto px-6 md:px-12 lg:px-24">
@@ -203,12 +172,25 @@ export function ProjectsPreview() {
           systems, deployment flow, and UI delivery.
         </p>
 
-        {/* Project rows */}
-        <div>
+        {/* Project stack */}
+        <ScrollStack
+          className="mt-12 md:mt-16"
+          itemDistance={96}
+          itemScale={0.035}
+          itemStackDistance={36}
+          stackPosition="18%"
+          scaleEndPosition="8%"
+          baseScale={0.86}
+          rotationAmount={0}
+          blurAmount={0}
+          useWindowScroll
+        >
           {featuredProjects.map((project, index) => (
-            <ProjectRow key={project.slug} project={project} index={index} />
+            <ScrollStackItem key={project.slug}>
+              <StackedProject project={project} index={index} />
+            </ScrollStackItem>
           ))}
-        </div>
+        </ScrollStack>
 
         {/* Bottom border cap */}
         <div className="border-t border-border/40" />
@@ -217,3 +199,6 @@ export function ProjectsPreview() {
     </section>
   );
 }
+
+
+

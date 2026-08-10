@@ -7,22 +7,20 @@ const simpleIconUrl = (slug: string, color: string) =>
 
 const marqueeRows = [
   {
-    label: skillTiers[0].label,
-    skills: skillTiers[0].skills,
-    duration: '32s',
+    label: 'Languages / Frameworks',
+    skills: [
+      ...skillTiers[0].skills,
+      ...skillTiers[1].skills,
+      ...skillTiers[2].skills,
+    ],
+    duration: '44s',
     reverse: false,
-  },
-  {
-    label: 'Frontend / Backend',
-    skills: [...skillTiers[1].skills, ...skillTiers[2].skills],
-    duration: '40s',
-    reverse: true,
   },
   {
     label: 'Mobile / Workflow',
     skills: [...skillTiers[3].skills, ...skillTiers[4].skills],
-    duration: '36s',
-    reverse: false,
+    duration: '38s',
+    reverse: true,
   },
 ];
 
@@ -122,10 +120,11 @@ export function Skills() {
       `}</style>
 
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
-        <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+        <div className="space-y-12">
+          <motion.header
+            className="mx-auto max-w-3xl text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.7, ease: springEase }}
           >
@@ -133,12 +132,12 @@ export function Skills() {
               Tech Stack
             </p>
             <h3 className="mb-6 font-serif text-5xl font-bold leading-[1.05] text-foreground md:text-6xl">
-              Tools that keep showing up.
+              Tools I keep reaching for.
             </h3>
-            <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
-              Languages, frameworks, and workflow tools pulled from what I actually use across projects and GitHub work.
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
+              Languages, frameworks, and workflow tools I keep coming back to across projects and GitHub work.
             </p>
-          </motion.div>
+          </motion.header>
 
           <motion.div
             className="relative -mx-6 space-y-6 md:mx-0"
@@ -158,3 +157,4 @@ export function Skills() {
     </section>
   );
 }
+
