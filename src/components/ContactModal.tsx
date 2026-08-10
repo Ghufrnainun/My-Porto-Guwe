@@ -84,7 +84,7 @@ export function ContactModal({ isOpen, onOpenChange }: ContactModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border-border bg-card p-0 shadow-2xl">
+      <DialogContent aria-describedby={isSuccess ? "contact-modal-success-desc" : "contact-modal-desc"} className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border-border bg-card p-0 shadow-2xl">
         {isSuccess ? (
           <div className="flex flex-col items-center p-6 text-center sm:p-10">
             <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -92,7 +92,7 @@ export function ContactModal({ isOpen, onOpenChange }: ContactModalProps) {
             </div>
             <DialogHeader className="items-center text-center">
               <DialogTitle className="text-xl">Message sent!</DialogTitle>
-              <DialogDescription className="max-w-xs leading-relaxed">
+              <DialogDescription id="contact-modal-success-desc" className="max-w-xs leading-relaxed">
                 Thank you for reaching out. Your message has been sent.
               </DialogDescription>
             </DialogHeader>
@@ -104,7 +104,7 @@ export function ContactModal({ isOpen, onOpenChange }: ContactModalProps) {
           <>
             <DialogHeader className="px-5 pb-2 pt-8 text-left sm:px-8">
               <DialogTitle className="text-2xl">Send Message</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="contact-modal-desc">
                 Share the role, project, or problem you want to discuss.
               </DialogDescription>
             </DialogHeader>
@@ -185,7 +185,7 @@ export function ContactModal({ isOpen, onOpenChange }: ContactModalProps) {
                 </p>
               )}
 
-              <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
+              <Button type="submit" variant="glass" className="h-12 w-full text-base font-bold tracking-wide" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />

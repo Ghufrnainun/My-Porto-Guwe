@@ -138,10 +138,10 @@ function ProjectContent({
         {/* Case study CTA */}
         <Link
           to={`/projects/${project.slug}`}
-          className="group ml-auto inline-flex items-center gap-2.5 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary transition-all duration-500 hover:-translate-y-0.5 hover:bg-primary/20 hover:border-primary/50 active:scale-[0.97]"
+          className="group ml-auto inline-flex items-center gap-2.5 glass-pill px-4 py-2 rounded-full font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-foreground transition-all duration-300 hover:scale-105 active:scale-95"
         >
           Case study
-          <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.6} />
+          <ArrowUpRight className="size-3.5 text-primary transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.6} />
         </Link>
       </div>
     </motion.div>

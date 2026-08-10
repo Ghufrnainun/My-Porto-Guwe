@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from '@/lib/utils';
 import { MessageCircle } from 'lucide-react';
 import { ContactModal } from '@/components/ContactModal';
+import { toast } from 'sonner';
 
 // Register ScrollTrigger safely for React
 if (typeof window !== 'undefined') {
@@ -65,11 +66,11 @@ const MagneticButton = React.forwardRef<HTMLElement, MagneticButtonProps>(
           });
         };
 
-        element.addEventListener('mousemove', handleMouseMove as any);
+        element.addEventListener('mousemove', handleMouseMove);
         element.addEventListener('mouseleave', handleMouseLeave);
 
         return () => {
-          element.removeEventListener('mousemove', handleMouseMove as any);
+          element.removeEventListener('mousemove', handleMouseMove);
           element.removeEventListener('mouseleave', handleMouseLeave);
         };
       }, element);
@@ -79,10 +80,13 @@ const MagneticButton = React.forwardRef<HTMLElement, MagneticButtonProps>(
 
     return (
       <Component
-        ref={(node: HTMLElement) => {
-          (localRef as any).current = node;
-          if (typeof forwardedRef === 'function') forwardedRef(node);
-          else if (forwardedRef) (forwardedRef as any).current = node;
+        ref={(node: HTMLElement | null) => {
+          localRef.current = node;
+          if (typeof forwardedRef === 'function') {
+            forwardedRef(node);
+          } else if (forwardedRef) {
+            forwardedRef.current = node;
+          }
         }}
         className={cn('cursor-pointer', className)}
         {...props}
@@ -99,12 +103,12 @@ MagneticButton.displayName = 'MagneticButton';
 // -------------------------------------------------------------------------
 const MarqueeItem = () => (
   <div className="flex items-center space-x-12 px-6">
-    <span>Frontend Development</span> <span className="text-primary/60">✦</span>
-    <span>Backend Engineering</span>{' '}
-    <span className="text-secondary/60">✦</span>
-    <span>UI/UX Design</span> <span className="text-primary/60">✦</span>
-    <span>Problem Solving</span> <span className="text-secondary/60">✦</span>
+    <span>Full-Stack Engineering</span> <span className="text-primary/60">✦</span>
+    <span>System Architecture</span> <span className="text-secondary/60">✦</span>
+    <span>API Design</span> <span className="text-primary/60">✦</span>
+    <span>Performance Optimization</span> <span className="text-secondary/60">✦</span>
     <span>Clean Code</span> <span className="text-primary/60">✦</span>
+    <span>React & Node.js</span> <span className="text-secondary/60">✦</span>
   </div>
 );
 
@@ -165,6 +169,16 @@ export function CinematicFooter() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleCopyEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const email = 'ghufronainunnajib@gmail.com';
+    navigator.clipboard.writeText(email);
+    toast.success('Email copied to clipboard! ✦', {
+      description: email,
+      duration: 3500,
+    });
+  };
+
   return (
     <>
       {/* 
@@ -186,14 +200,16 @@ export function CinematicFooter() {
           {/* Giant background text */}
           <div
             ref={giantTextRef}
-            className="footer-giant-bg-text absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
+            className="footer-giant-bg-text absolute -bottom-[5vh] inset-x-0 w-full flex justify-center items-center text-center whitespace-nowrap z-0 pointer-events-none select-none"
           >
             GHUFRON
           </div>
 
           {/* 1. Diagonal Sleek Marquee (Top of footer) */}
-          <div className="absolute top-12 left-0 w-full overflow-hidden border-y border-border/50 bg-background/60 backdrop-blur-md py-4 z-10 -rotate-2 scale-110 shadow-2xl">
+          <div className="absolute top-24 -left-[5%] w-[110%] overflow-hidden border-y border-border/50 bg-background/90 py-3.5 z-10 -rotate-2 shadow-xl pointer-events-none select-none">
             <div className="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] text-muted-foreground uppercase">
+              <MarqueeItem />
+              <MarqueeItem />
               <MarqueeItem />
               <MarqueeItem />
             </div>
@@ -272,6 +288,7 @@ export function CinematicFooter() {
                 <MagneticButton
                   as="a"
                   href="mailto:ghufronainunnajib@gmail.com"
+                  onClick={handleCopyEmail}
                   aria-label="Send an email to Ghufron"
                   title="Send an email to Ghufron"
                   className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"

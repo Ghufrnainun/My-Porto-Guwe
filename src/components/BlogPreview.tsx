@@ -117,7 +117,7 @@ export function BlogPreview() {
             
             <Link 
               to="/projects" 
-              className="group inline-flex items-center justify-center gap-3 bg-foreground text-background px-6 py-3 rounded-full font-bold text-[11px] uppercase tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+              className="group inline-flex items-center justify-center gap-3 glass-pill text-foreground px-6 py-3.5 rounded-full font-bold text-[11px] uppercase tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
             >
               View Case Studies
               <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />

@@ -33,7 +33,6 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      // Always show on subpages, on homepage show after scrolling down
       if (location.pathname === '/') {
         setIsVisible(scrollY > window.innerHeight * 0.1);
       } else {
@@ -50,9 +49,9 @@ export function Header() {
     <>
       {/* ==================== DESKTOP LAYOUT ==================== */}
 
-      {/* Unified Floating Glass Header (Desktop) */}
+      {/* Single Ultra-Clean Floating Liquid Glass Bar */}
       <motion.header
-        className="fixed top-6 inset-x-6 mx-auto max-w-5xl z-50 hidden md:flex h-14 items-center justify-between bg-card/85 backdrop-blur-md border border-border/60 rounded-xl px-6 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+        className="fixed top-6 inset-x-6 mx-auto max-w-4xl z-50 hidden md:flex h-14 items-center justify-between glass-pill px-6 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.25)]"
         initial={{ y: -100, opacity: 0 }}
         animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
         transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
@@ -60,13 +59,13 @@ export function Header() {
         {/* Left Side: Logo */}
         <Link
           to="/"
-          className="font-bold text-base text-foreground tracking-tight hover:text-primary transition-colors cursor-pointer select-none"
+          className="font-bold text-sm md:text-base text-foreground tracking-tight hover:text-primary transition-colors cursor-pointer select-none pl-1"
         >
           Ghufron A.N.
         </Link>
 
-        {/* Center: Navigation Links */}
-        <nav aria-label="Primary navigation" className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border border-border/10">
+        {/* Center: Navigation Links (Clean, No Nested Box) */}
+        <nav aria-label="Primary navigation" className="flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = isPathActive(location.pathname, link.href);
 
@@ -75,16 +74,16 @@ export function Header() {
                 key={link.href}
                 to={link.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative px-4 py-1.5 font-mono text-xs font-semibold rounded-md transition-colors duration-300 ${
+                className={`relative px-4 py-2 text-xs font-semibold tracking-tight transition-colors duration-300 ${
                   isActive ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <span className="relative z-10">{link.label}</span>
                 {isActive && (
                   <motion.div
-                    layoutId="activeNavBackground"
-                    className="absolute inset-0 bg-card rounded-md shadow-sm border border-border/40"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    layoutId="activeNavTab"
+                    className="absolute inset-0 bg-foreground/10 dark:bg-foreground/15 border border-foreground/15 rounded-full shadow-sm"
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
                 )}
               </Link>
@@ -96,7 +95,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             to="/resume"
-            className="border border-border/80 hover:border-primary text-foreground text-xs font-mono font-semibold px-4 py-1.5 rounded-md transition-all bg-secondary/20 hover:scale-[1.02] active:scale-[0.98]"
+            className="glass-pill text-foreground text-xs font-semibold px-4 py-2 rounded-full transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Resume
           </Link>
@@ -104,9 +103,11 @@ export function Header() {
         </div>
       </motion.header>
 
+      {/* ==================== MOBILE LAYOUT ==================== */}
+
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <motion.header
-          className="fixed top-4 inset-x-4 z-50 md:hidden h-14 bg-card/85 backdrop-blur-lg border border-border/50 rounded-xl px-4 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.1)]"
+          className="fixed top-4 inset-x-4 z-50 md:hidden h-14 glass-pill rounded-full px-5 flex items-center justify-between shadow-lg"
           initial={{ y: -100, opacity: 0 }}
           animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
@@ -119,7 +120,7 @@ export function Header() {
           </Link>
           <SheetTrigger asChild>
             <button
-              className="group flex flex-col gap-1.5 items-end justify-center w-11 h-11 text-foreground rounded-md hover:bg-secondary/80 active:bg-secondary/60 transition-colors pr-1"
+              className="group flex flex-col gap-1.5 items-end justify-center w-11 h-11 text-foreground rounded-full hover:bg-secondary/80 active:bg-secondary/60 transition-colors pr-1"
               aria-label="Open menu"
             >
               <span className="w-5 h-[1.5px] bg-foreground transition-all duration-300 group-hover:bg-primary" />
@@ -135,16 +136,11 @@ export function Header() {
             </SheetHeader>
 
             <nav aria-label="Mobile navigation" className="flex flex-1 flex-col items-center justify-center gap-6 py-8 sm:gap-8">
-              {navLinks.map((link, index) => {
+              {navLinks.map((link) => {
                 const isActive = isPathActive(location.pathname, link.href);
 
                 return (
-                  <motion.div
-                    key={link.href}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                  >
+                  <motion.div key={link.href} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <SheetClose asChild>
                       <Link
                         to={link.href}
@@ -204,7 +200,7 @@ export function Header() {
               <SheetClose asChild>
                 <Link
                   to="/resume"
-                  className="border border-border hover:border-primary text-foreground text-sm font-mono px-8 py-3 rounded-md transition-all bg-secondary/30"
+                  className="glass-pill text-foreground text-sm font-semibold px-8 py-3 rounded-full transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   View Resume
                 </Link>

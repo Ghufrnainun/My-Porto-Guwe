@@ -20,7 +20,7 @@ export default function Blog() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
               I'm preparing short notes on web development, system design, and lessons from shipping real projects.
             </p>
-            <Button asChild className="mt-8">
+            <Button asChild variant="glass" className="mt-8 px-6 py-3 h-auto text-xs font-bold uppercase tracking-widest">
               <Link to="/projects" className="flex items-center gap-2">
                 View Case Studies
                 <ArrowRight className="size-4" />

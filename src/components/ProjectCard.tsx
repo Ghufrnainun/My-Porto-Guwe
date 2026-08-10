@@ -1,7 +1,7 @@
 import { Github, ExternalLink, ArrowUpRight, LockKeyhole } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { PortfolioProject } from '@/data/featuredProjects';
 import { ProjectCover } from './ProjectCover';
 
@@ -27,6 +27,10 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
   // Motion values for 3D tilt
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+
+  // Motion values for mouse spotlight
+  const spotlightX = useMotionValue(0);
+  const spotlightY = useMotionValue(0);
 
   const mouseXSpring = useSpring(x, { stiffness: 300, damping: 30 });
   const mouseYSpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -55,10 +59,14 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
     const rect = rectRef.current;
     const width = rect.width;
     const height = rect.height;
-    const mouseX = e.clientX - rect.left - width / 2;
-    const mouseY = e.clientY - rect.top - height / 2;
+    const relX = e.clientX - rect.left;
+    const relY = e.clientY - rect.top;
+    const mouseX = relX - width / 2;
+    const mouseY = relY - height / 2;
     x.set(mouseX / width);
     y.set(mouseY / height);
+    spotlightX.set(relX);
+    spotlightY.set(relY);
   };
 
   const handleMouseLeave = () => {
@@ -95,7 +103,15 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
             className="bg-card p-5 md:p-8 rounded-[calc(2rem-0.5rem)] border border-border/40 relative overflow-hidden"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* Ambient glow — radial-gradient, NO filter:blur() to avoid GPU repaint on hover */}
+            {/* Dynamic Mouse Spotlight Glow (Apple / Vercel style) */}
+            <motion.div
+              className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500 group-hover:opacity-100 rounded-[calc(2rem-0.5rem)] z-0"
+              style={{
+                background: useMotionTemplate`radial-gradient(450px circle at ${spotlightX}px ${spotlightY}px, color-mix(in oklch, hsl(var(--primary)) 20%, transparent), transparent 80%)`,
+              }}
+            />
+
+            {/* Ambient glow — radial-gradient */}
             <div
               className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               style={{
