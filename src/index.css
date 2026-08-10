@@ -142,7 +142,7 @@
 @layer utilities {
   .portfolio-flow {
     position: relative;
-    overflow: clip;
+    overflow-x: clip;
   }
 
   .portfolio-flow::before,
@@ -540,5 +540,6 @@
   z-index: 9999;
   mix-blend-mode: normal;
 }
+
 
 
