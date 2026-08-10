@@ -28,6 +28,7 @@ const PostEditor = lazy(() => import('./pages/PostEditor'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Resume = lazy(() => import('./pages/Resume'));
 const TestAnimate = lazy(() => import('./pages/TestAnimate'));
+const HeroPreview = lazy(() => import('./pages/HeroPreview'));
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,10 @@ const AnimatedAppContent = () => {
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/resume" element={<Resume />} />
                   <Route path="/test-animate" element={<TestAnimate />} />
+                  <Route path="/hero-a" element={<HeroPreview variant="a" label="A / volumetric spotlight" />} />
+                  <Route path="/hero-b" element={<HeroPreview variant="b" label="B / liquid caustics" />} />
+                  <Route path="/hero-c" element={<HeroPreview variant="c" label="C / gradient field" />} />
+                  <Route path="/hero-d" element={<HeroPreview variant="d" label="D / orbital halos" />} />
                   {/* Protected Admin Routes */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/admin" element={<AdminDashboard />} />

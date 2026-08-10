@@ -5,13 +5,17 @@ import { motion } from 'framer-motion';
 import { HeroBackground } from './HeroBackground';
 import { TextEffect } from './ui/text-effect';
 
-export function Hero() {
+type HeroProps = {
+  backgroundVariant?: 'current' | 'a' | 'b' | 'c' | 'd';
+};
+
+export function Hero({ backgroundVariant = 'current' }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-center items-center pt-24 pb-20 px-6 overflow-hidden bg-transparent">
       {/* Animated dynamic background */}
-      <HeroBackground />
+      <HeroBackground variant={backgroundVariant} />
 
-      {/* ── Main content (Centered Typography & Portrait) ──────────────── */}
+      {/* â”€â”€ Main content (Centered Typography & Portrait) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center">
         <div className="relative text-center flex flex-col items-center justify-center">
           {/* Top Word */}
@@ -49,7 +53,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* ── Tagline (Bottom) ───────────────────────────────────────────── */}
+      {/* â”€â”€ Tagline (Bottom) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="absolute bottom-20 md:bottom-24 w-full flex flex-col items-center justify-center px-6">
         <div className="max-w-sm text-center">
           <TextEffect 
@@ -61,7 +65,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* ── Scroll hint — bottom center ─────────────────────────────────── */}
+      {/* â”€â”€ Scroll hint â€” bottom center â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <motion.a
         href="#about"
         className="absolute bottom-8 flex flex-col items-center text-foreground/40 hover:text-foreground/90 transition-colors cursor-pointer"
