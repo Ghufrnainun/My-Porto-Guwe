@@ -1,145 +1,158 @@
 import { motion } from 'framer-motion';
-
-const primary = [
-  {
-    name: 'Laravel',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/laravel/laravel-original.svg',
-    tag: 'Backend Core',
-    description: "The foundation for relational data, robust auth, and APIs that don't break under load.",
-  },
-  {
-    name: 'React',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
-    tag: 'Frontend Core',
-    description: 'Component architectures that stay predictable even when application state gets complex.',
-  },
-  {
-    name: 'Next.js',
-    icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
-    tag: 'Meta Framework',
-    description: 'Server-rendered React for when SEO and time-to-first-byte actually matter.',
-  },
-];
-
-const support = [
-  { name: 'PHP', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg' },
-  { name: 'MySQL', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg' },
-  { name: 'MongoDB', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg' },
-  { name: 'JavaScript', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
-  { name: 'Tailwind', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg' },
-  { name: 'Git', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
-  { name: 'Python', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
-];
+import { skillTiers, type Skill } from '@/data/profile';
 
 const springEase = [0.32, 0.72, 0, 1];
+const simpleIconUrl = (slug: string, color: string) =>
+  `https://cdn.simpleicons.org/${slug}/${color.replace('#', '')}`;
+
+const marqueeRows = [
+  {
+    label: skillTiers[0].label,
+    skills: skillTiers[0].skills,
+    duration: '32s',
+    reverse: false,
+  },
+  {
+    label: 'Frontend / Backend',
+    skills: [...skillTiers[1].skills, ...skillTiers[2].skills],
+    duration: '40s',
+    reverse: true,
+  },
+  {
+    label: 'Mobile / Workflow',
+    skills: [...skillTiers[3].skills, ...skillTiers[4].skills],
+    duration: '36s',
+    reverse: false,
+  },
+];
+
+function SkillIcon({ skill }: { skill: Skill }) {
+  if (!skill.icon) {
+    return (
+      <span
+        className="grid size-9 place-items-center rounded-md text-xs font-bold text-background"
+        style={{ backgroundColor: skill.color }}
+        aria-hidden="true"
+      >
+        {skill.name.slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={simpleIconUrl(skill.icon, skill.color)}
+      alt=""
+      className="size-9"
+      loading="lazy"
+      aria-hidden="true"
+    />
+  );
+}
+
+function SkillPill({ skill }: { skill: Skill }) {
+  return (
+    <li className="group flex h-16 shrink-0 items-center gap-3 rounded-lg border border-border/60 bg-background/70 px-5 shadow-card backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-secondary/70">
+      <SkillIcon skill={skill} />
+      <span className="whitespace-nowrap text-sm font-semibold text-foreground/70 transition-colors duration-300 group-hover:text-foreground">
+        {skill.name}
+      </span>
+    </li>
+  );
+}
+
+function SkillMarqueeRow({
+  label,
+  skills,
+  duration,
+  reverse,
+}: {
+  label: string;
+  skills: Skill[];
+  duration: string;
+  reverse: boolean;
+}) {
+  const repeated = [...skills, ...skills, ...skills];
+
+  return (
+    <div className="group/row relative overflow-hidden py-2">
+      <div className="mb-3 flex items-center gap-4 px-1">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          {label}
+        </span>
+        <span className="h-px flex-1 bg-border/50" />
+      </div>
+      <ul
+        className="skill-marquee flex w-max gap-3 group-hover/row:[animation-play-state:paused]"
+        style={{
+          animationDuration: duration,
+          animationDirection: reverse ? 'reverse' : 'normal',
+        }}
+      >
+        {repeated.map((skill, index) => (
+          <SkillPill key={`${label}-${skill.name}-${index}`} skill={skill} />
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function Skills() {
   return (
-    <section id="skills" className="relative bg-transparent py-24 md:py-32 overflow-hidden">
+    <section id="skills" className="relative overflow-hidden bg-transparent py-24 md:py-32">
+      <style>{`
+        @keyframes skill-marquee {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-33.333%, 0, 0); }
+        }
+
+        .skill-marquee {
+          animation: skill-marquee 36s linear infinite;
+          will-change: transform;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .skill-marquee {
+            animation: none;
+            transform: none;
+            flex-wrap: wrap;
+            width: auto;
+          }
+        }
+      `}</style>
+
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-start">
-          
-          {/* Header Column */}
-          <motion.div 
-            className="lg:col-span-4 lg:sticky lg:top-32 pr-0 lg:pr-8"
+        <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.7, ease: springEase }}
           >
-            <div className="mb-8">
-              <h3 className="font-serif text-5xl md:text-6xl font-bold mb-6 text-foreground leading-[1.05] tracking-tight">
-                Tools of <br /> the Trade.
-              </h3>
-              <p className="text-muted-foreground text-lg leading-relaxed text-wrap-pretty max-w-sm">
-                I don't treat frameworks as religions. I pick the stack that ships fastest and runs best for the specific problem.
-              </p>
-            </div>
+            <p className="mb-4 font-mono text-xs uppercase tracking-[0.24em] text-primary">
+              Tech Stack
+            </p>
+            <h3 className="mb-6 font-serif text-5xl font-bold leading-[1.05] text-foreground md:text-6xl">
+              Tools that keep showing up.
+            </h3>
+            <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
+              Languages, frameworks, and workflow tools pulled from what I actually use across projects and GitHub work.
+            </p>
           </motion.div>
 
-          {/* List Column */}
-          <div className="lg:col-span-8">
-            <div className="flex flex-col border-b border-border/40">
-              {primary.map((skill, index) => (
-                <motion.div
-                  key={skill.name}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.7, delay: index * 0.1, ease: springEase }}
-                  className="group relative border-t border-border/40 py-10 md:py-14 cursor-default overflow-hidden"
-                >
-                  {/* Background hover reveal */}
-                  <div className="absolute inset-0 bg-secondary/30 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out-spring -z-10" />
-
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8 md:gap-12 px-4 md:px-8">
-                    <div className="flex flex-col gap-3">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors duration-300">
-                        0{index + 1} &mdash; {skill.tag}
-                      </span>
-                      <h4 className="font-serif text-5xl md:text-7xl font-bold text-foreground/30 group-hover:text-foreground transition-colors duration-500">
-                        {skill.name}
-                      </h4>
-                    </div>
-                    
-                    <div className="flex flex-col justify-end md:text-right mt-auto max-w-[280px]">
-                      <div className="hidden md:flex justify-end mb-6 opacity-0 -translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 ease-out-spring">
-                        <img 
-                          src={skill.icon} 
-                          alt={skill.name} 
-                          className={`w-10 h-10 ${skill.name === 'Next.js' ? 'dark:invert' : ''}`}
-                          loading="lazy"
-                        />
-                      </div>
-                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                        {skill.description}
-                      </p>
-                      
-                      {/* Mobile icon (shows only on small screens) */}
-                      <div className="md:hidden mt-6">
-                         <img 
-                          src={skill.icon} 
-                          alt={skill.name} 
-                          className={`w-8 h-8 opacity-50 grayscale ${skill.name === 'Next.js' ? 'dark:invert' : ''}`}
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Support Stack */}
-            <motion.div 
-              className="mt-16 px-4 md:px-8"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-50px' }}
-              transition={{ duration: 0.7, delay: 0.3, ease: springEase }}
-            >
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-8">
-                The Ecosystem
-              </p>
-              <div className="flex flex-wrap gap-x-8 gap-y-6">
-                {support.map((item) => (
-                  <div key={item.name} className="flex items-center gap-3 group cursor-default">
-                    <img 
-                      src={item.icon} 
-                      alt={item.name}
-                      className="w-5 h-5 grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500 ease-out-spring" 
-                      loading="lazy"
-                    />
-                    <span className="text-sm font-medium text-foreground/50 group-hover:text-foreground transition-colors duration-300">
-                      {item.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-          </div>
+          <motion.div
+            className="relative -mx-6 space-y-6 md:mx-0"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.7, delay: 0.1, ease: springEase }}
+          >
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
+            {marqueeRows.map((row) => (
+              <SkillMarqueeRow key={row.label} {...row} />
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
