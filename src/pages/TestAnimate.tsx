@@ -319,9 +319,9 @@ function Hero() {
               transition={{ duration: 0.82, ease }}
               className="mt-7 max-w-2xl text-base leading-8 text-white/58 md:text-lg md:leading-8"
             >
-              Full-stack developer building certification platforms, CMS
-              systems, and motion-aware web interfaces with Laravel, React, and
-              pragmatic architecture.
+              Full-stack developer building web platforms, CMS
+              systems, and motion-aware interfaces with Laravel, React, and
+              code that stays simple on purpose.
             </motion.p>
             <motion.div
               variants={fadeUp}

@@ -164,7 +164,7 @@ export function ProjectsPreview() {
         </div>
 
         <h2 className="mb-4 font-serif text-4xl font-bold leading-[0.95] tracking-tight text-foreground md:text-6xl">
-          Projects with more depth.
+          Shipped, not sketched.
         </h2>
 
         <p className="mb-2 max-w-lg text-base leading-8 text-muted-foreground">

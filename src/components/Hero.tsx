@@ -56,7 +56,7 @@ export function Hero() {
             per="word"
             delay={0.7}
             className="font-sans text-[13px] md:text-[15px] lg:text-base text-foreground/60 tracking-wide text-center text-wrap-pretty font-light leading-relaxed"
-            text="Designing human experiences in code. From robust backends to tactile interfaces."
+            text="Full-stack developer in Semarang. Backends that hold up, frontends that feel right."
           />
         </div>
       </div>
