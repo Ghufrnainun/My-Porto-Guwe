@@ -4,8 +4,16 @@ import { Skills } from '@/components/Skills';
 import { ProjectsPreview } from '@/components/ProjectsPreview';
 import { BlogPreview } from '@/components/BlogPreview';
 import { HomeCanvas } from '@/components/HomeCanvas';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const Index = () => {
+  usePageMeta({
+    title: 'Ghufron Ainun Najib | Full-Stack Developer Portfolio',
+    description:
+      'I engineer full-stack web products. From robust backend architectures to the tactile interfaces that ship them.',
+    canonicalPath: '/',
+  });
+
   return (
     <HomeCanvas>
       {/* 

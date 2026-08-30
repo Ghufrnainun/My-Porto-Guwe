@@ -2,8 +2,22 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export default function Blog() {
+  usePageMeta({
+    title: 'Blog | Ghufron Ainun Najib — Writing Log',
+    description:
+      'Notes and write-ups on full-stack development, TypeScript, and shipping web products — by Ghufron Ainun Najib.',
+    canonicalPath: '/blog',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      name: 'Ghufron Ainun Najib — Writing Log',
+      url: 'https://ghufronainun.tech/blog',
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       

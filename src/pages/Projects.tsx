@@ -1,8 +1,23 @@
 
 import { Projects as ProjectsSection } from '@/components/Projects';
 import { motion } from 'framer-motion';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const Projects = () => {
+  usePageMeta({
+    title: 'Projects | Ghufron Ainun Najib — Full-Stack Developer',
+    description:
+      'Selected projects by Ghufron Ainun Najib: TempeMail, SewaInAja, LSP Polines certification platform, and the IMPP organization website.',
+    canonicalPath: '/projects',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Projects — Ghufron Ainun Najib',
+      url: 'https://ghufronainun.tech/projects',
+      description: 'Portfolio of full-stack web projects',
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       
