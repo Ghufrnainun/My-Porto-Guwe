@@ -30,9 +30,9 @@ const projectsSource = readFileSync(
   resolve(root, 'src/data/featuredProjects.ts'),
   'utf8'
 );
-const projectSlugs = [...projectsSource.matchAll(/slug:\s*'([^']+)'/g)].map(
-  (match) => match[1]
-);
+const projectSlugs = [...new Set(
+  [...projectsSource.matchAll(/slug:\s*'([^']+)'/g)].map((match) => match[1])
+)];
 
 const projectRoutes = projectSlugs.map((slug) => ({
   path: `/projects/${slug}`,

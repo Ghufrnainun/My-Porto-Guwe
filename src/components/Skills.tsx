@@ -82,17 +82,22 @@ function SkillMarqueeRow({
   // duration would scroll slower. Measure one set and derive duration from
   // the shared MARQUEE_SPEED instead.
   useEffect(() => {
+    let isCancelled = false;
     const measure = () => {
+      if (isCancelled) return;
       const el = listRef.current;
       if (!el) return;
       // The list renders the skill set 3x; the keyframe scrolls exactly one
       // set (-33.333%), so duration = one set width / shared pixel speed.
       const setWidth = el.scrollWidth / 3;
-      setDuration(`${setWidth / MARQUEE_SPEED}s`);
+      if (!isCancelled) setDuration(`${setWidth / MARQUEE_SPEED}s`);
     };
     measure();
     // Re-measure once web fonts finish swapping — text width can shift.
     document.fonts?.ready.then(measure).catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
   }, [skills, repeated.length]);
 
   return (
@@ -181,4 +186,3 @@ export function Skills() {
     </section>
   );
 }
-

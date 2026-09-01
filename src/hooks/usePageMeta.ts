@@ -31,6 +31,10 @@ function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   el.setAttribute('content', content);
 }
 
+function removeMeta(attr: 'name' | 'property', key: string) {
+  document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)?.remove();
+}
+
 function upsertCanonical(href: string) {
   let el = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
   if (!el) {
@@ -64,13 +68,15 @@ export function usePageMeta(meta: PageMeta) {
   const jsonLdKey = meta.jsonLd ? JSON.stringify(meta.jsonLd) : '';
 
   useEffect(() => {
-    const url = `${SITE_URL}${meta.canonicalPath ?? ''}`;
+    const path = meta.canonicalPath ?? window.location.pathname;
+    const url = `${SITE_URL}${path}`;
     const description = meta.description ?? '';
     const image = meta.ogImage ?? DEFAULT_OG_IMAGE;
 
     document.title = meta.title;
     upsertMeta('name', 'title', meta.title);
     if (description) upsertMeta('name', 'description', description);
+    else removeMeta('name', 'description');
     upsertMeta('name', 'robots', meta.noindex ? 'noindex, nofollow' : 'index, follow');
 
     upsertCanonical(url);
@@ -79,6 +85,7 @@ export function usePageMeta(meta: PageMeta) {
     upsertMeta('property', 'og:url', url);
     upsertMeta('property', 'og:title', meta.title);
     if (description) upsertMeta('property', 'og:description', description);
+    else removeMeta('property', 'og:description');
     upsertMeta('property', 'og:image', image);
     upsertMeta('property', 'og:site_name', SITE_NAME);
 
@@ -86,6 +93,7 @@ export function usePageMeta(meta: PageMeta) {
     upsertMeta('name', 'twitter:url', url);
     upsertMeta('name', 'twitter:title', meta.title);
     if (description) upsertMeta('name', 'twitter:description', description);
+    else removeMeta('name', 'twitter:description');
     upsertMeta('name', 'twitter:image', image);
 
     if (meta.jsonLd) {

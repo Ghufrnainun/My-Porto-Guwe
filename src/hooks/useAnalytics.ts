@@ -32,7 +32,7 @@ export function useAnalytics() {
         window.dataLayer?.push(args);
       };
       window.gtag('js', new Date());
-      window.gtag('config', GA4_ID, { send_page_view: true });
+      window.gtag('config', GA4_ID, { send_page_view: false });
       injectScript(`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`);
     }
 
