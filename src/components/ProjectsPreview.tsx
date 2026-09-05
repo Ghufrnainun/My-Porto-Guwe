@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { featuredProjects } from '@/data/featuredProjects';
-import ScrollStack, { ScrollStackItem } from './ScrollStack';
 import {
   VariantSwitcher,
   UniversalProjectCard,
@@ -37,7 +36,7 @@ export function ProjectsPreview() {
           <div className="flex items-center gap-3">
             <span className="size-2 rounded-full bg-primary animate-pulse" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">
-              Featured Work
+              Selected Works
             </span>
           </div>
 
@@ -69,32 +68,20 @@ export function ProjectsPreview() {
           deployment flow, and UI delivery.
         </p>
 
-        {/* Project stack */}
-        <ScrollStack
-          className="mt-8 md:mt-12"
-          itemDistance={96}
-          itemScale={0.035}
-          itemStackDistance={36}
-          stackPosition="18%"
-          scaleEndPosition="8%"
-          baseScale={0.88}
-          rotationAmount={0}
-          blurAmount={0}
-          useWindowScroll
-        >
+        {/* Fluid Editorial Project Showcase (No Stiff Box Cards, No Forced Stacking) */}
+        <div className="mt-8 md:mt-12 flex flex-col">
           {featuredProjects.map((project, index) => (
-            <ScrollStackItem key={`${project.slug}-${variant}`} zIndex={index + 1}>
-              <UniversalProjectCard
-                project={project}
-                index={index}
-                variant={variant}
-              />
-            </ScrollStackItem>
+            <UniversalProjectCard
+              key={`${project.slug}-${variant}`}
+              project={project}
+              index={index}
+              variant={variant}
+            />
           ))}
-        </ScrollStack>
+        </div>
 
         {/* Bottom border cap */}
-        <div className="mt-20 border-t border-border/40" />
+        <div className="mt-16 border-t border-border/40" />
       </div>
     </section>
   );

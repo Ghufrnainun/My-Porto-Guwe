@@ -26,9 +26,8 @@ export function ProjectCardVariant2({ project }: ProjectCardProps) {
       ref={cardRef}
       onClick={handleCardClick}
       className={cn(
-        'group relative w-full overflow-hidden rounded-[2rem] border border-border/40 hover:border-primary/40',
-        'bg-card/70 p-6 md:p-10 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.7)] backdrop-blur-sm',
-        'transition-all duration-500 cursor-pointer flex flex-col gap-8'
+        'group relative w-full cursor-pointer select-none py-14 md:py-24',
+        'border-b border-border/30 last:border-none flex flex-col gap-8'
       )}
     >
       <ProjectCursor
@@ -37,58 +36,54 @@ export function ProjectCardVariant2({ project }: ProjectCardProps) {
         label="Explore Project"
       />
 
-      {/* Heroic Full-Width Visual Banner */}
-      <div className="relative w-full overflow-hidden rounded-2xl border border-border/30 bg-neutral-950">
-        <div className="aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden">
-          <div className="size-full transition-transform duration-700 ease-out group-hover:scale-[1.02]">
+      {/* Cinematic Panoramic Stage Display */}
+      <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-neutral-950 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.9)]">
+        <div className="aspect-[16/8] md:aspect-[21/8] w-full overflow-hidden">
+          <div className="size-full transition-transform duration-1000 ease-out group-hover:scale-[1.03]">
             <ProjectCover project={project} className="size-full" />
           </div>
         </div>
+        {/* Subtle Bottom Ambient Gradient */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+        {/* Floating Quick Action in Corner */}
+        <div className="absolute bottom-6 right-6 z-10 hidden sm:flex items-center gap-2 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-white backdrop-blur-md transition-all duration-300 group-hover:bg-primary group-hover:text-black group-hover:border-primary">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em]">
+            Read Case Study
+          </span>
+          <ArrowUpRight className="size-3.5 stroke-[2.2]" />
+        </div>
       </div>
 
-      {/* 2-Column Editorial Info Bar */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-12 items-start pt-2">
-        {/* Left Column (Heading & Meta) */}
-        <div className="md:col-span-5 flex flex-col gap-3">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
+      {/* Architectural Meta & Story Footer */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between pt-2">
+        {/* Left: Title & Meta */}
+        <div className="flex flex-col gap-2 md:max-w-xs">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/60">
             <span>{project.role}</span>
             <span>·</span>
             <span>{project.year}</span>
           </div>
 
-          <h3 className="font-serif text-3xl font-bold tracking-tight text-foreground leading-[1.05] md:text-4xl lg:text-5xl group-hover:text-primary transition-colors duration-300">
+          <h3 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300">
             {project.title}
           </h3>
-
-          <div className="pt-2">
-            <span
-              onMouseEnter={() => setIsHoveringAction(true)}
-              onMouseLeave={() => setIsHoveringAction(false)}
-              className="group/link inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/30 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-foreground transition-all duration-300 group-hover:border-primary/40 group-hover:bg-primary/10"
-            >
-              Case Study
-              <ArrowUpRight
-                className="size-3.5 text-primary transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
-                strokeWidth={2}
-              />
-            </span>
-          </div>
         </div>
 
-        {/* Right Column (Summary, Tech, Links) */}
-        <div className="md:col-span-7 flex flex-col justify-between gap-5">
-          <p className="font-sans text-sm md:text-base leading-relaxed text-muted-foreground text-pretty max-w-xl">
-            {project.summary}
-          </p>
+        {/* Middle: Summary Text */}
+        <p className="font-sans text-sm md:text-base leading-relaxed text-muted-foreground text-pretty max-w-lg md:px-4">
+          {project.summary}
+        </p>
 
-          <div className="flex flex-wrap gap-1.5 pt-1">
+        {/* Right: Tech Badges & Direct Links */}
+        <div className="flex flex-col items-start md:items-end gap-4">
+          <div className="flex flex-wrap gap-1.5 md:justify-end">
             {project.technologies.map((tech) => (
               <TechBadge key={tech} tech={tech} />
             ))}
           </div>
 
-          {/* Action Row */}
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-3">
             {project.repository && (
               <a
                 href={project.repository}
@@ -98,16 +93,16 @@ export function ProjectCardVariant2({ project }: ProjectCardProps) {
                 onMouseEnter={() => setIsHoveringAction(true)}
                 onMouseLeave={() => setIsHoveringAction(false)}
                 onClick={(e) => e.stopPropagation()}
-                className="grid size-10 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/80 transition-all duration-300 hover:scale-105 hover:border-primary/40 hover:text-primary active:scale-95"
+                className="grid size-9 place-items-center rounded-full border border-border/60 bg-secondary/20 text-muted-foreground transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:text-primary active:scale-95"
               >
-                <Github className="size-4" strokeWidth={1.5} />
+                <Github className="size-3.5" strokeWidth={1.5} />
               </a>
             )}
 
             {project.visibility === 'private' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/40 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/30 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
                 <LockKeyhole className="size-3" />
-                Private Repository
+                Private
               </span>
             )}
 
@@ -120,9 +115,9 @@ export function ProjectCardVariant2({ project }: ProjectCardProps) {
                 onMouseEnter={() => setIsHoveringAction(true)}
                 onMouseLeave={() => setIsHoveringAction(false)}
                 onClick={(e) => e.stopPropagation()}
-                className="grid size-10 place-items-center rounded-full border border-border/50 bg-secondary/40 text-muted-foreground/80 transition-all duration-300 hover:scale-105 hover:border-primary/40 hover:text-primary active:scale-95"
+                className="grid size-9 place-items-center rounded-full border border-border/60 bg-secondary/20 text-muted-foreground transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:text-primary active:scale-95"
               >
-                <ExternalLink className="size-4" strokeWidth={1.5} />
+                <ExternalLink className="size-3.5" strokeWidth={1.5} />
               </a>
             )}
           </div>

@@ -73,8 +73,8 @@ export function Projects({
           </div>
         </div>
 
-        {/* Projects Container */}
-        <div ref={ref} className="flex flex-col gap-14 md:gap-24">
+        {/* Projects Container (Seamless Frameless Flow) */}
+        <div ref={ref} className="flex flex-col">
           {featuredProjects.map((project, index) => (
             <motion.div
               key={`${project.title}-${variant}`}
