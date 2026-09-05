@@ -1,5 +1,5 @@
 import { CreditCard, Database, Code, Layers } from 'lucide-react';
-import { getTechInfo, getSimpleIconUrl } from '@/lib/techIcons';
+import { getTechInfo, getReiconLogoUrl } from '@/lib/techIcons';
 
 interface TechBadgeProps {
   tech: string;
@@ -17,11 +17,19 @@ export function TechBadge({ tech, size = 'sm', showIcon = true, className = '' }
     if (info.slug) {
       return (
         <img
-          src={getSimpleIconUrl(info.slug, info.color)}
+          src={getReiconLogoUrl(info.slug, 'original')}
           alt=""
           className={size === 'sm' ? 'size-3.5 shrink-0 object-contain' : 'size-4 shrink-0 object-contain'}
           loading="lazy"
           aria-hidden="true"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.dataset.triedFallback && info.slug) {
+              target.dataset.triedFallback = 'true';
+              const colorHex = info.color ? info.color.replace('#', '') : 'ffffff';
+              target.src = `https://cdn.simpleicons.org/${info.slug}/${colorHex}`;
+            }
+          }}
         />
       );
     }

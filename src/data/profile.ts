@@ -90,7 +90,7 @@ export const skillTiers: SkillTier[] = [
       { name: 'Dart', icon: 'dart', color: '#0175C2' },
       { name: 'HTML', icon: 'html5', color: '#E34F26' },
       { name: 'CSS', icon: 'css', color: '#1572B6' },
-      { name: 'SQL', icon: 'postgresql', color: '#336791' },
+      { name: 'SQL', icon: 'mysql', color: '#4479A1' },
     ],
   },
   {

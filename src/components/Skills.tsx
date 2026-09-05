@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { skillTiers, type Skill } from '@/data/profile';
 
 const springEase = [0.32, 0.72, 0, 1];
-const simpleIconUrl = (slug: string, color: string) =>
-  `https://cdn.simpleicons.org/${slug}/${color.replace('#', '')}`;
+const reiconLogoUrl = (slug: string) =>
+  `https://cdn.reicon.dev/logos/${slug}/original.svg`;
 
 /**
  * Both marquee rows scroll at this pixel speed so they visually match,
@@ -46,12 +46,20 @@ function SkillIcon({ skill }: { skill: Skill }) {
 
   return (
     <img
-      src={simpleIconUrl(skill.icon, skill.color)}
+      src={reiconLogoUrl(skill.icon)}
       alt=""
       className="size-7 shrink-0 object-contain transition-transform duration-300 group-hover:scale-110"
       loading="lazy"
       aria-hidden="true"
-      onError={() => setHasError(true)}
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (!target.dataset.triedFallback && skill.icon) {
+          target.dataset.triedFallback = 'true';
+          target.src = `https://cdn.simpleicons.org/${skill.icon}/${skill.color.replace('#', '')}`;
+        } else {
+          setHasError(true);
+        }
+      }}
     />
   );
 }
