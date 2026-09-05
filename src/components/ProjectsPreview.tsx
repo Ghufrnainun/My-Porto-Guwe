@@ -7,6 +7,7 @@ import {
   UniversalProjectCard,
   CardVariantType,
 } from './project-cards';
+import { cn } from '@/lib/utils';
 
 export function ProjectsPreview() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,25 +64,44 @@ export function ProjectsPreview() {
           Shipped, not sketched.
         </h2>
 
-        <p className="mb-10 max-w-xl text-base leading-relaxed text-muted-foreground text-pretty">
+        <p className="mb-12 max-w-xl text-base leading-relaxed text-muted-foreground text-pretty">
           Recent builds with real ownership: auth architecture, content systems,
           deployment flow, and UI delivery.
         </p>
 
-        {/* Fluid Editorial Project Showcase (No Stiff Box Cards, No Forced Stacking) */}
-        <div className="mt-8 md:mt-12 flex flex-col">
+        {/* Project Showcase Container */}
+        <div
+          className={cn(
+            'mt-8 md:mt-12 flex flex-col',
+            variant === '1' ? 'gap-10 sm:gap-14' : 'gap-0'
+          )}
+        >
           {featuredProjects.map((project, index) => (
-            <UniversalProjectCard
+            <div
               key={`${project.slug}-${variant}`}
-              project={project}
-              index={index}
-              variant={variant}
-            />
+              className={cn(
+                variant === '1' ? 'sticky top-24 md:top-32 will-change-transform' : 'relative'
+              )}
+              style={
+                variant === '1'
+                  ? {
+                      zIndex: index + 1,
+                      top: `calc(5.5rem + ${index * 16}px)`,
+                    }
+                  : undefined
+              }
+            >
+              <UniversalProjectCard
+                project={project}
+                index={index}
+                variant={variant}
+              />
+            </div>
           ))}
         </div>
 
         {/* Bottom border cap */}
-        <div className="mt-16 border-t border-border/40" />
+        <div className="mt-20 border-t border-border/40" />
       </div>
     </section>
   );
