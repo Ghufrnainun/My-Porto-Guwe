@@ -36,8 +36,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAllPosts, useDeletePost } from '@/hooks/useBlogPosts';
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export default function AdminDashboard() {
+  usePageMeta({ title: 'Admin | Ghufron Ainun Najib', noindex: true });
+
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: posts, isLoading: postsLoading } = useAllPosts();

@@ -4,10 +4,41 @@ import { ArrowLeft, Calendar, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePostBySlug } from '@/hooks/useBlogPosts';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export default function BlogPost() {
   const { id: slug } = useParams<{ id: string }>();
   const { data: post, isLoading, error } = usePostBySlug(slug || '');
+
+  usePageMeta({
+    title: post
+      ? `${post.title} | Ghufron Ainun Najib`
+      : 'Blog Post | Ghufron Ainun Najib',
+    description:
+      post?.excerpt ??
+      post?.content.slice(0, 155) ??
+      'Read the latest writing from Ghufron Ainun Najib.',
+    canonicalPath: slug ? `/blog/${slug}` : '/blog',
+    ogType: 'article',
+    ogImage: post?.featured_image ?? undefined,
+    jsonLd: post
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: post.title,
+          description: post.excerpt ?? undefined,
+          url: `https://ghufronainun.tech/blog/${post.slug}`,
+          image: post.featured_image ?? undefined,
+          datePublished: post.published_at ?? post.created_at,
+          dateModified: post.updated_at,
+          author: {
+            '@type': 'Person',
+            name: 'Ghufron Ainun Najib',
+            url: 'https://ghufronainun.tech',
+          },
+        }
+      : undefined,
+  });
 
   if (isLoading) {
     return (

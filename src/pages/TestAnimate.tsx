@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { featuredProjects } from '@/data/featuredProjects';
 import { ProjectCover } from '@/components/ProjectCover';
 import { useLenisScroll } from '@/hooks/useLenisScroll';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const ease = [0.32, 0.72, 0, 1] as const;
 
@@ -759,6 +760,7 @@ function ContactSection() {
 
 export default function TestAnimate() {
   useLenisScroll();
+  usePageMeta({ title: 'Animation Lab | Ghufron Ainun Najib', noindex: true });
 
   return (
     <main className="dark min-h-screen w-full max-w-full overflow-x-hidden bg-[#050505] text-white">

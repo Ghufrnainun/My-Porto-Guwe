@@ -6,6 +6,7 @@ import { ProjectCover } from '@/components/ProjectCover';
 import { TechBadge } from '@/components/TechBadge';
 import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
 import NotFound from './NotFound';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -195,6 +196,30 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
 export default function ProjectCaseStudy() {
   const { slug = '' } = useParams();
   const project = getPortfolioProject(slug);
+
+  usePageMeta({
+    title: project
+      ? `${project.title} | Ghufron Ainun Najib`
+      : 'Project | Ghufron Ainun Najib',
+    description: project?.summary ?? 'Case study from the portfolio of Ghufron Ainun Najib.',
+    canonicalPath: project ? `/projects/${project.slug}` : '/projects',
+    ogImage: project?.image ?? undefined,
+    jsonLd: project
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'CreativeWork',
+          name: project.title,
+          description: project.summary,
+          url: `https://ghufronainun.tech/projects/${project.slug}`,
+          image: project.image ?? undefined,
+          author: {
+            '@type': 'Person',
+            name: 'Ghufron Ainun Najib',
+            url: 'https://ghufronainun.tech',
+          },
+        }
+      : undefined,
+  });
 
   return project ? <CaseStudy project={project} /> : <NotFound />;
 }

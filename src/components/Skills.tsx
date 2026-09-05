@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { skillTiers, type Skill } from '@/data/profile';
 
 const springEase = [0.32, 0.72, 0, 1];
 const simpleIconUrl = (slug: string, color: string) =>
   `https://cdn.simpleicons.org/${slug}/${color.replace('#', '')}`;
+
+/**
+ * Both marquee rows scroll at this pixel speed so they visually match,
+ * regardless of how many skills each row holds.
+ */
+const MARQUEE_SPEED = 60; // px per second
 
 // Flatten and balance all skills into 2 sleek scrolling rows
 const allSkills = skillTiers.flatMap((tier) => tier.skills);
@@ -14,13 +20,11 @@ const marqueeRows = [
   {
     id: 'row-1',
     skills: allSkills.slice(0, halfIndex),
-    duration: '40s',
     reverse: false,
   },
   {
     id: 'row-2',
     skills: allSkills.slice(halfIndex),
-    duration: '36s',
     reverse: true,
   },
 ];
@@ -70,18 +74,42 @@ function SkillPill({ skill }: { skill: Skill }) {
 
 function SkillMarqueeRow({
   skills,
-  duration,
   reverse,
 }: {
   skills: Skill[];
-  duration: string;
   reverse: boolean;
 }) {
   const repeated = [...skills, ...skills, ...skills];
+  const listRef = useRef<HTMLUListElement>(null);
+  const [duration, setDuration] = useState('36s');
+
+  // Duration must scale with row width, not be hardcoded: the keyframe
+  // always moves exactly one set (-33.333%), so a shorter row with the same
+  // duration would scroll slower. Measure one set and derive duration from
+  // the shared MARQUEE_SPEED instead.
+  useEffect(() => {
+    let isCancelled = false;
+    const measure = () => {
+      if (isCancelled) return;
+      const el = listRef.current;
+      if (!el) return;
+      // The list renders the skill set 3x; the keyframe scrolls exactly one
+      // set (-33.333%), so duration = one set width / shared pixel speed.
+      const setWidth = el.scrollWidth / 3;
+      if (!isCancelled) setDuration(`${setWidth / MARQUEE_SPEED}s`);
+    };
+    measure();
+    // Re-measure once web fonts finish swapping — text width can shift.
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, [skills, repeated.length]);
 
   return (
     <div className="group/row relative overflow-hidden py-1.5">
       <ul
+        ref={listRef}
         className="skill-marquee flex w-max gap-3 group-hover/row:[animation-play-state:paused]"
         style={{
           animationDuration: duration,
@@ -160,5 +188,3 @@ export function Skills() {
     </section>
   );
 }
-
-
