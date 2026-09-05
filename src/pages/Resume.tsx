@@ -9,8 +9,17 @@ import {
   profile,
   skillTiers,
 } from '@/data/profile';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
-const Resume = () => (
+const Resume = () => {
+  usePageMeta({
+    title: 'Resume | Ghufron Ainun Najib — Full-Stack Developer',
+    description:
+      'Resume of Ghufron Ainun Najib: full-stack developer experienced with TypeScript, React, Node.js, and shipping production web products.',
+    canonicalPath: '/resume',
+  });
+
+  return (
   <div className="min-h-screen bg-gray-100 py-6 font-sans text-black dark:bg-zinc-950 print:bg-white print:p-0">
     <nav className="fixed inset-x-0 top-0 z-50 flex flex-col gap-2 border-b border-gray-200 bg-white/90 p-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 dark:border-gray-800 dark:bg-zinc-900/90 print:hidden">
       <Button variant="ghost" size="sm" className="w-full gap-2 sm:w-auto" asChild>
@@ -123,6 +132,7 @@ const Resume = () => (
       {`@page { size: auto; margin: 0; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } html, body { height: auto; overflow: visible !important; }`}
     </style>
   </div>
-);
+  );
+};
 
 export default Resume;

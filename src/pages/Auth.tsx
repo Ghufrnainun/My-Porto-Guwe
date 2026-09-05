@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { Link } from "react-router-dom";
 
 const loginSchema = z.object({
@@ -20,6 +21,12 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Auth() {
+  usePageMeta({
+    title: 'Sign In | Ghufron Ainun Najib',
+    canonicalPath: '/auth',
+    noindex: true,
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, user, isAdmin, isLoading } = useAuth();
   const { toast } = useToast();
