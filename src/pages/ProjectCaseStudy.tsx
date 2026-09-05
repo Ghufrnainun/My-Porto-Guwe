@@ -2,8 +2,8 @@ import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 
-
 import { ProjectCover } from '@/components/ProjectCover';
+import { TechBadge } from '@/components/TechBadge';
 import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
 import NotFound from './NotFound';
 
@@ -139,12 +139,7 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
 
             <div className="mt-10 flex flex-wrap gap-2">
               {project.technologies.map((technology) => (
-                <span
-                  key={technology}
-                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 font-mono text-[10px] font-semibold text-muted-foreground"
-                >
-                  {technology}
-                </span>
+                <TechBadge key={technology} tech={technology} size="md" />
               ))}
             </div>
           </div>

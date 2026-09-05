@@ -1,9 +1,11 @@
-import { Github, ExternalLink, ArrowUpRight, LockKeyhole } from 'lucide-react';
+import { Github, ExternalLink, ArrowUpRight, LockKeyhole, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { PortfolioProject } from '@/data/featuredProjects';
 import { ProjectCover } from './ProjectCover';
+import { Cursor } from '@/components/core/cursor';
+import { TechBadge } from './TechBadge';
 
 interface ProjectCardProps {
   project: PortfolioProject;
@@ -111,14 +113,6 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
               }}
             />
 
-            {/* Ambient glow — radial-gradient */}
-            <div
-              className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{
-                background: `radial-gradient(circle, ${project.color || 'hsl(var(--primary))'}55 0%, ${project.color || 'hsl(var(--primary))'}18 55%, transparent 75%)`,
-              }}
-            />
-
             <div
               className={`flex flex-col md:flex-row gap-6 md:gap-10 items-stretch ${
                 isReversed ? 'md:flex-row-reverse' : ''
@@ -128,12 +122,32 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
               <div className="w-full md:w-[50%] flex-shrink-0 flex items-center justify-center">
                 <Link
                   to={`/projects/${project.slug}`}
-                  className="block bg-secondary/30 p-1.5 rounded-[1.5rem] border border-border/10 overflow-hidden w-full h-full"
+                  className="block bg-secondary/30 p-1.5 rounded-[1.5rem] border border-border/10 overflow-hidden w-full h-full cursor-none group/img"
                 >
                   <div className="aspect-[16/10] rounded-[calc(1.5rem-0.25rem)] overflow-hidden relative w-full h-full">
+                    <Cursor
+                      attachToParent
+                      variants={{
+                        initial: { scale: 0.2, opacity: 0 },
+                        animate: { scale: 1, opacity: 1 },
+                        exit: { scale: 0.2, opacity: 0 },
+                      }}
+                      springConfig={{
+                        damping: 24,
+                        stiffness: 320,
+                        mass: 0.4,
+                      }}
+                    >
+                      <div className="flex size-20 md:size-24 flex-col items-center justify-center rounded-full bg-[#D4FF00] text-black shadow-[0_12px_36px_rgba(212,255,0,0.35)] select-none">
+                        <ArrowUpRight className="size-4 md:size-5 stroke-[2.2] text-black mb-0.5" />
+                        <span className="text-[10px] md:text-[11px] font-sans font-semibold tracking-tight text-black text-center leading-none">
+                          View Details
+                        </span>
+                      </div>
+                    </Cursor>
                     <ProjectCover
                       project={project}
-                      className="size-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
+                      className="size-full object-cover transition-transform duration-700 ease-premium group-hover/img:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                   </div>
@@ -160,13 +174,8 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
                 <div>
                   {/* Tech Stack */}
                   <div className="flex flex-wrap gap-1.5 mb-6">
-                    {project.technologies.slice(0, 4).map((tech) => (
-                      <span
-                        key={tech}
-                        className="px-3 py-1 text-[9px] font-mono font-semibold text-muted-foreground bg-secondary/80 rounded-md border border-border/50"
-                      >
-                        {tech}
-                      </span>
+                    {project.technologies.map((tech) => (
+                      <TechBadge key={tech} tech={tech} />
                     ))}
                   </div>
 
