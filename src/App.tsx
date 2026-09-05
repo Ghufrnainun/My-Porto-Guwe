@@ -69,6 +69,13 @@ const AnimatedAppContent = () => {
                   <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/projects" element={<Projects />} />
+                  {/* Direct Layout Variant Routes */}
+                  <Route path="/1" element={<Navigate to="/projects?v=1" replace />} />
+                  <Route path="/2" element={<Navigate to="/projects?v=2" replace />} />
+                  <Route path="/3" element={<Navigate to="/projects?v=3" replace />} />
+                  <Route path="/projects/1" element={<Navigate to="/projects?v=1" replace />} />
+                  <Route path="/projects/2" element={<Navigate to="/projects?v=2" replace />} />
+                  <Route path="/projects/3" element={<Navigate to="/projects?v=3" replace />} />
                   <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogPost />} />

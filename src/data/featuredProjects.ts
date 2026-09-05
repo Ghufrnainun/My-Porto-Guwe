@@ -43,6 +43,7 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['TypeScript', 'Cloudflare Workers', 'D1', 'Hono'],
     color: '#fb923c',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1400&auto=format&fit=crop',
     repository: 'https://github.com/Ghufrnainun/tempe-mail',
     demo: 'https://temp.atminku.my.id',
   },
@@ -68,6 +69,7 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['Flutter', 'Next.js 16', 'TypeScript 5', 'Firebase', 'Midtrans'],
     color: '#14b8a6',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop',
     repository: 'https://github.com/sewainaja-pbl',
   },
   {
@@ -92,6 +94,7 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
     color: '#22d3c5',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1400&auto=format&fit=crop',
   },
   {
     title: 'IMPP Organization Website',

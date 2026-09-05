@@ -1,5 +1,6 @@
-import { Cpu, Server, ShieldCheck } from 'lucide-react';
-import type { PortfolioProject } from '@/data/projects';
+import { useState } from 'react';
+import type { PortfolioProject } from '@/data/featuredProjects';
+import { cn } from '@/lib/utils';
 
 export function ProjectCover({
   project,
@@ -8,94 +9,49 @@ export function ProjectCover({
   project: PortfolioProject;
   className?: string;
 }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   if (project.image) {
     return (
-      <img
-        src={project.image}
-        alt={`${project.title} preview`}
-        className={`size-full object-cover transition-transform duration-700 hover:scale-105 ${className}`}
-        loading="lazy"
-      />
+      <div className={cn('relative size-full overflow-hidden bg-neutral-900', className)}>
+        <img
+          src={project.image}
+          alt={`${project.title} project preview`}
+          className={cn(
+            'size-full object-cover object-top transition-all duration-700 ease-out will-change-transform',
+            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+          )}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+        />
+        {/* Subtle cinematic vignette */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+      </div>
     );
   }
 
-  // SYSTEM BLUEPRINT REDESIGN (No BorderTrail)
+  // Minimalist dark editorial fallback
   return (
     <div
       role="img"
-      aria-label={`${project.title} system architecture identity`}
-      className={`relative isolate overflow-hidden bg-card text-card-foreground select-none ${className}`}
+      aria-label={`${project.title} visual`}
+      className={cn(
+        'relative isolate flex size-full items-center justify-center overflow-hidden bg-neutral-950 text-foreground select-none',
+        className
+      )}
     >
-      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black opacity-80" />
       <div
-        className="absolute inset-0 opacity-15 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-          maskImage:
-            'radial-gradient(circle at center, black 20%, transparent 80%)',
-          WebkitMaskImage:
-            'radial-gradient(circle at center, black 20%, transparent 80%)',
-        }}
+        className="absolute -right-16 -top-16 size-64 rounded-full blur-3xl opacity-20"
+        style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
       />
-
-      {/* Main UI Layout */}
-      <div className="relative flex size-full flex-col p-6 md:p-8">
-        {/* Top Header */}
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1">
-            <Cpu className="size-3 text-primary" />
-            <span className="font-mono text-[9px] font-bold uppercase tracking-widest text-primary/80">
-              System Blueprint
-            </span>
-          </div>
-
-          <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-accent">
-            0{project.team.size} Modules
-          </div>
-        </div>
-
-        {/* Center Canvas */}
-        <div className="flex flex-1 items-center justify-center">
-          <div className="relative group/core">
-            {/* Core Node */}
-            <div className="relative z-10 flex size-20 items-center justify-center rounded-2xl border border-primary/20 bg-background/80 shadow-2xl backdrop-blur-sm transition-all duration-500 group-hover/core:border-primary/50 group-hover/core:shadow-primary/20 md:size-24">
-              <span className="font-serif text-3xl font-bold tracking-tighter text-foreground md:text-4xl">
-                {project.title.charAt(0)}
-                {project.title.split(' ')[1]?.[0] ||
-                  project.title.slice(1, 2).toLowerCase()}
-              </span>
-            </div>
-            
-            {/* Connection Node Indicator */}
-            <div className="absolute -right-2 -top-2 size-3 rounded-full bg-accent shadow-[0_0_12px_2px] shadow-accent/40" />
-          </div>
-        </div>
-
-        {/* Bottom Flow Footer */}
-        <div className="flex items-center justify-center gap-4 border-t border-border/30 pt-6">
-          <div className="flex items-center gap-1.5 opacity-60">
-            <Server className="size-3.5 text-primary" />
-            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-              Core App
-            </span>
-          </div>
-          <span className="text-border/40 font-mono text-[10px]">──</span>
-          <div className="flex items-center gap-1.5 opacity-60">
-            <Cpu className="size-3.5 text-accent" />
-            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-              Pipeline
-            </span>
-          </div>
-          <span className="text-border/40 font-mono text-[10px]">──</span>
-          <div className="flex items-center gap-1.5 opacity-60">
-            <ShieldCheck className="size-3.5 text-green-500" />
-            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-              Verified
-            </span>
-          </div>
-        </div>
+      <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center">
+        <span className="font-serif text-5xl md:text-6xl font-bold tracking-tight text-white/90">
+          {project.title.charAt(0)}
+        </span>
+        <span className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60">
+          {project.title}
+        </span>
       </div>
     </div>
   );
