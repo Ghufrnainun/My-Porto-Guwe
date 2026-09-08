@@ -8,8 +8,8 @@ interface TechBadgeProps {
   className?: string;
 }
 
-export function TechBadge({ tech, size = 'sm', showIcon = true, className = '' }: TechBadgeProps) {
-  const info = getTechInfo(tech);
+export function TechBadge({ tech = '', size = 'sm', showIcon = true, className = '' }: TechBadgeProps) {
+  const info = getTechInfo(tech || '');
 
   const renderIcon = () => {
     if (!showIcon) return null;

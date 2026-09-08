@@ -83,8 +83,27 @@
 
   <body>
     <div id="root">
-      <!-- Static fallback: gives crawlers & no-JS clients real content.
-           React replaces this entire node on mount (createRoot.render). -->
+      <!-- Minimal inline preloader: prevents flash of unstyled content before React mounts -->
+      <div style="position: fixed; inset: 0; z-index: 9999; background: #050505; display: flex; align-items: center; justify-content: center;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 1.25rem;">
+          <svg width="64" height="64" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation: preloaderPulse 1.6s ease-in-out infinite;">
+            <path d="M45 55C45 55 45 25 45 25C45 13.9543 36.0457 5 25 5C13.9543 5 5 13.9543 5 25C5 36.0457 13.9543 45 25 45H50" stroke="#d97736" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span style="color: #a3a3a3; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase;">
+            Loading
+          </span>
+        </div>
+        <style>
+          @keyframes preloaderPulse {
+            0%, 100% { opacity: 0.35; transform: scale(0.96); }
+            50% { opacity: 1; transform: scale(1.04); }
+          }
+        </style>
+      </div>
+    </div>
+
+    <!-- Static fallback for crawlers & no-JS clients (does not flash for normal JS visitors) -->
+    <noscript>
       <div style="font-family: system-ui, sans-serif; background: #050505; color: #e8e8e8; min-height: 100vh; padding: 4rem 1.5rem; max-width: 720px; margin: 0 auto;">
         <h1>Ghufron Ainun Najib</h1>
         <p><strong>Full-Stack Developer</strong> — I engineer full-stack web products. From robust backend architectures to the tactile interfaces that ship them.</p>
@@ -110,11 +129,9 @@
           <a href="https://github.com/Ghufrnainun" rel="noopener">GitHub</a> ·
           <a href="https://www.linkedin.com/in/ghufronainunnajib/" rel="noopener">LinkedIn</a>
         </p>
+        <p style="margin-top: 2rem; color: #888888; font-size: 0.875rem;">This portfolio is an interactive JavaScript application. Enable JavaScript for the full experience.</p>
       </div>
-      <noscript>
-        <p>This portfolio is a JavaScript application. The content above is a summary; enable JavaScript for the full interactive experience.</p>
-      </noscript>
-    </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

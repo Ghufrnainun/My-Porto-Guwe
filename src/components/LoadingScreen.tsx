@@ -26,7 +26,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
   }, [onLoadingComplete]);
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-background">
+    <motion.div
+      key="loading-screen"
+      role="status"
+      aria-live="polite"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.02 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed inset-0 z-[100] grid place-items-center bg-background pointer-events-auto"
+    >
       <div className="relative flex flex-col items-center justify-center">
         <motion.div
           initial={{ opacity: 1 }}
@@ -47,12 +55,12 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
             y: currentStep >= 1 && currentStep < 2 ? 0 : 10,
           }}
           transition={{ duration: 0.5 }}
-          className="absolute -bottom-12 text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase"
+          className="absolute -bottom-12 text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase font-mono"
         >
           Loading
         </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

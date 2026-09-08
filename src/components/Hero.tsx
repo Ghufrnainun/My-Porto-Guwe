@@ -2,11 +2,15 @@
 
 import { ArrowDown } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { HeroBackground } from './HeroBackground';
+import { HeroBackground, HeroBackgroundVariant } from './HeroBackground';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export function Hero() {
+type HeroProps = {
+  backgroundVariant?: HeroBackgroundVariant;
+};
+
+export function Hero({ backgroundVariant = 'current' }: HeroProps) {
   const shouldReduceMotion = useReducedMotion();
 
   const initialMotion = shouldReduceMotion
@@ -18,7 +22,7 @@ export function Hero() {
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-center items-center pt-24 pb-20 px-4 sm:px-6 overflow-hidden bg-transparent">
       {/* Animated dynamic background */}
-      <HeroBackground />
+      <HeroBackground variant={backgroundVariant} />
 
       {/* ── Main content (Centered Typography & Portrait) ──────────────── */}
       <div className="relative z-10 w-full flex flex-col items-center justify-center">
