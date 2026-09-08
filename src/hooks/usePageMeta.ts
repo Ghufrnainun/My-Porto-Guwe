@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 const SITE_URL = 'https://ghufronainun.tech';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
-const SITE_NAME = 'Ghufron Ainun Portfolio';
+const SITE_NAME = 'Ghufron Ainun Najib';
 
 export interface PageMeta {
   /** Page title (50-60 chars ideal) */
@@ -87,6 +87,10 @@ export function usePageMeta(meta: PageMeta) {
     if (description) upsertMeta('property', 'og:description', description);
     else removeMeta('property', 'og:description');
     upsertMeta('property', 'og:image', image);
+    upsertMeta('property', 'og:image:width', '1200');
+    upsertMeta('property', 'og:image:height', '630');
+    upsertMeta('property', 'og:image:type', 'image/png');
+    upsertMeta('property', 'og:image:alt', meta.title);
     upsertMeta('property', 'og:site_name', SITE_NAME);
 
     upsertMeta('name', 'twitter:card', 'summary_large_image');
@@ -95,6 +99,7 @@ export function usePageMeta(meta: PageMeta) {
     if (description) upsertMeta('name', 'twitter:description', description);
     else removeMeta('name', 'twitter:description');
     upsertMeta('name', 'twitter:image', image);
+    upsertMeta('name', 'twitter:image:alt', meta.title);
 
     if (meta.jsonLd) {
       upsertJsonLd(meta.jsonLd);

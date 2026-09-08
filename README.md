@@ -1,121 +1,169 @@
-# Ghufron Ainun Najib - Portfolio
+# Ghufron Ainun Najib — Portfolio
 
-<div align="center">
-  <img src="/public/favicon.svg" alt="Logo" width="80" height="80" />
-  
-  <h1>Artisan Web Experiences</h1>
-  
-  <p>
-    A premium personal portfolio website showcasing projects and skills with a <strong>Brutalist Editorial</strong> design system.
-    Built with modern web technologies and a focus on performance, accessibility, and smooth animations.
-  </p>
+> Full-stack developer. Web products, built end to end.
 
-  <p>
-    <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-    <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
-    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  </p>
-</div>
+**Live Website:** [ghufronainun.tech](https://ghufronainun.tech/)
 
-<br />
-
-![Portfolio Preview](/public/og-image.png)
-
-## 🎨 Design Philosophy
-
-This portfolio departs from standard card-based layouts, embracing an **Editorial Brutalist** aesthetic:
-
-- **Asymmetric Layouts**: Intentional grid breaks and whitespace usage.
-- **Typography First**: Strong contrast between Serif headings (_Playfair Display_) and Mono technical details (_JetBrains Mono_).
-- **Motion Design**: Fluid transitions powered by `framer-motion` and `locomotive-scroll` behaviors.
-
-## ✨ Key Features
-
-- **Smooth Scroll**: Custom lenis-like scrolling experience.
-- **CMS Integration**: Supabase-backed admin dashboard for managing blog posts.
-- **Dynamic Theming**: System-aware Dark/Light mode with comprehensive color token mapping.
-- **Responsive Navigation**: Mobile-first menu with backdrop blurs and gesture support.
-- **Security**: Row Level Security (RLS) enabled on database tables.
-
-## 🛠️ Tech Stack
-
-**Frontend**
-
-- **Core**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, Shadcn/UI (Radix Primitives)
-- **Animation**: Framer Motion
-- **Icons**: Lucide React
-
-**Backend**
-
-- **BaaS**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
-- **Storage**: Supabase Storage
-
-**Tooling**
-
-- **Linting**: ESLint, Prettier
-- **Git Hooks**: Husky (optional setup)
-
-## 🚀 Getting Started
-
-Follow these steps to run the project locally.
-
-### Prerequisites
-
-- Node.js 18+
-- npm or pnpm
-
-### Installation
-
-1.  **Clone the repository**
-
-    ```bash
-    git clone https://github.com/Ghufrnainun/My-Porto-Guwe.git
-    cd My-Porto-Guwe
-    ```
-
-2.  **Install dependencies**
-
-    ```bash
-    npm install
-    ```
-
-3.  **Environment Setup**
-    Create a `.env` file in the root directory:
-
-    ```env
-    VITE_SUPABASE_URL=your_project_url
-    VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
-    ```
-
-4.  **Run Development Server**
-    ```bash
-    npm run dev
-    ```
-    Open [http://localhost:8080](http://localhost:8080) to view it in the browser.
-
-## 📁 Project Structure
-
-```
-src/
-├── components/        # Reusable UI components
-│   ├── ui/           # Shadcn/Radix primitives
-│   └── ...           # Feature components (Hero, About, etc.)
-├── pages/            # Route pages (Index, Projects, etc.)
-├── hooks/            # Custom React hooks (useAuth, etc.)
-├── integrations/     # Supabase client & generated types
-└── index.css         # Global styles & Tailwind directives
-```
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+[![Portfolio Preview](public/og-image.png)](https://ghufronainun.tech/)
 
 ---
 
-<div align="center">
-  <p>Crafted with coffee by <a href="https://github.com/Ghufrnainun">Ghufron Ainun Najib</a></p>
-</div>
+## Overview
+
+This repository houses the personal portfolio, engineering case studies, and technical writing log of **Ghufron Ainun Najib**.
+
+The site departs from generic developer templates, adopting an **editorial minimalist** design language with typography-first hierarchy, refined surfaces, deliberate whitespace, and calibrated motion. Built with React 18, TypeScript, Vite, and Tailwind CSS.
+
+---
+
+## Highlights
+
+- **Editorial Design Language**: Asymmetric grid layouts, disciplined negative space, and curated typographic contrast between *Playfair Display* (serif), *Plus Jakarta Sans* (sans), *Space Grotesk* (display), and *JetBrains Mono* (monospace).
+- **Fluid Motion & Lenis Scroll**: Smooth transitions and scroll-driven revelations orchestrated with Framer Motion and Lenis scrolling.
+- **Calibrated Dual-Mode Theming**: Custom-mapped warm espresso dark mode (`#050505` / `hsl(20 10% 6%)`) and warm cream light mode (`hsl(30 20% 98%)`) with semantic HSL design tokens.
+- **Full SEO & Structured Data**: Per-route metadata with dynamic Open Graph, Twitter Cards, JSON-LD schemas (`Person` & `WebSite`), and a build-time sitemap generator.
+- **Full-Bleed Case Studies**: Dedicated project walk-throughs documenting architecture, technical constraints, team roles, and outcomes.
+- **Supabase Integration**: Type-safe client queries and database schemas with Row-Level Security (RLS) for the writing log and administrative management.
+
+---
+
+## Selected Projects
+
+### [TempeMail](https://github.com/Ghufrnainun/tempe-mail)
+*Solo Developer · 2026 · [Live Demo](https://temp.atminku.my.id)*
+- Disposable email service running entirely on the Cloudflare Workers edge.
+- Multi-domain auto-provisioning across 20+ live domains with zero server cost.
+- Features a REST API, HMAC-signed webhook delivery, D1 SQLite storage, and a native MCP server for AI agents.
+- **Stack**: TypeScript, Cloudflare Workers, Hono, Cloudflare D1.
+
+### [SewaInAja](https://github.com/sewainaja-pbl)
+*Full-Stack Developer (4-person team) · 2026*
+- Comprehensive rental platform connecting renters, owners, and administrators into a cohesive workflow.
+- Spans a customer-facing Flutter mobile application and a Next.js 16 administration and API surface.
+- Integrated Firebase services and Midtrans payment processing.
+- **Stack**: Flutter, Next.js 16, TypeScript 5, Firebase, Midtrans.
+
+### LSP Polines Certification Platform
+*Team Lead (5-person team) · 2025*
+- Certification management portal developed for Semarang State Polytechnic.
+- Led five engineers through system analysis, database design, and sprint delivery.
+- Designed authentication architecture and established repository branching strategies.
+- **Stack**: Laravel, Livewire, Tailwind CSS, MySQL.
+
+### [IMPP Organization Website](https://imppolines.my.id/)
+*Solo Developer · 2025*
+- Public website and custom content management system for Ikatan Mahasiswa Pemalang Polines.
+- Built independent administration interfaces for publishing activities, organizational structure, and photo galleries.
+- **Stack**: Laravel, Tailwind CSS, MySQL.
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, TypeScript 5, Vite 5 (SWC) |
+| **Styling & UI** | Tailwind CSS 3, Radix UI Primitives, Lucide Icons |
+| **Motion & Scroll** | Framer Motion 12, Lenis Scroll |
+| **Data & State** | Supabase JS (`@supabase/supabase-js`), TanStack Query 5 |
+| **Rich Text** | Tiptap Editor (`@tiptap/react`) |
+| **Asset & Build Tools** | Sharp, to-ico, Node.js Sitemap Generator |
+
+---
+
+## Project Structure
+
+```
+.
+├── public/                  # Static assets & metadata
+│   ├── favicon.svg          # Canonical adaptive vector brand favicon
+│   ├── favicon.ico          # Multi-resolution fallback icon (16/32/48)
+│   ├── apple-touch-icon.png # iOS home screen icon (180x180)
+│   ├── og-image.png         # Open Graph / Twitter share hero (1200x630)
+│   ├── robots.txt           # Crawler indexing policy
+│   ├── sitemap.xml          # Generated XML sitemap
+│   └── _redirects           # SPA routing fallback for edge hosts
+├── scripts/
+│   ├── build-brand-assets.mjs # High-DPI brand asset & OG image generator
+│   └── generate-sitemap.mjs   # Route-discovery sitemap generator
+├── src/
+│   ├── components/          # Reusable UI & section components
+│   │   ├── layouts/         # Page layout wrappers
+│   │   └── ui/              # Primitive components & design tokens
+│   ├── data/                # Static data layers (projects, profile)
+│   ├── hooks/               # Custom hooks (SEO, auth, theme)
+│   ├── integrations/        # Third-party integrations (Supabase)
+│   ├── lib/                 # Utility functions & helpers
+│   ├── pages/               # Route components
+│   ├── App.tsx              # Root component & route definitions
+│   └── main.tsx             # Application mount point
+├── supabase/                # Database migrations & storage policies
+├── index.html               # Semantic HTML shell, preloader & meta tags
+├── tailwind.config.ts       # Tailwind CSS theme extension
+└── tsconfig.json            # TypeScript strict configuration
+```
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- **Node.js**: `18.x` or higher (tested with Node 20 and 24)
+- **Package Manager**: `npm`
+
+### Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Ghufrnainun/My-Porto-Guwe.git
+   cd My-Porto-Guwe
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+   ```
+
+4. **Start the local development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+### Available Scripts
+
+| Command | Action |
+|---|---|
+| `npm run dev` | Starts Vite dev server with Hot Module Replacement |
+| `npm run build` | Generates sitemap, runs `tsc` type check, and compiles to `dist/` |
+| `npm run preview` | Serves the local production build for testing |
+| `npm run lint` | Runs ESLint across all TypeScript and React files |
+
+---
+
+## Deployment
+
+The project compiles to static assets in `dist/`. SPA routing rewrites are configured in `public/_redirects` for Cloudflare Pages, Netlify, or Vercel.
+
+Production builds automatically run the sitemap generator before compilation:
+```bash
+npm run build
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+© 2026 [Ghufron Ainun Najib](https://github.com/Ghufrnainun). All rights reserved.

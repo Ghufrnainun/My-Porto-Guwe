@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand & Social Assets Preview — Ghufron Ainun Najib</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070707;
+      --card-bg: #121110;
+      --card-border: #22201e;
+      --text: #f3efe6;
+      --text-muted: #8c887e;
+      --accent: #d97736;
+      --accent-hover: #f08a46;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 2.5rem 1.5rem 5rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 2rem;
+      margin-bottom: 3rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1.5rem;
+    }
+
+    .brand-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .brand-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .header-links {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #181715;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #fff;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 2.5rem 0 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-left: 3px solid var(--accent);
+      padding-left: 0.75rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+      flex: 1;
+    }
+
+    /* OG Card Simulation (Twitter / X Large Summary) */
+    .x-card {
+      border: 1px solid #2f3336;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      transition: border-color 0.2s;
+      max-width: 600px;
+    }
+
+    .x-card:hover {
+      border-color: #536471;
+    }
+
+    .x-card-img-wrap {
+      width: 100%;
+      aspect-ratio: 1200 / 630;
+      overflow: hidden;
+      background: #111;
+      display: block;
+    }
+
+    .x-card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .x-card-content {
+      padding: 12px 16px;
+      border-top: 1px solid #2f3336;
+      background: #000;
+    }
+
+    .x-domain {
+      font-size: 13px;
+      color: #71767b;
+      line-height: 16px;
+    }
+
+    .x-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e7e9ea;
+      margin-top: 2px;
+      line-height: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .x-desc {
+      font-size: 14px;
+      color: #71767b;
+      margin-top: 4px;
+      line-height: 18px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Browser Tab Preview */
+    .browser-window {
+      background: #1e1e1e;
+      border-radius: 10px;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+
+    .browser-tabs {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 0;
+      background: #161616;
+      border-bottom: 1px solid #2a2a2a;
+      gap: 6px;
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+      margin-right: 10px;
+    }
+
+    .browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+    }
+
+    .browser-dot.red { background: #ff5f56; }
+    .browser-dot.yellow { background: #ffbd2e; }
+    .browser-dot.green { background: #27c93f; }
+
+    .browser-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #252525;
+      padding: 6px 14px;
+      border-radius: 6px 6px 0 0;
+      font-size: 12px;
+      color: #e0e0e0;
+      border-top: 1px solid #3a3a3a;
+      border-left: 1px solid #3a3a3a;
+      border-right: 1px solid #3a3a3a;
+      max-width: 240px;
+    }
+
+    .browser-tab img {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .browser-tab-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .browser-body {
+      padding: 2rem;
+      background: #0a0908;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+
+    /* iOS Icon Frame */
+    .ios-icon-frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ios-icon {
+      width: 90px;
+      height: 90px;
+      border-radius: 22%;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 2px 4px rgba(255,255,255,0.05) inset;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #0a0908;
+    }
+
+    .ios-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ios-label {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    /* Logo Stage (Dark & Light) */
+    .logo-stage {
+      border-radius: 0.75rem;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      position: relative;
+    }
+
+    .logo-stage.dark {
+      background: #050505;
+      border: 1px solid #1c1a18;
+    }
+
+    .logo-stage.light {
+      background: #f8f6f0;
+      border: 1px solid #ded9ce;
+    }
+
+    .logo-stage img,
+    .logo-stage svg {
+      width: 110px;
+      height: auto;
+      max-height: 90px;
+    }
+
+    /* Code Snippet */
+    pre {
+      background: #0c0b0a;
+      border: 1px solid #1c1a18;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #c9c5bd;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      background: #151413;
+    }
+
+    td code {
+      font-family: var(--font-mono);
+      color: var(--accent);
+      background: #1d1b19;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(39, 201, 63, 0.15);
+      color: #27c93f;
+      border: 1px solid rgba(39, 201, 63, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand-title">Brand & Social Showcase</div>
+        <div class="brand-subtitle">Ghufron Ainun Najib — External Identity System</div>
+      </div>
+      <div class="header-links">
+        <a href="/" class="btn">Back to Portfolio</a>
+        <a href="/og-image.png" target="_blank" class="btn btn-primary">Open OG Image</a>
+      </div>
+    </header>
+
+    <!-- SECTION 1: SOCIAL SHARING CARDS -->
+    <h2>01. Open Graph & Social Card (1200 × 630)</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span>TWITTER / X & DISCORD PREVIEW</span>
+          <span class="badge">1200 × 630 PNG</span>
+        </div>
+        <div class="card-body" style="display: flex; justify-content: center; align-items: center;">
+          <div class="x-card">
+            <a href="/og-image.png" target="_blank" class="x-card-img-wrap">
+              <img src="/og-image.png" alt="Open Graph Card Preview" />
+            </a>
+            <div class="x-card-content">
+              <div class="x-domain">ghufronainun.tech</div>
+              <div class="x-title">Ghufron Ainun Najib | Full-Stack Developer Portfolio</div>
+              <div class="x-desc">Full-stack developer building things for the web. Web products, built end to end.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>SPECS & ACTIVE HEAD METADATA</span>
+          <span>HTML5</span>
+        </div>
+        <div class="card-body">
+          <pre><code>&lt;!-- Primary Meta Tags --&gt;
+&lt;meta name="title" content="Ghufron Ainun Najib | Full-Stack Developer Portfolio" /&gt;
+&lt;meta name="description" content="Full-stack developer building things for the web. Web products, built end to end." /&gt;
+
+&lt;!-- Open Graph / Facebook --&gt;
+&lt;meta property="og:type" content="website" /&gt;
+&lt;meta property="og:url" content="https://ghufronainun.tech/" /&gt;
+&lt;meta property="og:image" content="https://ghufronainun.tech/og-image.png" /&gt;
+&lt;meta property="og:image:width" content="1200" /&gt;
+&lt;meta property="og:image:height" content="630" /&gt;
+&lt;meta property="og:image:type" content="image/png" /&gt;
+
+&lt;!-- Twitter / X Card --&gt;
+&lt;meta name="twitter:card" content="summary_large_image" /&gt;
+&lt;meta name="twitter:image" content="https://ghufronainun.tech/og-image.png" /&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: BRAND LOGO MONOGRAM -->
+    <h2>02. Canonical Outline Monogram (GN Tube Mark)</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span>DARK MODE BACKDROP</span>
+          <a href="/brand-logo.svg" target="_blank" class="btn" style="padding: 0.2rem 0.6rem; font-size: 0.7rem;">SVG File</a>
+        </div>
+        <div class="card-body">
+          <div class="logo-stage dark">
+            <img src="/brand-logo.svg" alt="Ghufron GN Monogram Dark" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>LIGHT MODE BACKDROP</span>
+          <span style="font-size: 0.7rem; color: var(--accent);">#D97736 TERRCOTTA</span>
+        </div>
+        <div class="card-body">
+          <div class="logo-stage light">
+            <img src="/brand-logo.svg" alt="Ghufron GN Monogram Light" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: FAVICONS & ICONS -->
+    <h2>03. Browser Tab & App Icon Verification</h2>
+    <div class="grid-3">
+      <!-- Browser Tab -->
+      <div class="card">
+        <div class="card-header">
+          <span>BROWSER TAB SIMULATION</span>
+          <span>16 × 16</span>
+        </div>
+        <div class="card-body">
+          <div class="browser-window">
+            <div class="browser-tabs">
+              <div class="browser-dots">
+                <div class="browser-dot red"></div>
+                <div class="browser-dot yellow"></div>
+                <div class="browser-dot green"></div>
+              </div>
+              <div class="browser-tab">
+                <img src="/favicon.svg" alt="Favicon" />
+                <span class="browser-tab-title">Ghufron Ainun Najib | Full-Stack</span>
+              </div>
+            </div>
+            <div class="browser-body">
+              <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #666;">ghufronainun.tech</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apple Touch Icon -->
+      <div class="card">
+        <div class="card-header">
+          <span>APPLE TOUCH ICON</span>
+          <span>180 × 180 PNG</span>
+        </div>
+        <div class="card-body" style="display: flex; justify-content: center; align-items: center;">
+          <div class="ios-icon-frame">
+            <div class="ios-icon">
+              <img src="/apple-touch-icon.png" alt="Apple Touch Icon" />
+            </div>
+            <div class="ios-label">Ghufron.tech</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Res Favicon ICO -->
+      <div class="card">
+        <div class="card-header">
+          <span>FAVICON.ICO (MULTI-RES)</span>
+          <span>16 / 32 / 48 ICO</span>
+        </div>
+        <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+          <div style="display: flex; align-items: flex-end; gap: 1.5rem;">
+            <div style="text-align: center;">
+              <img src="/favicon.ico" style="width: 16px; height: 16px; display: block; margin: 0 auto 6px;" alt="16x16" />
+              <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">16px</span>
+            </div>
+            <div style="text-align: center;">
+              <img src="/favicon.ico" style="width: 32px; height: 32px; display: block; margin: 0 auto 6px;" alt="32x32" />
+              <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">32px</span>
+            </div>
+            <div style="text-align: center;">
+              <img src="/favicon.ico" style="width: 48px; height: 48px; display: block; margin: 0 auto 6px;" alt="48x48" />
+              <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">48px</span>
+            </div>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">True binary .ico format</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: FILE INVENTORY -->
+    <h2>04. Production Asset Inventory</h2>
+    <div class="card">
+      <div class="card-body" style="padding: 0;">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Dimensions</th>
+              <th>Format</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/public/og-image.png</code></td>
+              <td>1200 × 630 px</td>
+              <td>True PNG</td>
+              <td>Twitter / X large summary card, Open Graph social share</td>
+            </tr>
+            <tr>
+              <td><code>/public/brand-logo.svg</code></td>
+              <td>2243 × 1811 (viewBox)</td>
+              <td>Vector SVG</td>
+              <td>Primary transparent GN outline tube monogram</td>
+            </tr>
+            <tr>
+              <td><code>/public/favicon.svg</code></td>
+              <td>2560 × 2560 (viewBox)</td>
+              <td>Vector SVG</td>
+              <td>Adaptive favicon (light mode terracotta / dark mode peach)</td>
+            </tr>
+            <tr>
+              <td><code>/public/apple-touch-icon.png</code></td>
+              <td>180 × 180 px</td>
+              <td>True PNG</td>
+              <td>iOS home screen bookmark on dark matte background</td>
+            </tr>
+            <tr>
+              <td><code>/public/favicon.ico</code></td>
+              <td>16 / 32 / 48 px</td>
+              <td>Multi-res ICO</td>
+              <td>Universal browser fallback icon</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
