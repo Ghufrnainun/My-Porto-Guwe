@@ -14,9 +14,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { CinematicFooter } from '@/components/ui/motion-footer';
-import LoadingScreen from '@/components/LoadingScreen';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { AppPreloader } from '@/components/AppPreloader';
 
@@ -113,7 +112,6 @@ const AnimatedAppContent = () => {
 };
 
 const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
   useDelight();
   useAnalytics();
 
@@ -122,14 +120,6 @@ const App = () => {
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <AuthProvider>
           <TooltipProvider>
-            <AnimatePresence mode="wait">
-              {isLoading && (
-                <LoadingScreen
-                  key="loading-screen"
-                  onLoadingComplete={() => setIsLoading(false)}
-                />
-              )}
-            </AnimatePresence>
             <InteractiveBackground />
             <div className="noise-overlay" />
             <Toaster />
