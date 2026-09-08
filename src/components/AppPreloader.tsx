@@ -48,7 +48,7 @@ export function AppPreloader({ children }: AppPreloaderProps) {
               <div className="rounded-[calc(2rem-0.5rem)] bg-foreground/[0.03] px-6 py-7 shadow-[inset_0_1px_1px_hsl(var(--foreground)/0.1)]">
                 <div className="flex items-center justify-between gap-6 font-mono text-[10px] uppercase tracking-[0.24em] text-foreground/45">
                   <span>portfolio boot</span>
-                  <span>01.35s</span>
+                  <span className="tabular-nums">01.35s</span>
                 </div>
 
                 <div className="mt-8 grid grid-cols-4 gap-2" aria-hidden="true">

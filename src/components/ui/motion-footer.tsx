@@ -262,7 +262,7 @@ export function CinematicFooter() {
                   onClick={() => setIsContactModalOpen(true)}
                   aria-label="Open contact form modal"
                   title="Start a Project"
-                  className="footer-glass-pill px-10 py-5 rounded-full text-foreground font-bold text-sm md:text-base flex items-center gap-3 group outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="footer-glass-pill px-10 py-5 min-h-[48px] rounded-full text-foreground font-bold text-sm md:text-base flex items-center gap-3 group outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] transition-transform"
                 >
                   <svg
                     className="w-6 h-6 text-muted-foreground group-hover:text-foreground transition-colors"
@@ -291,7 +291,7 @@ export function CinematicFooter() {
                   rel="noopener noreferrer"
                   aria-label="Visit Ghufron's LinkedIn Profile"
                   title="Visit Ghufron's LinkedIn Profile"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="footer-glass-pill px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] transition-transform"
                 >
                   LinkedIn
                 </MagneticButton>
@@ -302,7 +302,7 @@ export function CinematicFooter() {
                   rel="noopener noreferrer"
                   aria-label="Visit Ghufron's GitHub Profile"
                   title="Visit Ghufron's GitHub Profile"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="footer-glass-pill px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] transition-transform"
                 >
                   GitHub
                 </MagneticButton>
@@ -312,7 +312,7 @@ export function CinematicFooter() {
                   onClick={handleCopyEmail}
                   aria-label="Send an email to Ghufron"
                   title="Send an email to Ghufron"
-                  className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="footer-glass-pill px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] transition-transform"
                 >
                   Email
                 </MagneticButton>

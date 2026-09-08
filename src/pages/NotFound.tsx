@@ -39,7 +39,7 @@ const NotFound = () => {
         <div className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
           <Link
             to="/"
-            className="glass-pill-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+            className="glass-pill-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold outline-none transition-transform hover:scale-105 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
           >
             <Home className="size-4" aria-hidden="true" />
             Back to Overview
@@ -47,7 +47,7 @@ const NotFound = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="glass-pill inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+            className="glass-pill inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-bold text-muted-foreground outline-none hover:text-foreground active:scale-[0.96] transition-transform focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Go Back

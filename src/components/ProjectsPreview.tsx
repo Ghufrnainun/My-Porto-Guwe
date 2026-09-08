@@ -17,7 +17,8 @@ export function ProjectsPreview() {
 
           <Link
             to="/projects"
-            className="group inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground transition-colors duration-300 hover:text-primary"
+            className="group inline-flex min-h-[44px] items-center gap-2 px-3 -mr-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground transition-all duration-300 hover:text-primary active:scale-[0.96]"
+            aria-label="View all projects"
           >
             View all
             <ArrowRight

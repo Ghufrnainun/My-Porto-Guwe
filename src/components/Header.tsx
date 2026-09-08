@@ -7,6 +7,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -95,7 +96,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             to="/resume"
-            className="glass-pill text-foreground text-xs font-semibold px-4 py-2 rounded-full transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="glass-pill text-foreground text-xs font-semibold px-4 py-2 min-h-[36px] inline-flex items-center justify-center rounded-full transition-all hover:scale-105 active:scale-[0.96] outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Resume
           </Link>
@@ -133,6 +134,7 @@ export function Header() {
           <div className="flex min-h-full flex-col">
             <SheetHeader className="border-b border-border/50 p-6 pr-16 text-left">
               <SheetTitle className="font-bold text-lg tracking-tight">Ghufron A.N.</SheetTitle>
+              <SheetDescription className="sr-only">Mobile navigation menu</SheetDescription>
             </SheetHeader>
 
             <nav aria-label="Mobile navigation" className="flex flex-1 flex-col items-center justify-center gap-6 py-8 sm:gap-8">
@@ -145,7 +147,7 @@ export function Header() {
                       <Link
                         to={link.href}
                         aria-current={isActive ? 'page' : undefined}
-                        className={`text-4xl font-bold tracking-tight transition-colors text-center ${
+                        className={`text-4xl font-bold tracking-tight transition-colors text-center inline-flex items-center justify-center min-h-[48px] py-1 px-4 ${
                           isActive ? 'text-primary' : 'text-foreground hover:text-primary'
                         }`}
                       >
