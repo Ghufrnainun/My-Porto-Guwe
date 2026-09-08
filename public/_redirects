@@ -1,1 +1,6 @@
+# Canonical www to apex redirect
+https://www.ghufronainun.tech/*  https://ghufronainun.tech/:splat  301!
+http://www.ghufronainun.tech/*   https://ghufronainun.tech/:splat  301!
+
+# Single Page Application fallback
 /*    /index.html   200
