@@ -13,7 +13,8 @@ import { Header } from '@/components/Header';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
-import React, { lazy, Suspense } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { CinematicFooter } from '@/components/ui/motion-footer';
 import { AppPreloader } from '@/components/AppPreloader';
 
@@ -35,6 +36,17 @@ const queryClient = new QueryClient();
 const AnimatedAppContent = () => {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
+
+  // SPA route change → send GA4 page_view (gtag doesn't auto-track client routing)
+  useEffect(() => {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'page_view', {
+        page_path: location.pathname,
+        page_title: document.title,
+        page_location: window.location.href,
+      });
+    }
+  }, [location.pathname]);
 
   return (
     // NOTE: overflow-x-hidden is on this wrapper (not on <main>)
@@ -92,6 +104,7 @@ const AnimatedAppContent = () => {
 
 const App = () => {
   useDelight();
+  useAnalytics();
 
   return (
     <QueryClientProvider client={queryClient}>

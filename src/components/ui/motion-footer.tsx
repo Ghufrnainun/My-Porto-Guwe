@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from '@/lib/utils';
-import { MessageCircle } from 'lucide-react';
 import { ContactModal } from '@/components/ContactModal';
 import { toast } from 'sonner';
 
@@ -116,8 +116,10 @@ export function CinematicFooter() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const giantTextRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const subHeadingRef = useRef<HTMLParagraphElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -125,45 +127,61 @@ export function CinematicFooter() {
 
     // React strict mode compatible GSAP context cleanup
     const ctx = gsap.context(() => {
-      // Background Parallax
-      gsap.fromTo(
-        giantTextRef.current,
-        { y: '10vh', scale: 0.8, opacity: 0 },
-        {
-          y: '0vh',
-          scale: 1,
-          opacity: 1,
-          ease: 'power1.out',
-          scrollTrigger: {
-            trigger: wrapperRef.current,
-            start: 'top 80%',
-            end: 'bottom bottom',
-            scrub: 1,
+      // Background Parallax: smooth vertical translate with scroll
+      if (giantTextRef.current) {
+        gsap.fromTo(
+          giantTextRef.current,
+          { y: '8vh' },
+          {
+            y: '0vh',
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrapperRef.current,
+              start: 'top bottom',
+              end: 'bottom bottom',
+              scrub: true,
+            },
           },
-        },
-      );
+        );
+      }
 
-      // Staggered Content Reveal
-      gsap.fromTo(
-        [headingRef.current, linksRef.current],
-        { y: 50, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.15,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: wrapperRef.current,
-            start: 'top 40%',
-            end: 'bottom bottom',
-            scrub: 1,
+      // Main Content Reveal: triggers once when footer enters viewport (top 95%)
+      const elementsToAnimate = [
+        headingRef.current,
+        subHeadingRef.current,
+        linksRef.current,
+      ].filter(Boolean);
+
+      if (elementsToAnimate.length > 0) {
+        gsap.fromTo(
+          elementsToAnimate,
+          { y: 24, opacity: 0.2 },
+          {
+            y: 0,
+            opacity: 1,
+            stagger: 0.1,
+            duration: 0.7,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: wrapperRef.current,
+              start: 'top 95%',
+              toggleActions: 'play none none none',
+            },
           },
-        },
-      );
+        );
+      }
     }, wrapperRef);
 
-    return () => ctx.revert();
-  }, []);
+    // Refresh ScrollTrigger after route transition and layout shifts
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      ctx.revert();
+    };
+  }, [location.pathname]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -171,7 +189,7 @@ export function CinematicFooter() {
 
   const handleCopyEmail = (e: React.MouseEvent) => {
     e.preventDefault();
-    const email = 'ghufronainunnajib@gmail.com';
+    const email = 'ghufrnainunajib@gmail.com';
     navigator.clipboard.writeText(email);
     toast.success('Email copied to clipboard! ✦', {
       description: email,
@@ -223,7 +241,10 @@ export function CinematicFooter() {
             >
               Let's work together
             </h2>
-            <p className="text-muted-foreground text-center max-w-md mb-12 text-sm md:text-base">
+            <p
+              ref={subHeadingRef}
+              className="text-muted-foreground text-center max-w-md mb-12 text-sm md:text-base"
+            >
               Have a role or project in mind?
               <br />
               Tell me what you're building or where I could help.
@@ -265,7 +286,7 @@ export function CinematicFooter() {
               <div className="flex flex-wrap justify-center gap-3 md:gap-6 w-full mt-2">
                 <MagneticButton
                   as="a"
-                  href="https://linkedin.com/in/ghufronainun"
+                  href="https://www.linkedin.com/in/ghufronainunnajib/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Visit Ghufron's LinkedIn Profile"
@@ -276,7 +297,7 @@ export function CinematicFooter() {
                 </MagneticButton>
                 <MagneticButton
                   as="a"
-                  href="https://github.com/ghufronainun"
+                  href="https://github.com/Ghufrnainun"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Visit Ghufron's GitHub Profile"
@@ -287,7 +308,7 @@ export function CinematicFooter() {
                 </MagneticButton>
                 <MagneticButton
                   as="a"
-                  href="mailto:ghufronainunnajib@gmail.com"
+                  href="mailto:ghufrnainunajib@gmail.com"
                   onClick={handleCopyEmail}
                   aria-label="Send an email to Ghufron"
                   title="Send an email to Ghufron"

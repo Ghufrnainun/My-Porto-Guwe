@@ -22,6 +22,31 @@ export interface PortfolioProject {
 
 export const featuredProjects: PortfolioProject[] = [
   {
+    title: 'TempeMail',
+    slug: 'tempe-mail',
+    summary:
+      'Disposable email service that runs entirely on Cloudflare Workers. Multi-domain, no VPS, no SMTP server, with a REST API, webhooks, and an MCP server for AI agents.',
+    year: '2026',
+    role: 'Solo Developer',
+    team: { size: 1, label: 'Solo project' },
+    visibility: 'public',
+    problem:
+      'Temp mail services are usually slow, single-domain, or closed-source. I wanted one that is self-hosted, multi-domain, and costs nothing to run.',
+    contributions: [
+      'Built the worker, email ingestion, and auto-provisioning for 20+ domains.',
+      'Designed the REST API, HMAC-signed webhook delivery, and MCP server.',
+      'Shipped a dark-theme vanilla JS frontend with inbox search and API key management.',
+    ],
+    outcomes: [
+      'Runs on the Cloudflare edge with zero server cost.',
+      '110 tests passing across 20+ live domains.',
+    ],
+    technologies: ['TypeScript', 'Cloudflare Workers', 'D1', 'Hono'],
+    color: '#fb923c',
+    repository: 'https://github.com/Ghufrnainun/tempe-mail',
+    demo: 'https://temp.atminku.my.id',
+  },
+  {
     title: 'SewaInAja',
     slug: 'sewainaja',
     summary:

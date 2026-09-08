@@ -2,10 +2,11 @@ import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useParams } from 'react-router-dom';
 
-
 import { ProjectCover } from '@/components/ProjectCover';
+import { TechBadge } from '@/components/TechBadge';
 import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
 import NotFound from './NotFound';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -139,12 +140,7 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
 
             <div className="mt-10 flex flex-wrap gap-2">
               {project.technologies.map((technology) => (
-                <span
-                  key={technology}
-                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 font-mono text-[10px] font-semibold text-muted-foreground"
-                >
-                  {technology}
-                </span>
+                <TechBadge key={technology} tech={technology} size="md" />
               ))}
             </div>
           </div>
@@ -200,6 +196,30 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
 export default function ProjectCaseStudy() {
   const { slug = '' } = useParams();
   const project = getPortfolioProject(slug);
+
+  usePageMeta({
+    title: project
+      ? `${project.title} | Ghufron Ainun Najib`
+      : 'Project | Ghufron Ainun Najib',
+    description: project?.summary ?? 'Case study from the portfolio of Ghufron Ainun Najib.',
+    canonicalPath: project ? `/projects/${project.slug}` : '/projects',
+    ogImage: project?.image ?? undefined,
+    jsonLd: project
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'CreativeWork',
+          name: project.title,
+          description: project.summary,
+          url: `https://ghufronainun.tech/projects/${project.slug}`,
+          image: project.image ?? undefined,
+          author: {
+            '@type': 'Person',
+            name: 'Ghufron Ainun Najib',
+            url: 'https://ghufronainun.tech',
+          },
+        }
+      : undefined,
+  });
 
   return project ? <CaseStudy project={project} /> : <NotFound />;
 }

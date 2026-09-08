@@ -63,10 +63,9 @@ export function About() {
                 <span className="text-foreground">
                   team leadership, independent delivery, and full-stack collaboration
                 </span>
-                . I led a five-person team for the LSP Polines certification
-                platform, built the IMPP public website and CMS independently,
-                and contributed to the SewaInAja rental platform across its
-                Flutter and Next.js surfaces.
+                . I've led teams and shipped solo: a certification platform,
+                an organization website with a CMS, and a rental marketplace
+                across Flutter and Next.js.
               </p>
 
               <p>

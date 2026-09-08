@@ -76,10 +76,10 @@ export function AboutPreview() {
               </h2>
               <div className="prose prose-lg text-muted-foreground/90 leading-relaxed font-sans max-w-2xl text-wrap-pretty">
                 <p className="mb-6 text-base md:text-lg">
-                  I build full-stack applications from Semarang, Indonesia. I refuse to settle for defaults&mdash;focusing instead on the micro-interactions and performance details that make software feel physical, tactile, and instantly responsive.
+                  I build full-stack applications from Semarang, Indonesia. The details matter to me: the extra 100ms of latency, the button that does not quite line up, the API route that returns the wrong shape. I chase those until they feel right.
                 </p>
                 <p className="text-base md:text-lg">
-                  Currently leading a 5-person team to ship the official certification platform for my polytechnic. I write pragmatic code&mdash;prioritizing maintainable architecture over chasing the latest trends.
+                  I've shipped projects solo and in teams: a certification platform, an org website with a CMS, a rental marketplace. Right now I'm building TempeMail, a disposable email service on Cloudflare Workers, and I start my internship in September.
                 </p>
               </div>
             </motion.div>

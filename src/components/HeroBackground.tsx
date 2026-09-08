@@ -60,6 +60,7 @@ function CurrentAurora({ reduceMotion }: { reduceMotion: boolean }) {
           left: '-10%',
           top: '-20%',
           background: 'radial-gradient(circle, hsl(var(--primary) / 0.6) 0%, hsl(var(--primary) / 0.15) 45%, transparent 70%)',
+          willChange: 'transform',
           animation: reduceMotion ? 'none' : 'aurora-1 14s ease-in-out infinite alternate',
         }}
       />
@@ -71,6 +72,7 @@ function CurrentAurora({ reduceMotion }: { reduceMotion: boolean }) {
           right: '-10%',
           bottom: '-15%',
           background: 'radial-gradient(circle, hsl(var(--accent) / 0.55) 0%, hsl(var(--accent) / 0.15) 45%, transparent 70%)',
+          willChange: 'transform',
           animation: reduceMotion ? 'none' : 'aurora-2 16s ease-in-out infinite alternate',
         }}
       />
@@ -82,6 +84,7 @@ function CurrentAurora({ reduceMotion }: { reduceMotion: boolean }) {
           left: '25%',
           top: '15%',
           background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, hsl(var(--accent) / 0.1) 45%, transparent 70%)',
+          willChange: 'transform',
           animation: reduceMotion ? 'none' : 'aurora-3 12s ease-in-out infinite alternate',
         }}
       />

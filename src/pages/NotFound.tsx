@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { ArrowLeft, Home } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { HeroBackground } from '@/components/HeroBackground';
 
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  usePageMeta({ title: '404 Not Found | Ghufron Ainun Najib', noindex: true });
 
   useEffect(() => {
     console.error('404 Error: User attempted to access non-existent route:', location.pathname);

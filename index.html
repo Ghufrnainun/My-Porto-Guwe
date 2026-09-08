@@ -19,10 +19,6 @@
       content="I engineer full-stack web products. From robust backend architectures to the tactile interfaces that ship them."
     />
     <meta name="author" content="Ghufron Ainun Najib" />
-    <meta
-      name="keywords"
-      content="Ghufron Ainun, Full-Stack Developer, Next.js Developer, TypeScript, React Developer, Web Developer Indonesia, Portfolio, Software Engineer"
-    />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://ghufronainun.tech/" />
 
@@ -86,7 +82,39 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static fallback: gives crawlers & no-JS clients real content.
+           React replaces this entire node on mount (createRoot.render). -->
+      <div style="font-family: system-ui, sans-serif; background: #050505; color: #e8e8e8; min-height: 100vh; padding: 4rem 1.5rem; max-width: 720px; margin: 0 auto;">
+        <h1>Ghufron Ainun Najib</h1>
+        <p><strong>Full-Stack Developer</strong> — I engineer full-stack web products. From robust backend architectures to the tactile interfaces that ship them.</p>
+        <nav aria-label="Main">
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/projects">Projects</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/resume">Resume</a></li>
+          </ul>
+        </nav>
+        <h2>Featured Projects</h2>
+        <ul>
+          <li><a href="/projects/tempe-mail">TempeMail — disposable email service</a></li>
+          <li><a href="/projects/sewainaja">SewaInAja — rental marketplace platform</a></li>
+          <li><a href="/projects/lsp-polines">LSP Polines — certification system</a></li>
+          <li><a href="/projects/impp-website">IMPP Website</a></li>
+        </ul>
+        <h2>Contact</h2>
+        <p>
+          <a href="mailto:ghufrnainunajib@gmail.com">ghufrnainunajib@gmail.com</a> ·
+          <a href="https://github.com/Ghufrnainun" rel="noopener">GitHub</a> ·
+          <a href="https://www.linkedin.com/in/ghufronainunnajib/" rel="noopener">LinkedIn</a>
+        </p>
+      </div>
+      <noscript>
+        <p>This portfolio is a JavaScript application. The content above is a summary; enable JavaScript for the full interactive experience.</p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -39,6 +39,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import RichTextEditor from '@/components/RichTextEditor';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const postSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -56,6 +57,8 @@ const postSchema = z.object({
 type PostFormValues = z.infer<typeof postSchema>;
 
 export default function PostEditor() {
+  usePageMeta({ title: 'Post Editor | Ghufron Ainun Najib', noindex: true });
+
   const { id } = useParams<{ id: string }>();
   const isNew = id === 'new';
   const navigate = useNavigate();

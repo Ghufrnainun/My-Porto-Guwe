@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ReactNode, useEffect, useState } from 'react';
 
 type AppPreloaderProps = {
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 const easeOutQuint = [0.22, 1, 0.36, 1] as const;
@@ -14,7 +14,7 @@ export function AppPreloader({ children }: AppPreloaderProps) {
 
   useEffect(() => {
     // ponytail: visual-only preload; upgrade to asset/font readiness when measurable load bottleneck exists.
-    const delay = shouldReduceMotion ? 180 : 1350;
+    const delay = shouldReduceMotion ? 180 : 2500;
     const timer = window.setTimeout(() => {
       setIsReady(true);
       setShowPreloader(false);
@@ -29,7 +29,7 @@ export function AppPreloader({ children }: AppPreloaderProps) {
       <AnimatePresence>
         {showPreloader && (
           <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-[hsl(var(--background))] text-foreground"
+            className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-background text-foreground"
             initial={{ opacity: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.015 }}
             transition={{ duration: shouldReduceMotion ? 0.15 : 0.55, ease: easeOutQuint }}
@@ -40,7 +40,7 @@ export function AppPreloader({ children }: AppPreloaderProps) {
             <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--foreground)/0.035)_1px,transparent_1px),linear-gradient(180deg,hsl(var(--foreground)/0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-45" />
 
             <motion.div
-              className="relative flex w-[min(28rem,calc(100vw-3rem))] flex-col gap-7 rounded-[2rem] border border-foreground/10 bg-background/70 p-2 shadow-[inset_0_1px_1px_hsl(var(--foreground)/0.08)]"
+              className="relative flex w-[min(28rem,calc(100vw-3rem))] flex-col gap-7 rounded-[2rem] border border-foreground/10 bg-background/70 p-2 shadow-[inset_0_1px_1px_hsl(var(--foreground)/0.08)] backdrop-blur-md"
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 18, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: shouldReduceMotion ? 0.15 : 0.7, ease: easeOutQuint }}

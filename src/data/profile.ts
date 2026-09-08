@@ -89,8 +89,8 @@ export const skillTiers: SkillTier[] = [
       { name: 'Python', icon: 'python', color: '#3776AB' },
       { name: 'Dart', icon: 'dart', color: '#0175C2' },
       { name: 'HTML', icon: 'html5', color: '#E34F26' },
-      { name: 'CSS', icon: 'css', color: '#663399' },
-      { name: 'SQL', icon: null, color: '#E2E8F0' },
+      { name: 'CSS', icon: 'css', color: '#1572B6' },
+      { name: 'SQL', icon: 'mysql', color: '#4479A1' },
     ],
   },
   {
@@ -105,8 +105,8 @@ export const skillTiers: SkillTier[] = [
     label: 'Backend & data',
     skills: [
       { name: 'Laravel', icon: 'laravel', color: '#FF2D20' },
-      { name: 'Node.js', icon: 'nodedotjs', color: '#339933' },
-      { name: 'Convex', icon: null, color: '#F97316' },
+      { name: 'Node.js', icon: 'nodedotjs', color: '#5FA04E' },
+      { name: 'Convex', icon: 'convex', color: '#F97316' },
       { name: 'Supabase', icon: 'supabase', color: '#3ECF8E' },
       { name: 'Firebase', icon: 'firebase', color: '#FFCA28' },
       { name: 'PostgreSQL', icon: 'postgresql', color: '#4169E1' },

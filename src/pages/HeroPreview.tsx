@@ -1,7 +1,7 @@
 import { Hero } from '@/components/Hero';
 
 type HeroPreviewProps = {
-  variant: 'a' | 'b' | 'c' | 'd';
+  variant: 'current' | 'a' | 'b' | 'c' | 'd';
   label: string;
 };
 

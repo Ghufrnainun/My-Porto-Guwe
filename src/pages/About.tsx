@@ -3,8 +3,16 @@ import { About as AboutSection } from '@/components/About';
 import { Skills } from '@/components/Skills';
 import { Education } from '@/components/Education';
 import { motion } from 'framer-motion';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const About = () => {
+  usePageMeta({
+    title: 'About Me | Ghufron Ainun Najib — Full-Stack Developer',
+    description:
+      'Background, skills, and journey of Ghufron Ainun Najib — a full-stack developer building web products with TypeScript, React, and Node.js.',
+    canonicalPath: '/about',
+  });
+
   return (
     <div className="min-h-screen bg-background">
       

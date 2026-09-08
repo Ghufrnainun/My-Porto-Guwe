@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { featuredProjects } from '@/data/featuredProjects';
 import { ProjectCover } from '@/components/ProjectCover';
 import { useLenisScroll } from '@/hooks/useLenisScroll';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const ease = [0.32, 0.72, 0, 1] as const;
 
@@ -319,9 +320,9 @@ function Hero() {
               transition={{ duration: 0.82, ease }}
               className="mt-7 max-w-2xl text-base leading-8 text-white/58 md:text-lg md:leading-8"
             >
-              Full-stack developer building certification platforms, CMS
-              systems, and motion-aware web interfaces with Laravel, React, and
-              pragmatic architecture.
+              Full-stack developer building web platforms, CMS
+              systems, and motion-aware interfaces with Laravel, React, and
+              code that stays simple on purpose.
             </motion.p>
             <motion.div
               variants={fadeUp}
@@ -759,6 +760,7 @@ function ContactSection() {
 
 export default function TestAnimate() {
   useLenisScroll();
+  usePageMeta({ title: 'Animation Lab | Ghufron Ainun Najib', noindex: true });
 
   return (
     <main className="dark min-h-screen w-full max-w-full overflow-x-hidden bg-[#050505] text-white">
