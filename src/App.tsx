@@ -14,20 +14,24 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { CinematicFooter } from '@/components/ui/motion-footer';
+import LoadingScreen from '@/components/LoadingScreen';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
+import { AppPreloader } from '@/components/AppPreloader';
 
-const About = lazy(() => import('./pages/About'));
-const Projects = lazy(() => import('./pages/Projects'));
-const ProjectCaseStudy = lazy(() => import('./pages/ProjectCaseStudy'));
-const Blog = lazy(() => import('./pages/Blog'));
-const BlogPost = lazy(() => import('./pages/BlogPost'));
-const Auth = lazy(() => import('./pages/Auth'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const PostEditor = lazy(() => import('./pages/PostEditor'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const Resume = lazy(() => import('./pages/Resume'));
-const TestAnimate = lazy(() => import('./pages/TestAnimate'));
+const About = lazyWithRetry(() => import('./pages/About'), 'About');
+const Projects = lazyWithRetry(() => import('./pages/Projects'), 'Projects');
+const ProjectCaseStudy = lazyWithRetry(() => import('./pages/ProjectCaseStudy'), 'ProjectCaseStudy');
+const Blog = lazyWithRetry(() => import('./pages/Blog'), 'Blog');
+const BlogPost = lazyWithRetry(() => import('./pages/BlogPost'), 'BlogPost');
+const Auth = lazyWithRetry(() => import('./pages/Auth'), 'Auth');
+const AdminDashboard = lazyWithRetry(() => import('./pages/AdminDashboard'), 'AdminDashboard');
+const PostEditor = lazyWithRetry(() => import('./pages/PostEditor'), 'PostEditor');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
+const Resume = lazyWithRetry(() => import('./pages/Resume'), 'Resume');
+const TestAnimate = lazyWithRetry(() => import('./pages/TestAnimate'), 'TestAnimate');
+const HeroPreview = lazyWithRetry(() => import('./pages/HeroPreview'), 'HeroPreview');
 
 const queryClient = new QueryClient();
 
@@ -69,12 +73,24 @@ const AnimatedAppContent = () => {
                   <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/projects" element={<Projects />} />
+                  {/* Direct Layout Variant Routes */}
+                  <Route path="/1" element={<Navigate to="/projects?v=1" replace />} />
+                  <Route path="/2" element={<Navigate to="/projects?v=2" replace />} />
+                  <Route path="/3" element={<Navigate to="/projects?v=3" replace />} />
+                  <Route path="/projects/1" element={<Navigate to="/projects?v=1" replace />} />
+                  <Route path="/projects/2" element={<Navigate to="/projects?v=2" replace />} />
+                  <Route path="/projects/3" element={<Navigate to="/projects?v=3" replace />} />
                   <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogPost />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/resume" element={<Resume />} />
                   <Route path="/test-animate" element={<TestAnimate />} />
+                  <Route path="/preview-preloader-boot" element={<div className="min-h-screen"><AppPreloader><div className="pt-32 text-center text-xl font-mono text-foreground">Boot complete!</div></AppPreloader></div>} />
+                  <Route path="/preview-hero/a" element={<HeroPreview variant="a" label="Variant A — Prism Angle" />} />
+                  <Route path="/preview-hero/b" element={<HeroPreview variant="b" label="Variant B — Topology Bolt" />} />
+                  <Route path="/preview-hero/c" element={<HeroPreview variant="c" label="Variant C — Eclipse Horizon" />} />
+                  <Route path="/preview-hero/d" element={<HeroPreview variant="d" label="Variant D — Compass Orbit" />} />
                   {/* Protected Admin Routes */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/admin" element={<AdminDashboard />} />
@@ -97,6 +113,7 @@ const AnimatedAppContent = () => {
 };
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
   useDelight();
   useAnalytics();
 
@@ -105,6 +122,14 @@ const App = () => {
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <AuthProvider>
           <TooltipProvider>
+            <AnimatePresence mode="wait">
+              {isLoading && (
+                <LoadingScreen
+                  key="loading-screen"
+                  onLoadingComplete={() => setIsLoading(false)}
+                />
+              )}
+            </AnimatePresence>
             <InteractiveBackground />
             <div className="noise-overlay" />
             <Toaster />
