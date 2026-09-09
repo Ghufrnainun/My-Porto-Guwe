@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ReactNode, useEffect, useState } from 'react';
 import Logo from '@/components/ui/Logo';
+import { PreloaderContext } from '@/hooks/usePreloader';
 
 type AppPreloaderProps = {
   children?: ReactNode;
@@ -23,13 +24,28 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
     return true;
   });
 
+  const [isReady, setIsReady] = useState(() => {
+    if (typeof window !== 'undefined' && !forceShow) {
+      try {
+        return sessionStorage.getItem('portfolio_booted') === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
   useEffect(() => {
-    if (!showPreloader) return;
+    if (!showPreloader) {
+      setIsReady(true);
+      return;
+    }
 
     // Fast, lightweight 0.9s boot sequence compliant with Web Interface Guidelines
     const delay = shouldReduceMotion ? 120 : 900;
     const timer = window.setTimeout(() => {
       setShowPreloader(false);
+      setIsReady(true);
       try {
         sessionStorage.setItem('portfolio_booted', 'true');
       } catch {
@@ -41,7 +57,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
   }, [shouldReduceMotion, showPreloader]);
 
   return (
-    <>
+    <PreloaderContext.Provider value={{ isReady }}>
       {children}
       <AnimatePresence mode="wait">
         {showPreloader && (
@@ -138,6 +154,6 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </PreloaderContext.Provider>
   );
 }

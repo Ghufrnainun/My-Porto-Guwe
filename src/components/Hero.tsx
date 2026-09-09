@@ -3,8 +3,10 @@
 import { ArrowDown } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HeroBackground, HeroBackgroundVariant } from './HeroBackground';
+import { usePreloader } from '@/hooks/usePreloader';
 
-const ease = [0.22, 1, 0.36, 1] as const;
+// Confident, silky deceleration curve aligned with /animation-systems
+const easeExpo = [0.16, 1, 0.3, 1] as const;
 
 type HeroProps = {
   backgroundVariant?: HeroBackgroundVariant;
@@ -12,12 +14,32 @@ type HeroProps = {
 
 export function Hero({ backgroundVariant = 'current' }: HeroProps) {
   const shouldReduceMotion = useReducedMotion();
+  const { isReady } = usePreloader();
 
   const initialMotion = shouldReduceMotion
-    ? { opacity: 0 }
-    : { opacity: 0, y: 36, filter: 'blur(10px)' };
+    ? { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }
+    : { opacity: 0, y: 44, filter: 'blur(14px)', scale: 0.97 };
 
-  const animateMotion = { opacity: 1, y: 0, filter: 'blur(0px)' };
+  const animateMotion = { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 };
+  const currentMotion = isReady || shouldReduceMotion ? animateMotion : initialMotion;
+
+  const initialAccent = shouldReduceMotion
+    ? { opacity: 1, y: 0 }
+    : { opacity: 0, y: 20 };
+  const animateAccent = { opacity: 1, y: 0 };
+  const currentAccent = isReady || shouldReduceMotion ? animateAccent : initialAccent;
+
+  const initialTagline = shouldReduceMotion
+    ? { opacity: 1, y: 0, filter: 'blur(0px)' }
+    : { opacity: 0, y: 16, filter: 'blur(6px)' };
+  const animateTagline = { opacity: 1, y: 0, filter: 'blur(0px)' };
+  const currentTagline = isReady || shouldReduceMotion ? animateTagline : initialTagline;
+
+  const initialScroll = shouldReduceMotion
+    ? { opacity: 1, y: 0 }
+    : { opacity: 0, y: -8 };
+  const animateScroll = { opacity: 1, y: 0 };
+  const currentScroll = isReady || shouldReduceMotion ? animateScroll : initialScroll;
 
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-center items-center pt-24 pb-20 px-4 sm:px-6 overflow-hidden bg-transparent">
@@ -31,13 +53,13 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
           <div className="relative z-0 -mb-4 md:-mb-8 lg:-mb-12">
             <motion.h1
               initial={initialMotion}
-              animate={animateMotion}
+              animate={currentMotion}
               transition={{
-                duration: shouldReduceMotion ? 0 : 0.85,
-                delay: shouldReduceMotion ? 0 : 0.1,
-                ease,
+                duration: shouldReduceMotion ? 0 : 0.9,
+                delay: shouldReduceMotion ? 0 : 0.08,
+                ease: easeExpo,
               }}
-              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap"
+              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap will-change-[transform,opacity,filter]"
             >
               GHUFRON
             </motion.h1>
@@ -47,13 +69,13 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
           <div className="relative z-0">
             <motion.h1
               initial={initialMotion}
-              animate={animateMotion}
+              animate={currentMotion}
               transition={{
-                duration: shouldReduceMotion ? 0 : 0.85,
-                delay: shouldReduceMotion ? 0 : 0.28,
-                ease,
+                duration: shouldReduceMotion ? 0 : 0.9,
+                delay: shouldReduceMotion ? 0 : 0.24,
+                ease: easeExpo,
               }}
-              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap"
+              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap will-change-[transform,opacity,filter]"
             >
               AINUN
             </motion.h1>
@@ -62,14 +84,14 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
           {/* Third Word (Accent) */}
           <div className="relative z-0 mt-0 md:-mt-2 w-full flex justify-end px-2 md:px-12 lg:px-24">
             <motion.h2
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={initialAccent}
+              animate={currentAccent}
               transition={{
-                duration: shouldReduceMotion ? 0 : 0.7,
-                delay: shouldReduceMotion ? 0 : 0.45,
-                ease,
+                duration: shouldReduceMotion ? 0 : 0.75,
+                delay: shouldReduceMotion ? 0 : 0.4,
+                ease: easeExpo,
               }}
-              className="font-sans text-[4.5vw] md:text-[3vw] lg:text-[2.2vw] leading-none tracking-[0.4em] text-foreground/40 font-bold uppercase whitespace-nowrap"
+              className="font-sans text-[4.5vw] md:text-[3vw] lg:text-[2.2vw] leading-none tracking-[0.4em] text-foreground/40 font-bold uppercase whitespace-nowrap will-change-[transform,opacity]"
             >
               NAJIB
             </motion.h2>
@@ -81,14 +103,14 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
       <div className="absolute bottom-20 md:bottom-24 w-full flex flex-col items-center justify-center px-6">
         <div className="max-w-sm text-center">
           <motion.p
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={initialTagline}
+            animate={currentTagline}
             transition={{
-              duration: shouldReduceMotion ? 0 : 0.7,
-              delay: shouldReduceMotion ? 0 : 0.62,
-              ease,
+              duration: shouldReduceMotion ? 0 : 0.75,
+              delay: shouldReduceMotion ? 0 : 0.54,
+              ease: easeExpo,
             }}
-            className="font-sans text-[13px] md:text-[15px] lg:text-base text-foreground/60 tracking-wide text-center text-wrap-pretty font-light leading-relaxed"
+            className="font-sans text-[13px] md:text-[15px] lg:text-base text-foreground/60 tracking-wide text-center text-wrap-pretty font-light leading-relaxed will-change-[transform,opacity,filter]"
           >
             Full-stack developer in Semarang. Backends that hold up, frontends that feel right.
           </motion.p>
@@ -99,12 +121,16 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
       <motion.a
         href="#about"
         className="absolute bottom-8 flex flex-col items-center text-foreground/40 hover:text-foreground/90 transition-colors cursor-pointer"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.1, duration: 0.6 }}
+        initial={initialScroll}
+        animate={currentScroll}
+        transition={{
+          duration: shouldReduceMotion ? 0 : 0.6,
+          delay: shouldReduceMotion ? 0 : 0.72,
+          ease: easeExpo,
+        }}
       >
         <motion.div
-          animate={{ y: [0, 6, 0] }}
+          animate={shouldReduceMotion ? {} : { y: [0, 6, 0] }}
           transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
         >
           <ArrowDown className="w-5 h-5" strokeWidth={1.5} />
