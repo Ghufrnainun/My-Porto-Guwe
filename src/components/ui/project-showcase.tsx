@@ -1,9 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
+import { motion, useMotionValue, useSpring } from "framer-motion"
 import { ArrowUpRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
 
 export interface Project {
   title: string
@@ -13,7 +15,7 @@ export interface Project {
   image: string
 }
 
-const defaultProjects: Project[] = [
+export const defaultProjects: Project[] = [
   {
     title: "TempeMail",
     description: "Disposable email service that runs entirely on Cloudflare Workers. Multi-domain, REST API, webhooks, and MCP server.",
@@ -26,7 +28,7 @@ const defaultProjects: Project[] = [
     description: "Rental platform spanning a Flutter mobile experience and a Next.js 16 admin surface with Firebase & Midtrans.",
     year: "2026",
     link: "/projects/sewainaja",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop",
+    image: "/sewainaja.png",
   },
   {
     title: "LSP Polines",
@@ -39,8 +41,8 @@ const defaultProjects: Project[] = [
     title: "IMPP Organization",
     description: "Official student organization platform with content management, dynamic event publishing, and community engagement.",
     year: "2025",
-    link: "/projects/impp",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1400&auto=format&fit=crop",
+    link: "/projects/impp-website",
+    image: "/impp-screenshot.png",
   },
 ]
 
@@ -56,47 +58,24 @@ export function ProjectShowcase({
   showTitle = true,
 }: ProjectShowcaseProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [smoothPosition, setSmoothPosition] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(false)
+  const [isNearRight, setIsNearRight] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number | null>(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!isVisible) return
-
-    const lerp = (start: number, end: number, factor: number) => {
-      return start + (end - start) * factor
-    }
-
-    const animate = () => {
-      setSmoothPosition((prev) => {
-        const dx = Math.abs(prev.x - mousePosition.x)
-        const dy = Math.abs(prev.y - mousePosition.y)
-        if (dx < 0.1 && dy < 0.1) return prev
-        return {
-          x: lerp(prev.x, mousePosition.x, 0.15),
-          y: lerp(prev.y, mousePosition.y, 0.15),
-        }
-      })
-      animationRef.current = requestAnimationFrame(animate)
-    }
-
-    animationRef.current = requestAnimationFrame(animate)
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [isVisible, mousePosition])
+  // Hardware-accelerated fluid spring physics (Emil Kowalski standard)
+  const mouseX = useMotionValue(-1000)
+  const mouseY = useMotionValue(-1000)
+  const springConfig = { damping: 28, stiffness: 320, mass: 0.35 }
+  const smoothX = useSpring(mouseX, springConfig)
+  const smoothY = useSpring(mouseY, springConfig)
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    setMousePosition({
-      x: e.clientX,
-      y: e.clientY,
-    })
+    mouseX.set(e.clientX)
+    mouseY.set(e.clientY)
+    if (typeof window !== "undefined") {
+      setIsNearRight(e.clientX > window.innerWidth - 440)
+    }
   }
 
   const handleMouseEnter = (index: number) => {
@@ -116,11 +95,6 @@ export function ProjectShowcase({
     }
   }
 
-  // Prevent preview card from overflowing right side of screen
-  const isNearRightEdge = typeof window !== "undefined" && smoothPosition.x > window.innerWidth - 400
-  const transformX = isNearRightEdge ? smoothPosition.x - 380 : smoothPosition.x + 28
-  const transformY = smoothPosition.y - 120
-
   return (
     <section
       ref={containerRef}
@@ -133,36 +107,43 @@ export function ProjectShowcase({
         </h2>
       )}
 
-      {/* Floating Hover Image Preview (Desktop only) */}
-      <div
+      {/* Floating Hover Image Preview Cursor (Desktop only) */}
+      <motion.div
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-50 overflow-hidden rounded-2xl shadow-2xl hidden md:block will-change-transform"
+        className="pointer-events-none fixed top-0 left-0 z-50 hidden md:block will-change-transform"
         style={{
-          transform: `translate3d(${transformX}px, ${transformY}px, 0)`,
-          opacity: isVisible ? 1 : 0,
-          scale: isVisible ? 1 : 0.85,
-          transition: "opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), scale 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+          x: smoothX,
+          y: smoothY,
         }}
       >
-        <div className="relative w-[340px] lg:w-[380px] h-[215px] lg:h-[240px] bg-secondary rounded-2xl overflow-hidden border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.8)]">
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: isVisible ? 1 : 0,
+            x: isNearRight ? -430 : 28,
+            y: -115,
+          }}
+          transition={{
+            opacity: { duration: 0.16, ease: [0.23, 1, 0.32, 1] },
+            x: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
+            y: { duration: 0.22, ease: [0.23, 1, 0.32, 1] },
+          }}
+          className="relative w-[360px] lg:w-[410px] aspect-[16/9] bg-secondary/95 backdrop-blur-md rounded-2xl overflow-hidden border border-border/80 dark:border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.5)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.85)]"
+        >
           {projects.map((project, index) => (
             <img
               key={project.title}
               src={project.image || "/placeholder.svg"}
               alt=""
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out"
-              style={{
-                opacity: hoveredIndex === index ? 1 : 0,
-                scale: hoveredIndex === index ? 1 : 1.08,
-                filter: hoveredIndex === index ? "none" : "blur(12px)",
-              }}
+              loading="eager"
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ease-out",
+                hoveredIndex === index ? "opacity-100" : "opacity-0"
+              )}
             />
           ))}
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/35 via-transparent to-transparent" />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div className="w-full space-y-0">
         {projects.map((project, index) => (
@@ -170,7 +151,7 @@ export function ProjectShowcase({
             key={project.title}
             href={project.link}
             onClick={(e) => handleProjectClick(e, project.link)}
-            className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+            className="group block rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
             onMouseEnter={() => handleMouseEnter(index)}
             onMouseLeave={handleMouseLeave}
           >

@@ -4,6 +4,8 @@ export interface OrganizationExperience {
   period: string;
   active: boolean;
   responsibilities: string[];
+  category?: string;
+  badge?: string;
 }
 
 export const profile = {
@@ -33,6 +35,8 @@ export const organizationExperience: OrganizationExperience[] = [
     role: 'Coordinator, Communication & Information Division',
     period: 'June 2025 - June 2026',
     active: false,
+    category: 'Web & Digital Systems',
+    badge: 'Division Head',
     responsibilities: [
       'Coordinated the division responsible for the organization\'s digital communication channels.',
       'Developed and maintained the organization website and its content workflow.',
@@ -43,6 +47,8 @@ export const organizationExperience: OrganizationExperience[] = [
     role: 'Maintenance Staff',
     period: 'May 2025 - May 2026',
     active: false,
+    category: 'IT Hardware & Support',
+    badge: 'Hardware Support',
     responsibilities: [
       'Supported maintenance activities and managed departmental financial records.',
       'Provided technical support for computers, laptops, and printers.',
@@ -53,6 +59,8 @@ export const organizationExperience: OrganizationExperience[] = [
     role: 'Staff, Communication & Information Division',
     period: 'September 2024 - May 2025',
     active: false,
+    category: 'Media & Publishing',
+    badge: 'Staff',
     responsibilities: [
       'Created visual content for the organization\'s social media channels.',
       'Prepared communication materials for organization activities and events.',
@@ -60,10 +68,42 @@ export const organizationExperience: OrganizationExperience[] = [
   },
 ];
 
-export const certifications = [
-  { title: 'Dicoding Web', issuer: 'Dicoding Indonesia', year: '2024' },
-  { title: 'BNSP Junior Web Developer', issuer: 'BNSP', year: '2025' },
-  { title: 'TEPPS 580', issuer: 'English Proficiency', year: '2024' },
+export interface Certification {
+  title: string;
+  issuer: string;
+  year: string;
+  category?: string;
+  highlight?: string;
+  credentialType?: 'national' | 'industry' | 'language';
+  score?: string;
+}
+
+export const certifications: readonly Certification[] = [
+  {
+    title: 'BNSP Junior Web Developer',
+    issuer: 'Badan Nasional Sertifikasi Profesi',
+    year: '2025',
+    category: 'National Competence (SKKNI)',
+    highlight: 'Certified Web Developer',
+    credentialType: 'national',
+  },
+  {
+    title: 'Dicoding Web',
+    issuer: 'Dicoding Indonesia',
+    year: '2024',
+    category: 'Industry Specialization',
+    highlight: 'Front-End Web Development',
+    credentialType: 'industry',
+  },
+  {
+    title: 'TEPPS 580',
+    issuer: 'English Proficiency',
+    year: '2024',
+    category: 'Language Proficiency',
+    highlight: 'Score 580 (High Working Proficiency)',
+    credentialType: 'language',
+    score: '580',
+  },
 ] as const;
 
 export interface Skill {

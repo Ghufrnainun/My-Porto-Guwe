@@ -69,7 +69,8 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['Flutter', 'Next.js 16', 'TypeScript 5', 'Firebase', 'Midtrans'],
     color: '#14b8a6',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1400&auto=format&fit=crop',
+    image: '/sewainaja.png',
+    gallery: ['/sewainaja.png'],
     repository: 'https://github.com/sewainaja-pbl',
   },
   {
