@@ -127,12 +127,19 @@ const Resume = () => {
       </section>
 
       <section>
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Verified Credentials</h2>
-        <ul className="ml-5 list-disc text-gray-900">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Verified Credentials &amp; Accreditations</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-gray-900 print:grid-cols-2">
           {certifications.map((certification) => (
-            <li key={certification.title}>{certification.title} - {certification.issuer}, <span className="tabular-nums">{certification.year}</span></li>
+            <div key={certification.title} className="text-[9.5pt] leading-snug">
+              <span className="font-bold">{certification.title}</span>
+              <span className="text-gray-700"> · {certification.issuer} </span>
+              <span className="tabular-nums font-mono text-gray-600 font-medium">({certification.year})</span>
+              {certification.credentialId && (
+                <div className="font-mono text-[8pt] text-gray-500">ID: {certification.credentialId}</div>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
     </main>
 
