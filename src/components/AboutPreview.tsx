@@ -1,99 +1,121 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MapPin, Globe, Calendar } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowUpRight, ArrowRight } from 'lucide-react';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+  type MotionValue,
+} from 'framer-motion';
 
-const springEase = [0.32, 0.72, 0, 1];
+interface WordProps {
+  children: string;
+  progress: MotionValue<number>;
+  range: [number, number];
+  reduceMotion: boolean | null;
+}
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
+function ScrubWord({ children, progress, range, reduceMotion }: WordProps) {
+  const opacity = useTransform(progress, range, [0.24, 1]);
+  const color = useTransform(
+    progress,
+    range,
+    ['hsl(var(--muted-foreground) / 0.35)', 'hsl(var(--foreground))']
+  );
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.7, ease: springEase }
-  },
-};
+  if (reduceMotion) {
+    return <span className="inline-block mr-[0.26em] text-foreground">{children}</span>;
+  }
+
+  return (
+    <motion.span
+      style={{ opacity, color }}
+      className="inline-block mr-[0.26em] transition-colors duration-150"
+    >
+      {children}
+    </motion.span>
+  );
+}
 
 export function AboutPreview() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start 0.85', 'end 0.45'],
+  });
+
+  // Authentic, human, craft-led statement without AI buzzwords (~45 words for optimal scroll scrub pacing)
+  const statement =
+    'I build web products from Semarang, focusing on clean backend systems and interfaces that feel good to use. As a Computer Engineering student at Polines, I care about the invisible details: database query speed, predictable APIs, and micro-interactions that make software feel responsive and physical. Practical code, built to last.';
+
+  const words = statement.split(' ');
+
   return (
-    <section id="about" className="relative bg-transparent py-20 md:py-32 overflow-hidden">
+    <section id="about" className="relative overflow-hidden bg-transparent py-20 md:py-32">
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-        >
-          {/* Left Column: Stats */}
-          <div className="md:col-span-3 flex flex-row md:flex-col gap-8 border-t md:border-t-0 border-border md:border-r pt-8 md:pt-0 md:pr-8">
-            <motion.div variants={itemVariants} className="flex gap-4 group cursor-default">
-              <div className="text-primary mt-1 transition-transform duration-500 ease-out-spring group-hover:scale-125 group-hover:rotate-12">
-                <MapPin className="w-4 h-4" strokeWidth={1.5} />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1 transition-colors group-hover:text-foreground">Location</p>
-                <p className="text-sm font-medium text-foreground">Semarang, ID</p>
-              </div>
-            </motion.div>
+        <div ref={containerRef} className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-14 items-start">
+          {/* Left Column: Quiet Metadata */}
+          <div className="md:col-span-4 lg:col-span-3 space-y-4">
+            <div className="space-y-1 text-xs font-mono text-muted-foreground">
+              <p className="font-sans font-semibold text-primary uppercase tracking-wider text-[11px]">
+                (About & Craft)
+              </p>
+              <p className="text-foreground/90 font-medium">Ghufron Ainun Najib</p>
+              <p>Semarang, Indonesia</p>
+            </div>
 
-            <motion.div variants={itemVariants} className="flex gap-4 group cursor-default">
-              <div className="text-primary mt-1 transition-transform duration-500 ease-out-spring group-hover:scale-125 group-hover:rotate-12">
-                <Globe className="w-4 h-4" strokeWidth={1.5} />
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-secondary/40 px-3 py-1 text-xs text-foreground/85">
+                <span className="size-1.5 rounded-full bg-primary" />
+                <span>Open to opportunities</span>
               </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1 transition-colors group-hover:text-foreground">Status</p>
-                <p className="text-sm font-medium text-foreground">Open to Work</p>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="flex gap-4 group cursor-default">
-              <div className="text-primary mt-1 transition-transform duration-500 ease-out-spring group-hover:scale-125 group-hover:rotate-12">
-                <Calendar className="w-4 h-4" strokeWidth={1.5} />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1 transition-colors group-hover:text-foreground">Experience</p>
-                <p className="text-sm font-medium text-foreground">1+ Years</p>
-              </div>
-            </motion.div>
+            </div>
           </div>
 
-          {/* Right Column: Main Content */}
-          <div className="md:col-span-9 lg:col-span-8 flex flex-col justify-center">
-            <motion.div variants={itemVariants} className="mb-8">
-              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-6 text-foreground leading-[1.05] tracking-tight text-wrap-pretty">
-                Backend logic that <span className="text-primary font-medium">scales.</span> Frontend interfaces that <span className="text-muted-foreground/80 font-medium">feel alive.</span>
-              </h2>
-              <div className="prose prose-lg text-muted-foreground/90 leading-relaxed font-sans max-w-2xl text-wrap-pretty">
-                <p className="mb-6 text-base md:text-lg">
-                  I build full-stack applications from Semarang, Indonesia. The details matter to me: the extra 100ms of latency, the button that does not quite line up, the API route that returns the wrong shape. I chase those until they feel right.
-                </p>
-                <p className="text-base md:text-lg">
-                  I've shipped projects solo and in teams: a certification platform, an org website with a CMS, a rental marketplace. Right now I'm building TempeMail, a disposable email service on Cloudflare Workers, and I start my internship in September.
-                </p>
-              </div>
-            </motion.div>
+          {/* Right Column: Portox Typography Statement & Action */}
+          <div className="md:col-span-8 lg:col-span-9 space-y-10">
+            <h2 className="font-serif text-[clamp(1.85rem,3.4vw,2.9rem)] font-normal leading-[1.32] tracking-tight">
+              {words.map((word, i) => {
+                const start = i / words.length;
+                const end = start + 1 / words.length;
+                return (
+                  <ScrubWord
+                    key={`${word}-${i}`}
+                    progress={scrollYProgress}
+                    range={[start, end]}
+                    reduceMotion={reduceMotion}
+                  >
+                    {word}
+                  </ScrubWord>
+                );
+              })}
+            </h2>
 
-            <motion.div variants={itemVariants}>
-              <Link to="/about" className="group inline-flex items-center gap-3 text-sm font-semibold font-display text-primary hover:text-primary/80 transition-colors uppercase tracking-widest bg-primary/5 px-5 py-2.5 rounded-full border border-primary/20 hover:border-primary/50 hover:bg-primary/10 active:scale-95">
-                <span>
-                  Read full story
+            {/* Direct & clean action links */}
+            <div className="flex flex-wrap items-center gap-6 pt-2">
+              <Link
+                to="/about"
+                className="group inline-flex items-center gap-2.5 font-display text-sm font-semibold text-foreground hover:text-primary transition-colors duration-200"
+              >
+                <span>Explore full story</span>
+                <span className="flex size-7 items-center justify-center rounded-full border border-border/80 bg-secondary/50 transition-[transform,background-color,border-color] duration-200 group-hover:translate-x-1 group-hover:border-primary/40 group-hover:bg-primary/10 group-hover:text-primary">
+                  <ArrowRight className="size-3.5" strokeWidth={1.5} />
                 </span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.5} />
               </Link>
-            </motion.div>
+
+              <Link
+                to="/resume"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                <span>View credentials</span>
+                <ArrowUpRight className="size-3.5" strokeWidth={1.5} />
+              </Link>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
