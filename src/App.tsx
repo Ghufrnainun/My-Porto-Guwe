@@ -85,7 +85,7 @@ const AnimatedAppContent = () => {
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/resume" element={<Resume />} />
                   <Route path="/test-animate" element={<TestAnimate />} />
-                  <Route path="/preview-preloader-boot" element={<div className="min-h-screen"><AppPreloader><div className="pt-32 text-center text-xl font-mono text-foreground">Boot complete!</div></AppPreloader></div>} />
+                  <Route path="/preview-preloader-boot" element={<div className="min-h-screen"><AppPreloader forceShow={true}><div className="pt-32 text-center text-xl font-mono text-foreground">Boot complete!</div></AppPreloader></div>} />
                   <Route path="/preview-hero/a" element={<HeroPreview variant="a" label="Variant A — Prism Angle" />} />
                   <Route path="/preview-hero/b" element={<HeroPreview variant="b" label="Variant B — Topology Bolt" />} />
                   <Route path="/preview-hero/c" element={<HeroPreview variant="c" label="Variant C — Eclipse Horizon" />} />
@@ -130,7 +130,9 @@ const App = () => {
                 v7_relativeSplatPath: true,
               }}
             >
-              <AnimatedAppContent />
+              <AppPreloader>
+                <AnimatedAppContent />
+              </AppPreloader>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
