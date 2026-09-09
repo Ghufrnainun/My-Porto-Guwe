@@ -36,10 +36,10 @@ export function ContactCTA({ onGetInTouch }: ContactCTAProps) {
 
           <button
             onClick={onGetInTouch}
-            className="group inline-flex items-center gap-3 glass-pill text-foreground px-8 py-4 rounded-full font-bold text-sm md:text-base tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="group inline-flex items-center gap-3 glass-pill text-foreground px-8 py-4 rounded-full font-bold text-sm md:text-base tracking-widest transition-[transform,background-color,border-color] duration-200 ease-out hover:scale-105 active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
           >
             Start a Conversation
-            <ArrowRight className="w-5 h-5 transition-transform duration-500 ease-out-spring group-hover:translate-x-1.5" />
+            <ArrowRight className="w-5 h-5 transition-transform duration-200 ease-out group-hover:translate-x-1.5" />
           </button>
         </motion.div>
       </div>

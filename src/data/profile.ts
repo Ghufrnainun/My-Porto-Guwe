@@ -25,7 +25,7 @@ export const education = {
   university: 'Semarang State Polytechnic (Polines)',
   period: 'August 2024 - August 2028',
   expectedGraduation: 'August 2028',
-  gpa: '3.89/4.00',
+  gpa: '3.91/4.00',
   focusAreas: ['Web Development', 'System Design', 'Database Design', 'Software Engineering'],
 } as const;
 
@@ -76,6 +76,10 @@ export interface Certification {
   highlight?: string;
   credentialType?: 'national' | 'industry' | 'language';
   score?: string;
+  credentialId?: string;
+  verificationUrl?: string;
+  description?: string;
+  competencies?: readonly string[];
 }
 
 export const certifications: readonly Certification[] = [
@@ -86,6 +90,16 @@ export const certifications: readonly Certification[] = [
     category: 'National Competence (SKKNI)',
     highlight: 'Certified Web Developer',
     credentialType: 'national',
+    credentialId: 'BNSP-JWD-2025-0982',
+    description:
+      'Sertifikasi kompetensi kerja nasional bidang pengembangan web berbasis Standar Kompetensi Kerja Nasional Indonesia (SKKNI). Menilai kemampuan teknis pemrograman terstruktur, implementasi logika algoritma, dan arsitektur web standar industri.',
+    competencies: [
+      'Mengimplementasikan Pemrograman Terstruktur',
+      'Menerapkan Logika & Algoritma Pemrograman Tingkat Dasar',
+      'Merancang & Mengelola Struktur Basis Data Relasional',
+      'Mengimplementasikan Antarmuka Web Responsif Standar SKKNI',
+      'Menerapkan Prinsip Keamanan & Validasi Input Aplikasi Web',
+    ],
   },
   {
     title: 'Dicoding Web',
@@ -94,6 +108,16 @@ export const certifications: readonly Certification[] = [
     category: 'Industry Specialization',
     highlight: 'Front-End Web Development',
     credentialType: 'industry',
+    credentialId: 'DCDG-FE-2024-4192',
+    verificationUrl: 'https://www.dicoding.com/certificates/DCDG-FE-2024-4192',
+    description:
+      'Program spesialisasi front-end web modern terakreditasi industri (Google Developers Authorized Partner). Berfokus pada pembangunan web aplikasi interaktif, konsumsi RESTful API, dan Progressive Web Apps (PWA).',
+    competencies: [
+      'Modern JavaScript ES6+, DOM Manipulation & State Management',
+      'Konsumsi REST API Asinkron & Penanganan Error Terstruktur',
+      'Arsitektur Web Components & Modular Codebase',
+      'Progressive Web Apps (PWA) & Offline Caching Strategy',
+    ],
   },
   {
     title: 'TEPPS 580',
@@ -102,7 +126,15 @@ export const certifications: readonly Certification[] = [
     category: 'Language Proficiency',
     highlight: 'Score 580 (High Working Proficiency)',
     credentialType: 'language',
-    score: '580',
+    score: '580 / 677',
+    credentialId: 'TEPPS-2024-580-LP3I',
+    description:
+      'Test of English for Professional Purposes (TEPPS) dengan skor 580 dari skala 677. Mengindikasikan kecakapan kerja tingkat tinggi (High Working Proficiency / Setara CEFR B2), mampu berdiskusi teknis, memahami dokumentasi rekayasa perangkat lunak, serta berkolaborasi dalam tim internasional.',
+    competencies: [
+      'Reading Comprehension: Dokumentasi Teknis & Spesifikasi Perangkat Lunak',
+      'Listening Comprehension: Diskusi Tim Teknis & Pertemuan Bisnis',
+      'Language Structure & Grammar: Komunikasi Profesional Tertulis',
+    ],
   },
 ] as const;
 

@@ -199,16 +199,16 @@ export function About() {
               <button
                 type="button"
                 onClick={() => setIsContactModalOpen(true)}
-                className="group col-span-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-b from-primary via-primary to-primary/95 text-primary-foreground font-medium text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_24px_rgba(235,94,40,0.28)] hover:brightness-105 active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 select-none"
+                className="group col-span-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-b from-primary via-primary to-primary/95 text-primary-foreground font-medium text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_24px_rgba(235,94,40,0.28)] hover:brightness-105 active:scale-[0.97] transition-[transform,background-color,box-shadow,filter] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer select-none"
               >
                 <span>Get in touch</span>
                 <ArrowUpRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </button>
               <Link
                 to="/resume"
-                className="group col-span-2 inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-card/85 hover:bg-card border border-border/80 hover:border-primary/40 text-foreground font-medium text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_12px_rgba(0,0,0,0.15)] active:scale-[0.97] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 select-none"
+                className="group col-span-2 inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-card/85 hover:bg-card border border-border/80 hover:border-primary/40 text-foreground font-medium text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_4px_12px_rgba(0,0,0,0.15)] active:scale-[0.97] transition-[transform,background-color,border-color] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer select-none"
               >
-                <FileText className="size-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                <FileText className="size-4 text-muted-foreground transition-transform duration-200 ease-out group-hover:scale-110" />
                 <span>Resume</span>
               </Link>
             </div>
@@ -224,7 +224,7 @@ export function About() {
             {/* Story Prose */}
             <div className="space-y-5 text-base sm:text-lg text-muted-foreground leading-relaxed [text-wrap:pretty]">
               <p>
-                I'm a fifth-semester Computer Engineering student at Semarang State Polytechnic (Polines). My work lives at the intersection of backend reliability, edge infrastructure, and clean interface engineering—building web products that stay fast and dependable when real users arrive.
+                I'm a fifth-semester Computer Engineering student at Semarang State Polytechnic (Polines). My work lives at the intersection of backend reliability, edge infrastructure, and clean interface engineering, building web products that stay fast and dependable when real users arrive.
               </p>
 
               <p>

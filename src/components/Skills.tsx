@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { skillTiers, type Skill } from '@/data/profile';
+import { MaskedHeading } from '@/components/ui/masked-heading';
+import { cn } from '@/lib/utils';
 
-const springEase = [0.32, 0.72, 0, 1];
+const easeExpo = [0.16, 1, 0.3, 1] as const;
 const reiconLogoUrl = (slug: string) =>
   `https://cdn.reicon.dev/logos/${slug}/original.svg`;
 
@@ -11,6 +13,34 @@ const reiconLogoUrl = (slug: string) =>
  * regardless of how many skills each row holds.
  */
 const MARQUEE_SPEED = 60; // px per second
+
+const categories = ['All', 'Backend & data', 'Frontend', 'Languages', 'Workflow'] as const;
+type SkillCategory = (typeof categories)[number];
+
+const skillCategoryMap: Record<string, SkillCategory> = {
+  JavaScript: 'Languages',
+  TypeScript: 'Languages',
+  PHP: 'Languages',
+  Python: 'Languages',
+  Dart: 'Languages',
+  HTML: 'Languages',
+  CSS: 'Languages',
+  SQL: 'Languages',
+  React: 'Frontend',
+  'Next.js': 'Frontend',
+  'Tailwind CSS': 'Frontend',
+  Flutter: 'Frontend',
+  Laravel: 'Backend & data',
+  'Node.js': 'Backend & data',
+  Convex: 'Backend & data',
+  Supabase: 'Backend & data',
+  Firebase: 'Backend & data',
+  PostgreSQL: 'Backend & data',
+  Git: 'Workflow',
+  GitHub: 'Workflow',
+  Docker: 'Workflow',
+  Figma: 'Workflow',
+};
 
 // Flatten and balance all skills into 2 sleek scrolling rows
 const allSkills = skillTiers.flatMap((tier) => tier.skills);
@@ -64,10 +94,21 @@ function SkillIcon({ skill }: { skill: Skill }) {
   );
 }
 
-function SkillPill({ skill }: { skill: Skill }) {
+function SkillPill({
+  skill,
+  isDimmed,
+}: {
+  skill: Skill;
+  isDimmed: boolean;
+}) {
   return (
     <li
-      className="group flex h-14 shrink-0 items-center gap-3 rounded-xl border border-border/60 bg-background/60 px-4 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-border hover:bg-secondary/80 hover:shadow-md"
+      className={cn(
+        "group flex h-14 shrink-0 items-center gap-3 rounded-xl border border-border/60 bg-background/60 px-4 shadow-sm backdrop-blur-md transition-[transform,opacity,border-color,background-color,box-shadow] duration-200 ease-out",
+        isDimmed
+          ? "opacity-25 scale-[0.97]"
+          : "opacity-100 scale-100 hover:-translate-y-0.5 hover:border-[var(--brand-color)]/60 hover:bg-secondary/80 hover:shadow-md active:scale-[0.97] cursor-default"
+      )}
       style={{
         '--brand-color': skill.color,
       } as React.CSSProperties}
@@ -83,31 +124,26 @@ function SkillPill({ skill }: { skill: Skill }) {
 function SkillMarqueeRow({
   skills,
   reverse,
+  activeCategory,
 }: {
   skills: Skill[];
   reverse: boolean;
+  activeCategory: SkillCategory;
 }) {
   const repeated = [...skills, ...skills, ...skills];
   const listRef = useRef<HTMLUListElement>(null);
   const [duration, setDuration] = useState('36s');
 
-  // Duration must scale with row width, not be hardcoded: the keyframe
-  // always moves exactly one set (-33.333%), so a shorter row with the same
-  // duration would scroll slower. Measure one set and derive duration from
-  // the shared MARQUEE_SPEED instead.
   useEffect(() => {
     let isCancelled = false;
     const measure = () => {
       if (isCancelled) return;
       const el = listRef.current;
       if (!el) return;
-      // The list renders the skill set 3x; the keyframe scrolls exactly one
-      // set (-33.333%), so duration = one set width / shared pixel speed.
       const setWidth = el.scrollWidth / 3;
       if (!isCancelled) setDuration(`${setWidth / MARQUEE_SPEED}s`);
     };
     measure();
-    // Re-measure once web fonts finish swapping — text width can shift.
     document.fonts?.ready.then(measure).catch(() => {});
     return () => {
       isCancelled = true;
@@ -124,15 +160,28 @@ function SkillMarqueeRow({
           animationDirection: reverse ? 'reverse' : 'normal',
         }}
       >
-        {repeated.map((skill, index) => (
-          <SkillPill key={`${skill.name}-${index}`} skill={skill} />
-        ))}
+        {repeated.map((skill, index) => {
+          const isDimmed =
+            activeCategory !== 'All' &&
+            skillCategoryMap[skill.name] !== activeCategory;
+
+          return (
+            <SkillPill
+              key={`${skill.name}-${index}`}
+              skill={skill}
+              isDimmed={isDimmed}
+            />
+          );
+        })}
       </ul>
     </div>
   );
 }
 
 export function Skills() {
+  const shouldReduceMotion = useReducedMotion();
+  const [activeCategory, setActiveCategory] = useState<SkillCategory>('All');
+
   return (
     <section id="skills" className="relative overflow-hidden bg-transparent py-24 md:py-32">
       <style>{`
@@ -157,38 +206,94 @@ export function Skills() {
       `}</style>
 
       <div className="container mx-auto px-6 md:px-12 lg:px-24">
-        <div className="space-y-12">
-          <motion.header
-            className="mx-auto max-w-3xl text-center"
-            initial={{ opacity: 0, y: 20 }}
+        <div className="space-y-10">
+          <header className="mx-auto max-w-3xl text-center">
+            <motion.p
+              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.6, ease: easeExpo }}
+              className="mb-4 font-mono text-xs uppercase tracking-[0.24em] text-primary"
+            >
+              Tech Stack
+            </motion.p>
+            <MaskedHeading
+              as="h3"
+              text="Tools I keep reaching for."
+              className="mb-6 font-serif text-5xl font-bold leading-[1.05] text-foreground md:text-6xl"
+              viewportMargin="-50px"
+            />
+            <motion.p
+              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.75, delay: shouldReduceMotion ? 0 : 0.16, ease: easeExpo }}
+              className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg will-change-[transform,opacity,filter]"
+            >
+              Languages, frameworks, and workflow tools I keep coming back to across projects and GitHub work.
+            </motion.p>
+          </header>
+
+          {/* Interactive Liquid Glass Category Filter */}
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.7, ease: springEase }}
+            transition={{ duration: 0.6, delay: 0.2, ease: easeExpo }}
+            className="flex justify-center"
           >
-            <p className="mb-4 font-mono text-xs uppercase tracking-[0.24em] text-primary">
-              Tech Stack
-            </p>
-            <h3 className="mb-6 font-serif text-5xl font-bold leading-[1.05] text-foreground md:text-6xl">
-              Tools I keep reaching for.
-            </h3>
-            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              Languages, frameworks, and workflow tools I keep coming back to across projects and GitHub work.
-            </p>
-          </motion.header>
+            <div
+              className="relative inline-flex flex-wrap items-center justify-center p-1 rounded-full border border-border/80 dark:border-white/12 bg-secondary/40 dark:bg-black/50 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)]"
+              role="tablist"
+              aria-label="Filter skills by category"
+            >
+              {categories.map((cat) => {
+                const isActive = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveCategory(cat)}
+                    className={cn(
+                      "relative px-4 py-2 rounded-full text-xs font-medium transition-colors duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                      isActive
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground/80 hover:text-foreground"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeCategoryPill"
+                        className="absolute inset-0 rounded-full bg-background/90 dark:bg-white/15 border border-border/90 dark:border-white/20 shadow-[0_2px_10px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] backdrop-blur-md"
+                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      />
+                    )}
+                    <span className="relative z-10">{cat}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
 
           <motion.div
             className="relative -mx-6 space-y-4 md:mx-0"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 28, filter: 'blur(6px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.7, delay: 0.1, ease: springEase }}
+            transition={{ duration: 0.8, delay: shouldReduceMotion ? 0 : 0.22, ease: easeExpo }}
           >
             {/* Gradient Fades for Smooth Edges */}
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent" />
 
             {marqueeRows.map((row) => (
-              <SkillMarqueeRow key={row.id} {...row} />
+              <SkillMarqueeRow
+                key={row.id}
+                {...row}
+                activeCategory={activeCategory}
+              />
             ))}
           </motion.div>
         </div>

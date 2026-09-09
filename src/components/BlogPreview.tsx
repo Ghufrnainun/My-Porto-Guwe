@@ -2,13 +2,16 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { usePublishedPosts } from '@/hooks/useBlogPosts';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { MaskedHeading } from '@/components/ui/masked-heading';
 
-const springEase = [0.32, 0.72, 0, 1];
+const easeExpo = [0.16, 1, 0.3, 1] as const;
+const springEase = easeExpo;
 
 export function BlogPreview() {
   const { data: posts, isLoading } = usePublishedPosts();
   const recentPosts = posts?.slice(0, 3) || [];
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <section id="blog" className="relative bg-transparent py-24 md:py-32 border-t border-border/40 overflow-hidden">
@@ -17,27 +20,30 @@ export function BlogPreview() {
         {/* Header */}
         <motion.div 
           className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16"
-          initial={{ opacity: 0, y: 30 }}
+          initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.7, ease: springEase }}
+          transition={{ duration: 0.7, ease: easeExpo }}
         >
           <div className="max-w-2xl">
             <p className="mb-4 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
               Writing Log
             </p>
-            <h2 className="font-serif text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.05]">
-              Notes & Thoughts.
-            </h2>
+            <MaskedHeading
+              as="h2"
+              text="Notes & Thoughts."
+              className="font-serif text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-[1.05]"
+              viewportMargin="-50px"
+            />
           </div>
           
           {recentPosts.length > 0 && (
             <Link 
               to="/blog" 
-              className="group hidden md:inline-flex items-center gap-3 text-sm font-semibold text-foreground hover:text-primary transition-colors uppercase tracking-widest pb-2 border-b border-border/60 hover:border-primary"
+              className="group hidden md:inline-flex items-center gap-3 text-sm font-semibold text-foreground hover:text-primary transition-colors uppercase tracking-widest pb-2 border-b border-border/60 hover:border-primary active:scale-[0.98]"
             >
               All Articles
-              <ArrowRight className="w-4 h-4 transition-transform duration-500 ease-out-spring group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-200 ease-out group-hover:translate-x-1" />
             </Link>
           )}
         </motion.div>
@@ -89,8 +95,8 @@ export function BlogPreview() {
                   </div>
 
                   <div className="hidden md:flex shrink-0 pr-4 md:pr-0">
-                    <div className="w-10 h-10 rounded-full border border-border/60 flex items-center justify-center group-hover:bg-primary group-hover:border-primary group-hover:text-primary-foreground transition-all duration-500 ease-out-spring">
-                      <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:-rotate-45" />
+                    <div className="w-10 h-10 rounded-full border border-border/60 flex items-center justify-center group-hover:bg-primary group-hover:border-primary group-hover:text-primary-foreground transition-[transform,background-color,border-color,color] duration-200 ease-out group-hover:scale-105">
+                      <ArrowRight className="w-4 h-4 transition-transform duration-200 ease-out group-hover:-rotate-45" />
                     </div>
                   </div>
                 </motion.article>
@@ -117,10 +123,10 @@ export function BlogPreview() {
             
             <Link 
               to="/projects" 
-              className="group inline-flex items-center justify-center gap-3 glass-pill text-foreground px-6 py-3.5 rounded-full font-bold text-[11px] uppercase tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+              className="group inline-flex items-center justify-center gap-3 glass-pill text-foreground px-6 py-3.5 rounded-full font-bold text-[11px] uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 ease-out hover:scale-105 active:scale-[0.98] shrink-0 cursor-pointer"
             >
               View Case Studies
-              <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-200 ease-out group-hover:translate-x-1" />
             </Link>
           </motion.div>
         )}
@@ -130,10 +136,10 @@ export function BlogPreview() {
           <div className="mt-10 flex justify-center md:hidden">
             <Link 
               to="/blog" 
-              className="group inline-flex items-center gap-3 text-[11px] font-bold text-foreground uppercase tracking-widest px-6 py-3 border border-border/60 rounded-full hover:bg-secondary transition-colors"
+              className="group inline-flex items-center gap-3 text-[11px] font-bold text-foreground uppercase tracking-widest px-6 py-3 border border-border/60 rounded-full hover:bg-secondary transition-[transform,background-color] duration-200 ease-out active:scale-[0.97]"
             >
               All Articles
-              <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 transition-transform duration-200 ease-out group-hover:translate-x-1" />
             </Link>
           </div>
         )}

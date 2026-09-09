@@ -2,7 +2,23 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MorphIcon, type IconNode } from 'morphicons/react';
+
+const SUN_ICON: IconNode = [
+  ['circle', { cx: '12', cy: '12', r: '4' }],
+  ['path', { d: 'M12 2v2' }],
+  ['path', { d: 'M12 20v2' }],
+  ['path', { d: 'm4.93 4.93 1.41 1.41' }],
+  ['path', { d: 'm17.66 17.66 1.41 1.41' }],
+  ['path', { d: 'M2 12h2' }],
+  ['path', { d: 'M20 12h2' }],
+  ['path', { d: 'm6.34 17.66-1.41 1.41' }],
+  ['path', { d: 'm19.07 4.93-1.41 1.41' }],
+];
+
+const MOON_ICON: IconNode = [
+  ['path', { d: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z' }],
+];
 
 interface ThemeToggleProps {
   maskGifUrl?: string;
@@ -110,76 +126,20 @@ export function ThemeToggle({
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        className="relative h-9 w-9 rounded-full overflow-hidden hover:bg-secondary/80 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative h-9 w-9 rounded-full overflow-hidden hover:bg-secondary/80 active:scale-[0.92] transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center cursor-pointer"
         aria-label="Toggle theme"
-        title="Toggle Light/Dark Theme (Anime GIF Mask + Spring Morph)"
+        title="Toggle Light/Dark Theme (Morph Icon + Spring Physics)"
       >
-        <AnimatePresence mode="wait" initial={false}>
-          {isDark ? (
-            <motion.div
-              key="dark"
-              initial={{ scale: 0.5, rotate: -90, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              exit={{ scale: 0.5, rotate: 90, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 22 }}
-              className="flex items-center justify-center"
-            >
-              <svg
-                className="w-5 h-5 text-foreground"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                <motion.circle
-                  cx="19"
-                  cy="5"
-                  r="1"
-                  fill="currentColor"
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                    ease: 'easeInOut',
-                  }}
-                />
-              </svg>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="light"
-              initial={{ scale: 0.5, rotate: 90, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              exit={{ scale: 0.5, rotate: -90, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 22 }}
-              className="flex items-center justify-center"
-            >
-              <svg
-                className="w-5 h-5 text-foreground"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2" />
-                <path d="M12 20v2" />
-                <path d="m4.93 4.93 1.41 1.41" />
-                <path d="m17.66 17.66 1.41 1.41" />
-                <path d="M2 12h2" />
-                <path d="M20 12h2" />
-                <path d="m6.34 17.66-1.41 1.41" />
-                <path d="m19.07 4.93-1.41 1.41" />
-              </svg>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <MorphIcon
+          icon={isDark ? MOON_ICON : SUN_ICON}
+          size={20}
+          strokeWidth={2}
+          spring="snappy"
+          reducedMotion="user"
+          className="text-foreground transition-colors duration-200"
+        />
       </Button>
     </>
   );
 }
+

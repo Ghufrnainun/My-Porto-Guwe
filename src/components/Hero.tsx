@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { HeroBackground, HeroBackgroundVariant } from './HeroBackground';
 import { usePreloader } from '@/hooks/usePreloader';
 
@@ -15,6 +15,14 @@ type HeroProps = {
 export function Hero({ backgroundVariant = 'current' }: HeroProps) {
   const shouldReduceMotion = useReducedMotion();
   const { isReady } = usePreloader();
+
+  // Scroll pushback: when scrolling down, hero content scales back, blurs, and fades
+  const { scrollY } = useScroll();
+  const pushbackScale = useTransform(scrollY, [0, 600], [1, 0.93]);
+  const pushbackOpacity = useTransform(scrollY, [0, 500], [1, 0.28]);
+  const pushbackY = useTransform(scrollY, [0, 600], [0, 48]);
+  const pushbackBlur = useTransform(scrollY, [0, 450], ['blur(0px)', 'blur(6px)']);
+  const scrollHintOpacity = useTransform(scrollY, [0, 120], [1, 0]);
 
   const initialMotion = shouldReduceMotion
     ? { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }
@@ -42,12 +50,20 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
   const currentScroll = isReady || shouldReduceMotion ? animateScroll : initialScroll;
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-center items-center pt-24 pb-20 px-4 sm:px-6 overflow-hidden bg-transparent">
+    <section className="relative w-full h-full min-h-screen flex flex-col justify-center items-center pt-24 pb-20 px-4 sm:px-6 overflow-hidden bg-transparent">
       {/* Animated dynamic background */}
       <HeroBackground variant={backgroundVariant} />
 
-      {/* ── Main content (Centered Typography & Portrait) ──────────────── */}
-      <div className="relative z-10 w-full flex flex-col items-center justify-center">
+      {/* ── Main content (Typography & Tagline with 3D Scroll Pushback) ──────────────── */}
+      <motion.div
+        style={{
+          scale: shouldReduceMotion ? 1 : pushbackScale,
+          opacity: shouldReduceMotion ? 1 : pushbackOpacity,
+          y: shouldReduceMotion ? 0 : pushbackY,
+          filter: shouldReduceMotion ? 'none' : pushbackBlur,
+        }}
+        className="relative z-10 w-full flex-1 flex flex-col items-center justify-center will-change-[transform,opacity,filter]"
+      >
         <div className="relative text-center flex flex-col items-center justify-center max-w-full select-none">
           {/* Top Word */}
           <div className="relative z-0 -mb-4 md:-mb-8 lg:-mb-12">
@@ -97,30 +113,34 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
             </motion.h2>
           </div>
         </div>
-      </div>
 
-      {/* ── Tagline (Bottom) ───────────────────────────────────────────── */}
-      <div className="absolute bottom-20 md:bottom-24 w-full flex flex-col items-center justify-center px-6">
-        <div className="max-w-sm text-center">
-          <motion.p
-            initial={initialTagline}
-            animate={currentTagline}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.75,
-              delay: shouldReduceMotion ? 0 : 0.54,
-              ease: easeExpo,
-            }}
-            className="font-sans text-[13px] md:text-[15px] lg:text-base text-foreground/60 tracking-wide text-center text-wrap-pretty font-light leading-relaxed will-change-[transform,opacity,filter]"
-          >
-            Full-stack developer in Semarang. Backends that hold up, frontends that feel right.
-          </motion.p>
+        {/* ── Tagline (Bottom) ───────────────────────────────────────────── */}
+        <div className="absolute bottom-20 md:bottom-24 w-full flex flex-col items-center justify-center px-6">
+          <div className="max-w-sm text-center">
+            <motion.p
+              initial={initialTagline}
+              animate={currentTagline}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.75,
+                delay: shouldReduceMotion ? 0 : 0.54,
+                ease: easeExpo,
+              }}
+              className="font-sans text-[13px] md:text-[15px] lg:text-base text-foreground/60 tracking-wide text-center text-wrap-pretty font-light leading-relaxed will-change-[transform,opacity,filter]"
+            >
+              Full-stack developer in Semarang. Backends that hold up, frontends that feel right.
+            </motion.p>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Scroll hint — bottom center ─────────────────────────────────── */}
       <motion.a
         href="#about"
-        className="absolute bottom-8 flex flex-col items-center text-foreground/40 hover:text-foreground/90 transition-colors cursor-pointer"
+        aria-label="Scroll down to about section"
+        style={{
+          opacity: shouldReduceMotion ? undefined : scrollHintOpacity,
+        }}
+        className="absolute bottom-8 z-20 flex flex-col items-center text-foreground/40 hover:text-foreground/90 active:scale-[0.92] transition-[transform,color] duration-150 cursor-pointer"
         initial={initialScroll}
         animate={currentScroll}
         transition={{

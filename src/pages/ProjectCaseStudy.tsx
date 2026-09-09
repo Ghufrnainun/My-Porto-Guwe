@@ -22,10 +22,10 @@ function ProjectLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-foreground transition-all duration-500 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary"
+      className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-foreground transition-[transform,border-color,color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
     >
       {children}
-      <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      <ArrowUpRight className="size-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
     </a>
   );
 }
@@ -71,9 +71,9 @@ function CaseStudy({ project }: { project: PortfolioProject }) {
             >
               <Link
                 to="/projects"
-                className="inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary"
+                className="group inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary"
               >
-                <ArrowLeft className="size-3.5" />
+                <ArrowLeft className="size-3.5 transition-transform duration-200 ease-out group-hover:-translate-x-1" />
                 All projects
               </Link>
 

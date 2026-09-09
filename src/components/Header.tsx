@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Github, Linkedin, Mail } from 'lucide-react';
+import { MorphIcon, type IconNode } from 'morphicons/react';
 import { ThemeToggle } from './ThemeToggle';
 import { motion } from 'framer-motion';
 import {
@@ -13,6 +14,17 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { isPathActive } from '@/lib/navigation';
+
+const MENU_ICON: IconNode = [
+  ['line', { x1: '4', x2: '20', y1: '12', y2: '12' }],
+  ['line', { x1: '4', x2: '20', y1: '6', y2: '6' }],
+  ['line', { x1: '4', x2: '20', y1: '18', y2: '18' }],
+];
+
+const X_ICON: IconNode = [
+  ['path', { d: 'M18 6 6 18' }],
+  ['path', { d: 'm6 6 12 12' }],
+];
 
 interface NavLink {
   href: string;
@@ -121,11 +133,17 @@ export function Header() {
           </Link>
           <SheetTrigger asChild>
             <button
-              className="group flex flex-col gap-1.5 items-end justify-center w-11 h-11 text-foreground rounded-full hover:bg-secondary/80 active:bg-secondary/60 transition-colors pr-1"
-              aria-label="Open menu"
+              className="group flex items-center justify-center w-11 h-11 text-foreground rounded-full hover:bg-secondary/80 active:scale-[0.92] transition-transform duration-150 cursor-pointer"
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              <span className="w-5 h-[1.5px] bg-foreground transition-all duration-300 group-hover:bg-primary" />
-              <span className="w-3 h-[1.5px] bg-foreground transition-all duration-300 group-hover:w-5 group-hover:bg-primary" />
+              <MorphIcon
+                icon={isMobileMenuOpen ? X_ICON : MENU_ICON}
+                size={22}
+                strokeWidth={2}
+                spring="snappy"
+                reducedMotion="user"
+                className="text-foreground transition-colors duration-200"
+              />
             </button>
           </SheetTrigger>
         </motion.header>
@@ -171,7 +189,7 @@ export function Header() {
                     href="https://github.com/Ghufrnainun"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-foreground hover:text-primary transition-all duration-300 hover:scale-110"
+                    className="text-foreground hover:text-primary transition-[transform,color] duration-200 ease-out hover:scale-110 active:scale-[0.94]"
                     aria-label="GitHub"
                   >
                     <Github className="w-6 h-6" strokeWidth={1.5} />
@@ -182,7 +200,7 @@ export function Header() {
                     href="https://www.linkedin.com/in/ghufronainunnajib/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-foreground hover:text-primary transition-all duration-300 hover:scale-110"
+                    className="text-foreground hover:text-primary transition-[transform,color] duration-200 ease-out hover:scale-110 active:scale-[0.94]"
                     aria-label="LinkedIn"
                   >
                     <Linkedin className="w-6 h-6" strokeWidth={1.5} />
@@ -191,7 +209,7 @@ export function Header() {
                 <SheetClose asChild>
                   <a
                     href="mailto:ghufrnainunajib@gmail.com"
-                    className="text-foreground hover:text-primary transition-all duration-300 hover:scale-110"
+                    className="text-foreground hover:text-primary transition-[transform,color] duration-200 ease-out hover:scale-110 active:scale-[0.94]"
                     aria-label="Email"
                   >
                     <Mail className="w-6 h-6" strokeWidth={1.5} />
@@ -202,7 +220,7 @@ export function Header() {
               <SheetClose asChild>
                 <Link
                   to="/resume"
-                  className="glass-pill text-foreground text-sm font-semibold px-8 py-3 rounded-full transition-all hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="glass-pill text-foreground text-sm font-semibold px-8 py-3 rounded-full transition-[transform,background-color,border-color] duration-200 ease-out hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   View Resume
                 </Link>

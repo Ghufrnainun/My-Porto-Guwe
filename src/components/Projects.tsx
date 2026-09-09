@@ -9,20 +9,6 @@ export function Projects({ className = '' }: { className?: string }) {
       className={`py-16 md:py-28 bg-background relative ${className}`}
     >
       <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        <div className="mb-14 border-b border-border/40 pb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="size-2 rounded-full bg-primary" />
-            <p className="text-primary font-mono text-[11px] tracking-widest uppercase font-semibold">
-              Portfolio Showcase
-            </p>
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-            Selected Projects
-          </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-            A curated index of production applications, backend architectures, and open-source software systems.
-          </p>
-        </div>
 
         {/* Minimalist Editorial Project Showcase */}
         <div className="w-full">
@@ -41,7 +27,7 @@ export function Projects({ className = '' }: { className?: string }) {
             href="https://github.com/Ghufrnainun"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-secondary/30 px-6 py-3 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-300 hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-secondary/30 px-6 py-3 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:border-primary/40 hover:text-primary transition-[transform,border-color,color] duration-200 ease-out hover:scale-105 active:scale-[0.97]"
           >
             <span>Explore More on GitHub</span>
             <Github className="size-4" />
