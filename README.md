@@ -30,7 +30,7 @@ The site departs from generic developer templates, adopting an **editorial minim
 ## Selected Projects
 
 ### [TempeMail](https://github.com/Ghufrnainun/tempe-mail)
-*Solo Developer · 2026 · [Live Demo](https://temp.atminku.my.id)*
+*Solo Developer · 2026 · [Live Demo](https://temp.ghufronainun.tech)*
 - Disposable email service running entirely on the Cloudflare Workers edge.
 - Multi-domain auto-provisioning across 20+ live domains with zero server cost.
 - Features a REST API, HMAC-signed webhook delivery, D1 SQLite storage, and a native MCP server for AI agents.
@@ -50,7 +50,7 @@ The site departs from generic developer templates, adopting an **editorial minim
 - Designed authentication architecture and established repository branching strategies.
 - **Stack**: Laravel, Livewire, Tailwind CSS, MySQL.
 
-### [IMPP Organization Website](https://imppolines.my.id/)
+### IMPP Organization Website
 *Solo Developer · 2025*
 - Public website and custom content management system for Ikatan Mahasiswa Pemalang Polines.
 - Built independent administration interfaces for publishing activities, organizational structure, and photo galleries.

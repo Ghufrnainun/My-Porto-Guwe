@@ -45,6 +45,7 @@ export const featuredProjects: PortfolioProject[] = [
     color: '#fb923c',
     image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1400&auto=format&fit=crop',
     repository: 'https://github.com/Ghufrnainun/tempe-mail',
+    demo: 'https://temp.ghufronainun.tech',
   },
   /** Curated Design (2026-09) */
   {
