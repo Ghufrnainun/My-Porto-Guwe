@@ -47,6 +47,32 @@ export const featuredProjects: PortfolioProject[] = [
     repository: 'https://github.com/Ghufrnainun/tempe-mail',
     demo: 'https://temp.atminku.my.id',
   },
+  /** Curated Design (2026-09) */
+  {
+    title: 'Curated Design',
+    slug: 'curated-design',
+    summary:
+      'A curated directory of design resources for AI coding, with component libraries, design systems, design inspiration, dev tools, and AI prompts. Content lives in plain markdown so anyone can contribute.',
+    year: '2026',
+    role: 'Solo Developer',
+    team: { size: 1, label: 'Solo project' },
+    visibility: 'public',
+    problem:
+      'Design resource lists are scattered across tweets, bookmarks, and newsletters. I wanted one searchable place where each entry links straight to the source, built so it is easy to extend.',
+    contributions: [
+      'Built the React + Vite site with search, category filter chips, sub-grouped sections, and a dark/light theme.',
+      'Designed the markdown-first pipeline: resources are plain markdown files parsed at build time, so adding a link is a one-line edit.',
+      'Added CI deploy to Cloudflare Pages with unit tests for the parser and filter logic.',
+    ],
+    outcomes: [
+      '292 resources across 5 categories, all links verified live before shipping.',
+      'Open contribution flow with PR templates and triage labels on GitHub.',
+    ],
+    technologies: ['React', 'Vite', 'Markdown', 'Cloudflare Pages', 'GitHub Actions'],
+    color: '#d9480f',
+    repository: 'https://github.com/Ghufrnainun/curated-design',
+    demo: 'https://design.ghuf.app',
+  },
   {
     title: 'SewaInAja',
     slug: 'sewainaja',
