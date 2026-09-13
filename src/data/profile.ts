@@ -68,142 +68,53 @@ export const organizationExperience: OrganizationExperience[] = [
   },
 ];
 
-export type CredentialDomain = 'verified' | 'database' | 'language';
-
 export interface Certification {
   title: string;
   issuer: string;
   year: string;
-  category?: string;
-  highlight?: string;
-  credentialType?: 'national' | 'industry' | 'language' | 'vendor' | 'academic';
-  domain: CredentialDomain;
-  isFlagship?: boolean;
+  score?: string;
+  credentialId?: string;
   /**
    * True only when the issuer hosts a public lookup page where anyone can check
    * the ID themselves. Everything else is self-attested and must not claim otherwise.
    */
   isVerifiedTransaction?: boolean;
-  score?: string;
-  credentialId?: string;
+  /** Public lookup page, when the issuer provides one. */
   verificationUrl?: string;
-  issueDate?: string;
-  validUntil?: string;
-  description?: string;
-  competencies?: readonly string[];
 }
-
-export const credentialDomains: { id: CredentialDomain | 'all'; label: string; count?: number }[] = [
-  { id: 'all', label: 'All Credentials' },
-  { id: 'verified', label: 'Network Engineering' },
-  { id: 'database', label: 'Database & SQL' },
-  { id: 'language', label: 'Language' },
-];
 
 export const certifications: readonly Certification[] = [
   {
     title: 'MikroTik Certified Routing Engineer (MTCRE)',
     issuer: 'MikroTik',
     year: '2025',
-    issueDate: '09 December 2025',
-    validUntil: '09 December 2028',
-    category: 'International Networking',
-    highlight: 'Certified Routing Engineer',
-    credentialType: 'vendor',
-    domain: 'verified',
-    isFlagship: true,
-    isVerifiedTransaction: true,
     credentialId: '2512RE1559',
+    isVerifiedTransaction: true,
     verificationUrl: 'https://mikrotik.com/certificates',
-    description:
-      'Sertifikasi tingkat lanjut rekayasa routing dari MikroTik, jenjang setelah MTCNA. Mencakup routing statis dan dinamis, OSPF multi-area, VPN tunnel point-to-point, serta VLAN dan routing inter-VLAN.',
-    competencies: [
-      'Static Routing: recursive routing, ECMP, policy-based routing',
-      'Dynamic Routing OSPF: single-area, multi-area, virtual links, LSA types, summarization',
-      'Point-to-Point VPN Tunnels: IPIP, EoIP, GRE, PPTP, L2TP, SSTP',
-      'VLAN & Inter-VLAN Enterprise Routing: Q-in-Q, bridge VLAN filtering',
-      'Network Diagnostics, MTU Path Discovery & BFD Protocol',
-    ],
   },
   {
     title: 'MikroTik Certified Network Associate (MTCNA)',
     issuer: 'MikroTik',
     year: '2025',
-    issueDate: '28 November 2025',
-    validUntil: '28 November 2028',
-    category: 'International Networking',
-    highlight: 'Certified Network Associate',
-    credentialType: 'vendor',
-    domain: 'verified',
-    isFlagship: true,
-    isVerifiedTransaction: true,
     credentialId: '2511NA7322',
+    isVerifiedTransaction: true,
     verificationUrl: 'https://mikrotik.com/certificates',
-    description:
-      'Sertifikasi asosiasi resmi MikroTik, prasyarat untuk jenjang MTCRE. Menguji dasar RouterOS, konfigurasi routing dan bridging, manajemen bandwidth, firewall, serta setup jaringan nirkabel.',
-    competencies: [
-      'RouterOS Fundamentals & Configuration Management',
-      'Routing & Bridging Basics, DHCP Client and Server',
-      'Firewall, NAT & Bandwidth Management (Queue)',
-      'Wireless Fundamentals (802.11) & Security Profiles',
-      'Network Troubleshooting & Monitoring Tools',
-    ],
   },
   {
     title: 'Oracle Database Programming with SQL',
     issuer: 'Oracle Academy',
     year: '2024',
-    issueDate: '25 December 2024',
-    category: 'Enterprise Database',
-    highlight: 'Database Programming with SQL',
-    credentialType: 'vendor',
-    domain: 'database',
-    description:
-      'Sertifikasi resmi Oracle Academy yang memvalidasi kemahiran menulis query SQL kompleks, dari join dan subquery hingga pengelolaan objek basis data tingkat enterprise.',
-    competencies: [
-      'Complex SQL Queries: Joins, Aggregation Functions, and Grouping',
-      'Subqueries: Single-row, Multiple-row, and Correlated Subqueries',
-      'Data Definition Language (DDL) and Data Manipulation Language (DML)',
-      'Database Constraints, Views, Indexes, and Sequences Management',
-      'Transaction Control and Relational Data Integrity',
-    ],
   },
   {
     title: 'Oracle Database Design',
     issuer: 'Oracle Academy',
     year: '2024',
-    issueDate: '23 December 2024',
-    category: 'Database Architecture',
-    highlight: 'Database Design',
-    credentialType: 'vendor',
-    domain: 'database',
-    description:
-      'Sertifikasi arsitektur basis data relasional dari Oracle Academy, mencakup pemodelan Entity-Relationship, normalisasi, dan pemetaan model konseptual ke skema fisik.',
-    competencies: [
-      'Entity-Relationship Diagram (ERD) & Conceptual Data Modeling',
-      'Database Normalization: First through Third Normal Form (1NF to 3NF)',
-      'Unique Identifiers (UID), Primary Keys, and Foreign Key Constraints',
-      'Mapping Conceptual Data Models to Physical Relational Schemas',
-      'Historical Data Modeling & Business Rule Constraints',
-    ],
   },
   {
     title: 'TEPPS 580 (English Proficiency for Technical Purposes)',
     issuer: 'English Proficiency Center',
     year: '2024',
-    category: 'Language Proficiency',
-    highlight: 'Score 580 (High Working Proficiency)',
-    credentialType: 'language',
-    domain: 'language',
-    isFlagship: true,
     score: '580 / 677',
-    description:
-      'Test of English for Professional Purposes dengan skor 580 dari 677, setara CEFR B2. Mencakup pemahaman dokumentasi teknis dan komunikasi profesional tertulis.',
-    competencies: [
-      'Reading Comprehension: Documentation & Software Specifications',
-      'Listening Comprehension: Technical Discussions & Business Meetings',
-      'Language Structure & Grammar: Written Professional Communication',
-    ],
   },
 ] as const;
 
