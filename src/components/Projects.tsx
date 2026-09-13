@@ -1,6 +1,7 @@
 import { Github } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ProjectShowcase } from '@/components/ui/project-showcase';
+import { SideProjects } from '@/components/SideProjects';
 
 export function Projects({ className = '' }: { className?: string }) {
   return (
@@ -15,9 +16,14 @@ export function Projects({ className = '' }: { className?: string }) {
           <ProjectShowcase showTitle={false} />
         </div>
 
+        {/* Side Projects Section */}
+        <div className="mt-20 md:mt-28 pt-16 border-t border-border/30">
+          <SideProjects hasContainer={false} className="py-0 md:py-0" />
+        </div>
+
         {/* GitHub CTA */}
         <motion.div
-          className="text-center mt-24 pt-12 border-t border-border/30"
+          className="text-center mt-20 md:mt-24 pt-12 border-t border-border/30"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

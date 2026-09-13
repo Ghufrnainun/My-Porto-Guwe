@@ -37,8 +37,8 @@ const Projects = () => {
                 Projects
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl">
-                Three verified case studies covering mobile products, team delivery,
-                and independently built content systems.
+                Selected case studies covering mobile products, cloud infrastructure,
+                and content systems, alongside focused side projects and prototypes.
               </p>
             </motion.div>
           </div>
