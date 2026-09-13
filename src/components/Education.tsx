@@ -1,10 +1,9 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
-import { motion, AnimatePresence, useInView, useReducedMotion } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import {
-  Award,
-  Code2,
+  ShieldCheck,
   Globe,
   Check,
   GraduationCap,
@@ -14,28 +13,15 @@ import {
   Copy,
   ExternalLink,
   Database,
-  Server,
   Network,
-  Cpu,
-  ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 import {
   education,
   organizationExperience,
   certifications,
-  credentialDomains,
-  type CredentialDomain,
-  type Certification,
+  profile,
 } from '@/data/profile';
 import { MaskedHeading } from '@/components/ui/masked-heading';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const easeExpo = [0.16, 1, 0.3, 1] as const;
@@ -89,113 +75,6 @@ function CountUp({
   }
 
   return <>{display}</>;
-}
-
-// ─── Icon Resolver for Credentials ───────────────────────────────────────────
-function getCertIcon(cert: Certification) {
-  if (cert.title.includes('MikroTik') || cert.title.includes('MTCRE')) return Network;
-  if (cert.title.includes('TEPPS')) return Globe;
-  if (cert.domain === 'database') return Database;
-  if (cert.domain === 'cloud') return Server;
-  if (cert.domain === 'ai-data') return Cpu;
-  if (cert.domain === 'flagship') return ShieldCheck;
-  return Code2;
-}
-
-// ─── Interactive Credential Card ─────────────────────────────────────────────
-function CertCard({
-  cert,
-  index,
-  isInView,
-  isCurrentHovered,
-  isOtherHovered,
-  onEnter,
-  onLeave,
-  onClick,
-}: {
-  cert: Certification;
-  index: number;
-  isInView: boolean;
-  isCurrentHovered: boolean;
-  isOtherHovered: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-  onClick: () => void;
-}) {
-  const shouldReduceMotion = useReducedMotion();
-  const Icon = getCertIcon(cert);
-
-  return (
-    <motion.div
-      key={cert.title}
-      layout="position"
-      initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20, scale: 0.98 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-      transition={{
-        duration: 0.35,
-        delay: Math.min(index * 0.04, 0.3),
-        ease: easeExpo,
-      }}
-      whileHover={shouldReduceMotion ? {} : { y: -2 }}
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-haspopup="dialog"
-      aria-label={`View accreditation details for ${cert.title}`}
-      className={cn(
-        'group relative flex flex-col justify-between rounded-2xl border p-5 sm:p-6 cursor-pointer select-none text-left',
-        'transition-[transform,border-color,background-color,box-shadow] duration-150 ease-out active:scale-[0.98]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-        isCurrentHovered
-          ? 'border-primary/50 bg-secondary/60 dark:bg-white/[0.05] shadow-[0_10px_28px_rgba(0,0,0,0.06)]'
-          : 'border-border/70 bg-card/40 dark:border-white/10 dark:bg-white/[0.02] hover:border-border hover:bg-secondary/30',
-        isOtherHovered ? 'opacity-40' : 'opacity-100'
-      )}
-    >
-      <div>
-        {/* Top bar: Domain Icon + Status indicator */}
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div
-            className={cn(
-              'flex size-9 items-center justify-center rounded-xl border transition-colors duration-150',
-              isCurrentHovered
-                ? 'border-primary/40 bg-primary/15 text-primary'
-                : 'border-border/70 bg-secondary text-foreground/80'
-            )}
-          >
-            <Icon className="size-4.5 stroke-[2]" />
-          </div>
-
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 group-hover:text-primary">
-            <span>Details</span>
-            <ArrowUpRight className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </span>
-        </div>
-
-        <h4 className="font-serif text-base font-bold leading-snug text-foreground transition-colors duration-150 group-hover:text-primary [text-wrap:pretty]">
-          {cert.title}
-        </h4>
-        <p className="mt-1 font-sans text-xs text-muted-foreground leading-relaxed">
-          {cert.issuer}
-        </p>
-      </div>
-
-      {/* Bottom Metadata bar */}
-      <div className="mt-5 flex items-center justify-between border-t border-border/50 pt-3 font-mono text-[11px] text-muted-foreground">
-        <span className="truncate max-w-[170px] tracking-tight">{cert.category || 'Accreditation'}</span>
-        <span className="tabular-nums font-bold text-foreground/80 shrink-0 ml-2">{cert.year}</span>
-      </div>
-    </motion.div>
-  );
 }
 
 // ─── Org Experience Item — per-item scroll reveal ────────────────────────────
@@ -342,40 +221,8 @@ export function Education() {
   const ch2InView = useInView(ch2Ref, { once: true, margin: '-80px' });
   const ch3InView = useInView(ch3Ref, { once: true, margin: '-80px' });
 
-  // Focus dimming states for storytelling
+  // Focus dimming state for the organization timeline
   const [hoveredExpIndex, setHoveredExpIndex] = useState<number | null>(null);
-  const [hoveredCertIndex, setHoveredCertIndex] = useState<number | null>(null);
-
-  // Filter state for credentials domain tabs
-  const [activeDomain, setActiveDomain] = useState<CredentialDomain | 'all'>('all');
-
-  // Dialog state for credential inspection
-  const [selectedCert, setSelectedCert] = useState<Certification | null>(null);
-  const [copiedId, setCopiedId] = useState(false);
-
-  const handleCopyId = (id?: string) => {
-    if (!id) return;
-    navigator.clipboard.writeText(id);
-    setCopiedId(true);
-    setTimeout(() => setCopiedId(false), 2000);
-  };
-
-  // Filtered certifications based on selected tab
-  const filteredCerts = useMemo(() => {
-    if (activeDomain === 'all') return certifications;
-    return certifications.filter((cert) => cert.domain === activeDomain);
-  }, [activeDomain]);
-
-  // Counts for each domain tab
-  const domainCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: certifications.length };
-    for (const d of credentialDomains) {
-      if (d.id !== 'all') {
-        counts[d.id] = certifications.filter((c) => c.domain === d.id).length;
-      }
-    }
-    return counts;
-  }, []);
 
   // GPA calculation
   const gpaValue = parseFloat(education.gpa.split('/')[0]) || 3.91;
@@ -558,336 +405,69 @@ export function Education() {
           </div>
 
           {/* ================================================================ */}
-          {/* Chapter III: Verified Credentials & Technical Ledger             */}
+          {/* Chapter III: Credentials                                          */}
           {/* ================================================================ */}
-          <div ref={ch3Ref} className="space-y-10">
-            {/* Chapter Header */}
+          <div ref={ch3Ref} className="space-y-6">
             <motion.div
               initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={ch3InView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.55, ease: easeExpo }}
-              className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-border/40 pb-4 gap-2"
+              className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border/40 pb-3"
             >
-              <div>
-                <MaskedHeading
-                  as="h3"
-                  text="Verified Credentials & Technical Ledger"
-                  className="font-mono text-sm font-semibold uppercase tracking-widest text-foreground"
-                  viewportMargin="-80px"
-                  stagger={0.04}
-                />
-                <p className="mt-1 text-xs text-muted-foreground font-sans">
-                  Accredited industrial certifications, international routing engineering, and database systems.
-                </p>
-              </div>
-
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                {filteredCerts.length} of {certifications.length} Credentials
-              </span>
+              <MaskedHeading
+                as="h3"
+                text="Credentials"
+                className="font-mono text-sm font-semibold uppercase tracking-widest text-foreground"
+                viewportMargin="-80px"
+                stagger={0.04}
+              />
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex min-h-[32px] items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors duration-200 hover:text-primary"
+              >
+                <span>Full list on LinkedIn</span>
+                <ArrowUpRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
             </motion.div>
 
-            {/* Flagship Landmark Feature Cards (MTCRE & Samsung SIC Spotlight) */}
-            {activeDomain === 'all' && (
-              <motion.div
-                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
-                animate={ch3InView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, ease: easeExpo }}
-                className="grid grid-cols-1 gap-4 md:grid-cols-2"
-              >
-                {/* MTCRE Spotlight */}
-                <div className="group relative overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-card/95 via-card/60 to-primary/5 p-6 shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-primary/60 hover:shadow-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-10 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary">
-                        <Network className="size-5 stroke-[2.2]" />
-                      </div>
-                      <div>
-                        <span className="inline-block rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
-                          International Engineering
-                        </span>
-                        <p className="font-mono text-xs text-muted-foreground mt-0.5">MikroTik RouterOS</p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-xs font-semibold tabular-nums text-foreground/80 border border-border/70 rounded px-2 py-0.5 bg-secondary/50">
-                      2025 – 2028
-                    </span>
+            <ul className="space-y-0">
+              {certifications.map((cert, i) => (
+                <motion.li
+                  key={cert.title}
+                  initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                  animate={ch3InView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.45, delay: 0.08 + i * 0.06, ease: easeExpo }}
+                  className="flex flex-col gap-1 border-b border-border/30 py-3 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+                >
+                  <div className="min-w-0">
+                    <span className="font-serif text-base font-bold text-foreground">{cert.title}</span>
+                    <span className="font-sans text-sm text-muted-foreground"> — {cert.issuer}</span>
                   </div>
 
-                  <h4 className="mt-4 font-serif text-lg font-bold text-foreground sm:text-xl leading-snug">
-                    MikroTik Certified Routing Engineer (MTCRE)
-                  </h4>
-                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                    Advanced routing architectures, multi-area OSPF, point-to-point tunnels, and VLAN switching verified by MikroTik.
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-muted-foreground">ID:</span>
-                      <code className="rounded bg-secondary px-2 py-0.5 font-mono text-xs font-semibold text-foreground">
-                        2512RE1559
-                      </code>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-3 font-mono text-xs tabular-nums text-muted-foreground">
+                    {cert.credentialId && (
+                      <span className="text-[11px]">ID {cert.credentialId}</span>
+                    )}
+                    {cert.score && <span className="text-[11px]">{cert.score}</span>}
+                    <span className="text-[11px] font-semibold text-foreground/80">{cert.year}</span>
+                    {cert.verificationUrl && (
                       <a
-                        href="https://mikrotik.com/certificate/2512RE1559"
+                        href={cert.verificationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-mono text-[11px] text-primary hover:underline"
+                        className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                       >
-                        <span>Official Verify</span>
+                        verify
                         <ExternalLink className="size-3" />
                       </a>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const c = certifications.find((item) => item.credentialId === '2512RE1559');
-                          if (c) setSelectedCert(c);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/70 px-3 py-1 font-mono text-xs font-medium text-foreground hover:bg-secondary active:scale-[0.97] transition-transform"
-                      >
-                        <span>Curriculum</span>
-                        <ArrowUpRight className="size-3" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Samsung SIC Spotlight */}
-                <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card/95 via-card/60 to-secondary/30 p-6 shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-md">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-secondary text-foreground">
-                        <Award className="size-5 stroke-[2.2]" />
-                      </div>
-                      <div>
-                        <span className="inline-block rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider bg-secondary text-foreground/80 border border-border/70">
-                          Global Acceleration
-                        </span>
-                        <p className="font-mono text-xs text-muted-foreground mt-0.5">Samsung &amp; Polines</p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-xs font-semibold tabular-nums text-foreground/80 border border-border/70 rounded px-2 py-0.5 bg-secondary/50">
-                      2025 – 2026
-                    </span>
-                  </div>
-
-                  <h4 className="mt-4 font-serif text-lg font-bold text-foreground sm:text-xl leading-snug">
-                    Samsung Innovation Campus (SIC) Stage 7
-                  </h4>
-                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                    AI, machine learning algorithms, and applied data engineering problem solving in partnership with Samsung.
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-muted-foreground">Batch:</span>
-                      <code className="rounded bg-secondary px-2 py-0.5 font-mono text-xs font-semibold text-foreground">
-                        SIC 7 Mahasiswa
-                      </code>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const c = certifications.find((item) => item.title.includes('Samsung'));
-                        if (c) setSelectedCert(c);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/70 px-3 py-1 font-mono text-xs font-medium text-foreground hover:bg-secondary active:scale-[0.97] transition-transform"
-                    >
-                      <span>Accreditation</span>
-                      <ArrowUpRight className="size-3" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Segmented Category Filter Tabs */}
-            <div className="relative">
-              <div
-                role="tablist"
-                aria-label="Credential Categories"
-                className="flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-border/70 bg-secondary/30 p-1.5 text-xs backdrop-blur-sm no-scrollbar"
-              >
-                {credentialDomains.map((domain) => {
-                  const isActive = activeDomain === domain.id;
-                  const count = domainCounts[domain.id] || 0;
-
-                  return (
-                    <button
-                      key={domain.id}
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => setActiveDomain(domain.id)}
-                      className={cn(
-                        'group relative flex items-center gap-2 rounded-xl px-3.5 py-2 font-mono text-xs transition-colors whitespace-nowrap active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                        isActive ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="cert-domain-pill"
-                          className="absolute inset-0 rounded-xl bg-background border border-border/80 shadow-xs dark:bg-zinc-900"
-                          transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                        />
-                      )}
-                      <span className="relative z-10">{domain.label}</span>
-                      <span
-                        className={cn(
-                          'relative z-10 rounded-md px-1.5 py-0.2 font-mono text-[10px] tabular-nums transition-colors',
-                          isActive ? 'bg-primary/15 text-primary font-bold' : 'bg-secondary text-muted-foreground'
-                        )}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Filtered Credentials Card Grid */}
-            <motion.div
-              layout
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredCerts.map((cert, index) => (
-                  <CertCard
-                    key={cert.title}
-                    cert={cert}
-                    index={index}
-                    isInView={ch3InView}
-                    isCurrentHovered={hoveredCertIndex === index}
-                    isOtherHovered={hoveredCertIndex !== null && hoveredCertIndex !== index}
-                    onEnter={() => setHoveredCertIndex(index)}
-                    onLeave={() => setHoveredCertIndex(null)}
-                    onClick={() => {
-                      setCopiedId(false);
-                      setSelectedCert(cert);
-                    }}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-
-          {/* Credential Accreditation & Verification Modal */}
-          <Dialog
-            open={!!selectedCert}
-            onOpenChange={(open) => {
-              if (!open) {
-                setSelectedCert(null);
-                setCopiedId(false);
-              }
-            }}
-          >
-            <DialogContent className="max-w-lg border-border/80 bg-background/95 p-6 backdrop-blur-xl sm:rounded-2xl shadow-2xl">
-              {selectedCert && (
-                <div className="space-y-5">
-                  <DialogHeader className="space-y-2 text-left">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-mono text-[11px] font-semibold uppercase tracking-widest text-primary">
-                        {selectedCert.category || 'Accredited Credential'}
-                      </span>
-                      <span className="font-mono text-xs tabular-nums text-muted-foreground border border-border/70 rounded px-2 py-0.5">
-                        {selectedCert.year}
-                      </span>
-                    </div>
-                    <DialogTitle className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                      {selectedCert.title}
-                    </DialogTitle>
-                    <DialogDescription className="font-sans text-xs text-muted-foreground">
-                      Issued by <span className="font-medium text-foreground">{selectedCert.issuer}</span>
-                      {selectedCert.issueDate && (
-                        <span> · Issued on <span className="tabular-nums">{selectedCert.issueDate}</span></span>
-                      )}
-                      {selectedCert.validUntil && (
-                        <span> · Valid through <span className="tabular-nums">{selectedCert.validUntil}</span></span>
-                      )}
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  {/* Summary Description */}
-                  {selectedCert.description && (
-                    <p className="font-sans text-xs sm:text-sm text-foreground/90 leading-relaxed bg-secondary/35 dark:bg-white/[0.03] p-4 rounded-xl border border-border/50">
-                      {selectedCert.description}
-                    </p>
-                  )}
-
-                  {/* Core Competencies */}
-                  {selectedCert.competencies && selectedCert.competencies.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Core Competencies Evaluated
-                      </h4>
-                      <ul className="space-y-2 font-sans text-xs text-foreground/85">
-                        {selectedCert.competencies.map((comp) => (
-                          <li key={comp} className="flex items-start gap-2">
-                            <Check className="size-3.5 text-primary mt-0.5 shrink-0 stroke-[2.5]" />
-                            <span className="leading-relaxed">{comp}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Credential ID & Score Metadata Box */}
-                  <div className="rounded-xl border border-border/60 bg-secondary/20 p-3.5 space-y-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
-                      <span className="text-muted-foreground">Credential ID</span>
-                      <div className="flex items-center gap-1.5">
-                        <code className="rounded bg-secondary px-2 py-0.5 font-mono text-xs font-semibold text-foreground select-all">
-                          {selectedCert.credentialId || 'Verified Record'}
-                        </code>
-                        {selectedCert.credentialId && (
-                          <button
-                            type="button"
-                            onClick={() => handleCopyId(selectedCert.credentialId)}
-                            className="inline-flex items-center gap-1 rounded border border-border/70 bg-background px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-[0.96] transition-all"
-                            title="Copy Credential ID"
-                          >
-                            {copiedId ? (
-                              <>
-                                <Check className="size-3 text-emerald-500 stroke-[2.5]" />
-                                <span className="text-emerald-500 font-medium">Copied</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="size-3" />
-                                <span>Copy</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {selectedCert.score && (
-                      <div className="flex items-center justify-between font-mono text-xs border-t border-border/40 pt-2">
-                        <span className="text-muted-foreground">Assessment Score</span>
-                        <span className="font-bold text-foreground tabular-nums">{selectedCert.score}</span>
-                      </div>
                     )}
                   </div>
-
-                  {/* Action Link Button if Available */}
-                  {selectedCert.verificationUrl && (
-                    <div className="flex items-center justify-end pt-1">
-                      <a
-                        href={selectedCert.verificationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm"
-                      >
-                        <span>Verify Credential</span>
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
 
         </div>
       </div>

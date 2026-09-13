@@ -13,9 +13,9 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 
 const Resume = () => {
   usePageMeta({
-    title: 'Resume | Ghufron Ainun Najib — Full-Stack Developer',
+    title: 'Resume | Ghufron Ainun Najib — Software Developer',
     description:
-      'Resume of Ghufron Ainun Najib: full-stack developer experienced with TypeScript, React, Node.js, and shipping production web products.',
+      'Resume of Ghufron Ainun Najib: Computer Engineering student and developer building web and mobile products with Flutter, TypeScript, and Node.js.',
     canonicalPath: '/resume',
   });
 
@@ -61,10 +61,11 @@ const Resume = () => {
 
       <section className="mb-6">
         <p className="text-justify text-gray-900">
-          Full-stack developer and semester-{profile.semester} Computer Engineering student building
-          responsive interfaces, APIs, and practical internal tools. Experienced in leading a
-          five-person project, delivering an organization website and CMS independently, and
-          contributing across Flutter and Next.js in a four-person product team. {profile.availability}.
+          I build web and mobile products and ship them to real users. In the past year I deployed an
+          edge-hosted email service on Cloudflare Workers, worked across a Flutter and Next.js rental
+          marketplace in a team of four, and led five developers building a certification platform for
+          my campus. I like work that crosses boundaries, and I care that what I ship still holds up
+          months after launch.
         </p>
       </section>
 
@@ -79,7 +80,7 @@ const Resume = () => {
       </section>
 
       <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Featured Projects</h2>
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Projects</h2>
         <div className="space-y-4">
           {featuredProjects.map((project) => (
             <article key={project.slug}>
@@ -90,7 +91,13 @@ const Resume = () => {
               <p className="italic text-gray-800">
                 {project.role} | {project.team.label} | {project.visibility === 'private' ? 'Private repository' : 'Public repository'}
               </p>
-              <p className="text-justify text-gray-900">{project.summary}</p>
+              {project.contributions.length > 0 ? (
+                <ul className="ml-5 list-disc text-gray-900">
+                  {project.contributions.map((contribution) => <li key={contribution}>{contribution}</li>)}
+                </ul>
+              ) : (
+                <p className="text-justify text-gray-900">{project.summary}</p>
+              )}
               <p className="text-gray-900"><strong>Technology:</strong> {project.technologies.join(', ')}</p>
               {project.repository && <a className="text-blue-700 underline hover:text-blue-900" href={project.repository}>{project.repository}</a>}
               {project.demo && <a className="block text-blue-700 underline hover:text-blue-900" href={project.demo}>{project.demo}</a>}
@@ -100,7 +107,7 @@ const Resume = () => {
       </section>
 
       <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Organizational Experience</h2>
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Leadership &amp; Organization</h2>
         <div className="space-y-4">
           {organizationExperience.map((experience) => (
             <article key={`${experience.organization}-${experience.role}`}>
@@ -127,19 +134,32 @@ const Resume = () => {
       </section>
 
       <section>
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Verified Credentials &amp; Accreditations</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-gray-900 print:grid-cols-2">
+        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Credentials</h2>
+        <ul className="ml-5 list-disc text-gray-900">
           {certifications.map((certification) => (
-            <div key={certification.title} className="text-[9.5pt] leading-snug">
+            <li key={certification.title} className="mb-1">
               <span className="font-bold">{certification.title}</span>
               <span className="text-gray-700"> · {certification.issuer} </span>
-              <span className="tabular-nums font-mono text-gray-600 font-medium">({certification.year})</span>
+              <span className="tabular-nums font-medium text-gray-600">({certification.year})</span>
               {certification.credentialId && (
-                <div className="font-mono text-[8pt] text-gray-500">ID: {certification.credentialId}</div>
+                <span className="font-mono text-[9.5pt] text-gray-600"> — ID {certification.credentialId}</span>
               )}
-            </div>
+              {certification.score && (
+                <span className="font-medium text-gray-600"> — {certification.score}</span>
+              )}
+              {certification.isVerifiedTransaction && certification.verificationUrl && (
+                <a
+                  href={certification.verificationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 text-blue-700 underline hover:text-blue-900"
+                >
+                  verify
+                </a>
+              )}
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
     </main>
 
