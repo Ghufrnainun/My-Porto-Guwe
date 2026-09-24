@@ -1,0 +1,22 @@
+{
+  "name": "Ghufron Ainun Najib — Full-Stack Developer",
+  "short_name": "Ghufron",
+  "description": "Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

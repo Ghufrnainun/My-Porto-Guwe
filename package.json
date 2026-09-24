@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "node scripts/generate-sitemap.mjs && tsc && vite build",
+        "build": "node scripts/generate-sitemap.mjs && tsc && vite build && node scripts/prerender.mjs",
         "build:assets": "node scripts/build-brand-assets.mjs",
         "preview": "vite preview",
         "build:dev": "vite build --mode development",

@@ -205,19 +205,43 @@ export default function ProjectCaseStudy() {
     canonicalPath: project ? `/projects/${project.slug}` : '/projects',
     ogImage: project?.image ?? undefined,
     jsonLd: project
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'CreativeWork',
-          name: project.title,
-          description: project.summary,
-          url: `https://ghufronainun.tech/projects/${project.slug}`,
-          image: project.image ?? undefined,
-          author: {
-            '@type': 'Person',
-            name: 'Ghufron Ainun Najib',
-            url: 'https://ghufronainun.tech',
+      ? [
+          {
+            '@type': 'CreativeWork',
+            name: project.title,
+            description: project.summary,
+            url: `https://ghufronainun.tech/projects/${project.slug}`,
+            image: project.image ?? undefined,
+            author: {
+              '@type': 'Person',
+              name: 'Ghufron Ainun Najib',
+              url: 'https://ghufronainun.tech',
+            },
           },
-        }
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://ghufronainun.tech/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Projects',
+                item: 'https://ghufronainun.tech/projects',
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: project.title,
+                item: `https://ghufronainun.tech/projects/${project.slug}`,
+              },
+            ],
+          },
+        ]
       : undefined,
   });
 

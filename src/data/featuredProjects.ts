@@ -95,8 +95,8 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['Flutter', 'Next.js 16', 'TypeScript 5', 'Firebase', 'Midtrans'],
     color: '#14b8a6',
-    image: '/sewainaja.png',
-    gallery: ['/sewainaja.png'],
+    image: '/sewainaja.webp',
+    gallery: ['/sewainaja.webp'],
     repository: 'https://github.com/sewainaja-pbl',
   },
   {
@@ -144,8 +144,8 @@ export const featuredProjects: PortfolioProject[] = [
       'Centralized routine website updates in a dedicated CMS.',
     ],
     technologies: ['Laravel', 'MySQL', 'Tailwind CSS'],
-    image: '/impp-screenshot.png',
-    gallery: ['/impp-screenshot.png'],
+    image: '/impp-screenshot.webp',
+    gallery: ['/impp-screenshot.webp'],
     color: '#38bdf8',
   },
 ];
