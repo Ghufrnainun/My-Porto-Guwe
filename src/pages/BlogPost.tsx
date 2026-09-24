@@ -22,21 +22,45 @@ export default function BlogPost() {
     ogType: 'article',
     ogImage: post?.featured_image ?? undefined,
     jsonLd: post
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'BlogPosting',
-          headline: post.title,
-          description: post.excerpt ?? undefined,
-          url: `https://ghufronainun.tech/blog/${post.slug}`,
-          image: post.featured_image ?? undefined,
-          datePublished: post.published_at ?? post.created_at,
-          dateModified: post.updated_at,
-          author: {
-            '@type': 'Person',
-            name: 'Ghufron Ainun Najib',
-            url: 'https://ghufronainun.tech',
+      ? [
+          {
+            '@type': 'BlogPosting',
+            headline: post.title,
+            description: post.excerpt ?? undefined,
+            url: `https://ghufronainun.tech/blog/${post.slug}`,
+            image: post.featured_image ?? undefined,
+            datePublished: post.published_at ?? post.created_at,
+            dateModified: post.updated_at,
+            author: {
+              '@type': 'Person',
+              name: 'Ghufron Ainun Najib',
+              url: 'https://ghufronainun.tech',
+            },
           },
-        }
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://ghufronainun.tech/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Blog',
+                item: 'https://ghufronainun.tech/blog',
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: post.title,
+                item: `https://ghufronainun.tech/blog/${post.slug}`,
+              },
+            ],
+          },
+        ]
       : undefined,
   });
 

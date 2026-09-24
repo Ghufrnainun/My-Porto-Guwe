@@ -65,9 +65,19 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
         className="relative z-10 w-full flex-1 flex flex-col items-center justify-center will-change-[transform,opacity,filter]"
       >
         <div className="relative text-center flex flex-col items-center justify-center max-w-full select-none">
-          {/* Top Word */}
-          <div className="relative z-0 -mb-4 md:-mb-8 lg:-mb-12">
-            <motion.h1
+          {/* Full name — single h1 for SEO; spans keep the split-size visual */}
+          <motion.h1
+            initial={initialMotion}
+            animate={currentMotion}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.9,
+              delay: shouldReduceMotion ? 0 : 0.08,
+              ease: easeExpo,
+            }}
+            className="w-full font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow will-change-[transform,opacity,filter]"
+          >
+            <motion.span
+              className="block whitespace-nowrap"
               initial={initialMotion}
               animate={currentMotion}
               transition={{
@@ -75,15 +85,11 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
                 delay: shouldReduceMotion ? 0 : 0.08,
                 ease: easeExpo,
               }}
-              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap will-change-[transform,opacity,filter]"
             >
               GHUFRON
-            </motion.h1>
-          </div>
-
-          {/* Bottom Word */}
-          <div className="relative z-0">
-            <motion.h1
+            </motion.span>
+            <motion.span
+              className="block whitespace-nowrap -mt-4 md:-mt-8 lg:-mt-12"
               initial={initialMotion}
               animate={currentMotion}
               transition={{
@@ -91,15 +97,11 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
                 delay: shouldReduceMotion ? 0 : 0.24,
                 ease: easeExpo,
               }}
-              className="font-sans text-[17vw] sm:text-[16vw] md:text-[15vw] lg:text-[14vw] leading-none tracking-tighter text-foreground font-black uppercase footer-text-glow whitespace-nowrap will-change-[transform,opacity,filter]"
             >
               AINUN
-            </motion.h1>
-          </div>
-
-          {/* Third Word (Accent) */}
-          <div className="relative z-0 mt-0 md:-mt-2 w-full flex justify-end px-2 md:px-12 lg:px-24">
-            <motion.h2
+            </motion.span>
+            <motion.span
+              className="block text-right whitespace-nowrap text-[4.5vw] md:text-[3vw] lg:text-[2.2vw] leading-none tracking-[0.4em] text-foreground/40 font-bold uppercase px-2 md:px-12 lg:px-24 md:-mt-2"
               initial={initialAccent}
               animate={currentAccent}
               transition={{
@@ -107,11 +109,10 @@ export function Hero({ backgroundVariant = 'current' }: HeroProps) {
                 delay: shouldReduceMotion ? 0 : 0.4,
                 ease: easeExpo,
               }}
-              className="font-sans text-[4.5vw] md:text-[3vw] lg:text-[2.2vw] leading-none tracking-[0.4em] text-foreground/40 font-bold uppercase whitespace-nowrap will-change-[transform,opacity]"
             >
               NAJIB
-            </motion.h2>
-          </div>
+            </motion.span>
+          </motion.h1>
         </div>
 
         {/* ── Tagline (Bottom) ───────────────────────────────────────────── */}

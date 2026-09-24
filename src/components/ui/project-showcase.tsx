@@ -30,7 +30,7 @@ export const defaultProjects: Project[] = [
     description: "Rental platform spanning a Flutter mobile experience and a Next.js 16 admin surface with Firebase & Midtrans.",
     year: "2026",
     link: "/projects/sewainaja",
-    image: "/sewainaja.png",
+    image: "/sewainaja.webp",
     tags: ["Flutter", "Next.js 16", "Midtrans"],
   },
   {
@@ -46,7 +46,7 @@ export const defaultProjects: Project[] = [
     description: "Official student organization platform with content management, dynamic event publishing, and community engagement.",
     year: "2025",
     link: "/projects/impp-website",
-    image: "/impp-screenshot.png",
+    image: "/impp-screenshot.webp",
     tags: ["Content CMS", "Event Publishing", "Community"],
   },
 ]

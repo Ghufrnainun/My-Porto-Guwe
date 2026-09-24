@@ -47,6 +47,27 @@ function upsertCanonical(href: string) {
 
 const JSON_LD_ID = 'page-jsonld';
 
+// SSR/static-prerender capture: pages call usePageMeta during render; in the
+// browser the effect writes to <head>, but on the server there is no document,
+// so record the meta in a store and let scripts/prerender.mjs inject it into
+// the static HTML instead.
+let capturedMeta: PageMeta | null = null;
+
+export function clearCapturedMeta() {
+  capturedMeta = null;
+}
+
+export function getCapturedMeta() {
+  return capturedMeta ? { ...capturedMeta } : null;
+}
+
+function recordMeta(meta: PageMeta) {
+  capturedMeta = {
+    ...meta,
+    jsonLd: meta.jsonLd ? JSON.parse(JSON.stringify(meta.jsonLd)) : undefined,
+  };
+}
+
 function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[]) {
   let el = document.getElementById(JSON_LD_ID) as HTMLScriptElement | null;
   if (!el) {
@@ -55,7 +76,12 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
     el.type = 'application/ld+json';
     document.head.appendChild(el);
   }
-  el.textContent = JSON.stringify(Array.isArray(data) ? data : [data]);
+  // Wrap in @graph so a bare node array stays valid JSON-LD.
+  const items = Array.isArray(data) ? data : [data];
+  el.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': items,
+  });
 }
 
 /**
@@ -64,6 +90,12 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
  * directive and JSON-LD structured data without a full page reload.
  */
 export function usePageMeta(meta: PageMeta) {
+  // During server-side rendering there is no document; record so the
+  // prerender script can inject the meta into static HTML.
+  if (typeof document === 'undefined') {
+    recordMeta(meta);
+  }
+
   // Serialize so effect re-runs when jsonLd contents change (e.g. async post load)
   const jsonLdKey = meta.jsonLd ? JSON.stringify(meta.jsonLd) : '';
 

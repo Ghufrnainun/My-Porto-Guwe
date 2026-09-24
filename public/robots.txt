@@ -2,6 +2,13 @@
 User-agent: *
 Allow: /
 
+# Test, preview, and private routes — keep out of the index
+Disallow: /admin
+Disallow: /auth
+Disallow: /test-animate
+Disallow: /mascot
+Disallow: /preview-hero
+Disallow: /preview-preloader-boot
+
 # Canonical host + sitemap
-Host: ghufronainun.tech
 Sitemap: https://ghufronainun.tech/sitemap.xml
