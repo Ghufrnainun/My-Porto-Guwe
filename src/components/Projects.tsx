@@ -47,7 +47,7 @@ export function Projects({ className = '' }: { className?: string }) {
                 Activity & Open Source
               </h2>
               <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-xl">
-                A year of active building on GitHub visualized as an interactive 2D heat map and 3D isometric skyline.
+                A year of active building on GitHub visualized as an interactive heat map and procedural 3D Git City skyline.
               </p>
             </div>
 

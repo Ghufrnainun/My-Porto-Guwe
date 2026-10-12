@@ -286,6 +286,8 @@ export interface ContributionSkylineProps {
   showStats?: boolean;
   showLegend?: boolean;
   showToggle?: boolean;
+  /** Procedural Git City building facades with floors, illuminated windows, and rooftop spires. Default: true. */
+  cityMode?: boolean;
   /** Replaces the hint under the chart. `null` renders none. */
   footer?: React.ReactNode;
   locale?: string;
@@ -297,6 +299,8 @@ export interface ContributionSkylineProps {
 
 const FG_FALLBACK: RGB = [23, 23, 23];
 const BG_FALLBACK: RGB = [255, 255, 255];
+const DARK_FG: RGB = [240, 240, 240];
+const DARK_BG: RGB = [20, 18, 16];
 
 // Any CSS colour → sRGB, by letting the browser paint it. Handles oklch, color-mix, names…
 let probe: CanvasRenderingContext2D | null = null;
@@ -313,7 +317,7 @@ const toRGB = (color: string, fallback: RGB | null): RGB | null => {
   probe.fillRect(0, 0, 1, 1);
   const d = probe.getImageData(0, 0, 1, 1).data;
   if (d[3] < 8) return fallback;
-  return [d[0], d[1], d[2]];
+  return [d[0], d[1], d[2]] as RGB;
 };
 
 const rgbString = (r: number, g: number, b: number) => "rgb(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + ")";
@@ -364,6 +368,12 @@ const CubeIcon = () => (
   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" style={{ maxWidth: "none" }}>
     <path d="M8 1.2 14.2 4.6v6.8L8 14.8 1.8 11.4V4.6Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
     <path d="M1.8 4.6 8 8l6.2-3.4M8 8v6.8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+  </svg>
+);
+
+const BuildingIcon = () => (
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" style={{ maxWidth: "none" }}>
+    <path d="M2 14.5h12M3.5 14.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v11M6 5.5h1M9 5.5h1M6 8.5h1M9 8.5h1M6 11.5h1M9 11.5h1" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -437,11 +447,30 @@ function Stat({
   );
 }
 
+const useIsDarkMode = () => {
+  const [isDark, setIsDark] = React.useState(() =>
+    typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : false,
+  );
+  React.useEffect(() => {
+    if (typeof document === "undefined") return;
+    const check = () => {
+      const dark = document.documentElement.classList.contains("dark");
+      setIsDark((prev) => (prev !== dark ? dark : prev));
+    };
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
+  }, []);
+  return isDark;
+};
+
 export function ContributionSkyline({
   data,
   endDate,
   view: viewProp,
   defaultView = "3d",
+  cityMode: cityModeProp = true,
   onViewChange,
   palette = "github",
   title,
@@ -476,9 +505,13 @@ export function ContributionSkyline({
     onViewChange?.(v);
   };
 
+  const [cityMode, setCityMode] = React.useState<boolean>(cityModeProp);
+
+  const isDark = useIsDarkMode();
+
   const [theme, setTheme] = React.useState<{ dark: boolean; swatches: string[]; accent: string }>(() => {
-    const p = resolvePalette(palette, false);
-    return { dark: false, swatches: ["#ebedf0", ...p], accent: p[3] };
+    const p = resolvePalette(palette, isDark);
+    return { dark: isDark, swatches: [isDark ? "#161b22" : "#ebedf0", ...p], accent: p[3] };
   });
   const [width, setWidth] = React.useState(0);
   const [active, setActive] = React.useState(-1);
@@ -504,8 +537,40 @@ export function ContributionSkyline({
   };
 
   // Everything the render loop reads, refreshed every render so the loop never closes over stale props.
-  const cfg = React.useRef({ model, duration, heightScale, orbit, palette, legendLevel, onCellClick, target: view === "3d" ? 1 : 0, setActive, setWidth, setTheme, setAnnounce, describe });
-  cfg.current = { model, duration, heightScale, orbit, palette, legendLevel, onCellClick, target: view === "3d" ? 1 : 0, setActive, setWidth, setTheme, setAnnounce, describe };
+  const cfg = React.useRef({
+    model,
+    duration,
+    heightScale,
+    orbit,
+    palette,
+    legendLevel,
+    cityMode,
+    onCellClick,
+    target: view === "3d" ? 1 : 0,
+    isDark,
+    setActive,
+    setWidth,
+    setTheme,
+    setAnnounce,
+    describe,
+  });
+  cfg.current = {
+    model,
+    duration,
+    heightScale,
+    orbit,
+    palette,
+    legendLevel,
+    cityMode,
+    onCellClick,
+    target: view === "3d" ? 1 : 0,
+    isDark,
+    setActive,
+    setWidth,
+    setTheme,
+    setAnnounce,
+    describe,
+  };
 
   React.useEffect(() => {
     const root = rootRef.current;
@@ -604,15 +669,24 @@ export function ContributionSkyline({
     };
 
     const retheme = () => {
+      const docDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      const currentDark = docDark || cfg.current.isDark;
       const cs = getComputedStyle(root);
-      fg = toRGB(cs.color, FG_FALLBACK) ?? FG_FALLBACK;
       const b = toRGB(cs.backgroundColor, null);
-      bg = b ?? (luminance(fg) > 0.5 ? [10, 10, 10] : BG_FALLBACK);
-      isDark = luminance(bg) < 0.45;
+      if (currentDark) {
+        bg = b && luminance(b) < 0.45 ? b : DARK_BG;
+        fg = toRGB(cs.color, DARK_FG) ?? DARK_FG;
+        if (luminance(fg) < 0.45) fg = DARK_FG;
+      } else {
+        bg = b && luminance(b) >= 0.45 ? b : BG_FALLBACK;
+        fg = toRGB(cs.color, FG_FALLBACK) ?? FG_FALLBACK;
+        if (luminance(fg) > 0.55) fg = FG_FALLBACK;
+      }
+      isDark = currentDark;
       font = "400 10px " + (cs.fontFamily || "sans-serif");
       const pal = resolvePalette(cfg.current.palette, isDark);
-      const empty = mixRGB(bg, fg, isDark ? 0.11 : 0.075);
-      const all: RGB[] = [empty, ...pal.map((c) => toRGB(c, FG_FALLBACK) ?? FG_FALLBACK)];
+      const empty = mixRGB(bg, fg, isDark ? 0.12 : 0.075);
+      const all: RGB[] = [empty, ...pal.map((c) => toRGB(c, isDark ? DARK_FG : FG_FALLBACK) ?? (isDark ? DARK_FG : FG_FALLBACK))];
       for (let k = 0; k < 5; k++) for (let ch = 0; ch < 3; ch++) colGoal[k * 3 + ch] = all[k][ch];
       if (!colReady || reduced) {
         col.set(colGoal);
@@ -720,6 +794,8 @@ export function ContributionSkyline({
       const ey = col[1];
       const ez = col[2];
 
+      const cityAlpha = cfg.current.cityMode ? Math.max(0, Math.min(1, (e - 0.12) / 0.45)) : 0;
+
       for (let k = 0; k < n; k++) {
         const i = order[k];
         const x0 = wk[i] + off;
@@ -767,22 +843,239 @@ export function ContributionSkyline({
           g += (fg[1] - g) * m;
           bl += (fg[2] - bl) * m;
         }
+        const isBuilding = lv[i] > 0 && z > 0.35;
+
         if (f & 1) {
           ctx.beginPath();
           quadPath(ctx, polys, o + 8, 0);
           ctx.fillStyle = rgbString(r * 0.84, g * 0.84, bl * 0.84);
           ctx.fill();
+
+          // Git City Architecture: +y facade slabs & illuminated windows
+          if (cityAlpha > 0.02 && isBuilding && tall > 7) {
+            const floorH = 0.42;
+            const nFloors = Math.floor(z / floorH);
+            if (nFloors >= 1) {
+              // Floor separator lines
+              ctx.strokeStyle = "rgba(0,0,0," + (0.24 * cityAlpha).toFixed(3) + ")";
+              ctx.lineWidth = 0.75;
+              ctx.beginPath();
+              for (let fl = 1; fl <= nFloors; fl++) {
+                const fz = fl * floorH;
+                ctx.moveTo(px(x0, y1), py(x0, y1, fz));
+                ctx.lineTo(px(x1, y1), py(x1, y1, fz));
+              }
+              ctx.stroke();
+
+              // Window bays
+              if (tall > 12) {
+                const bayInset = 0.12 * w;
+                const bayW = 0.31 * w;
+                const bayGap = 0.14 * w;
+                for (let fl = 0; fl < nFloors; fl++) {
+                  const fz0 = fl * floorH + floorH * 0.22;
+                  const fz1 = fl * floorH + floorH * 0.78;
+                  for (let bay = 0; bay < 2; bay++) {
+                    const bx0 = x0 + (bay === 0 ? bayInset : bayInset + bayW + bayGap);
+                    const bx1 = bx0 + bayW;
+                    const wSeed = (i * 397 + fl * 47 + bay * 19 + 7) % 100;
+                    const threshold = lv[i] === 4 ? 68 : lv[i] === 3 ? 52 : lv[i] === 2 ? 36 : 22;
+                    const isLit = wSeed < threshold;
+
+                    ctx.beginPath();
+                    ctx.moveTo(px(bx0, y1), py(bx0, y1, fz0));
+                    ctx.lineTo(px(bx1, y1), py(bx1, y1, fz0));
+                    ctx.lineTo(px(bx1, y1), py(bx1, y1, fz1));
+                    ctx.lineTo(px(bx0, y1), py(bx0, y1, fz1));
+                    ctx.closePath();
+
+                    if (isLit) {
+                      const tone = wSeed % 3;
+                      ctx.fillStyle =
+                        tone === 0
+                          ? "rgba(254, 240, 138, " + (0.92 * cityAlpha).toFixed(3) + ")"
+                          : tone === 1
+                          ? "rgba(167, 243, 208, " + (0.88 * cityAlpha).toFixed(3) + ")"
+                          : "rgba(255, 255, 242, " + (0.95 * cityAlpha).toFixed(3) + ")";
+                    } else {
+                      ctx.fillStyle = "rgba(4, 24, 14, " + (0.65 * cityAlpha).toFixed(3) + ")";
+                    }
+                    ctx.fill();
+                  }
+                }
+              }
+            }
+          }
         }
+
         if (f & 2) {
           ctx.beginPath();
           quadPath(ctx, polys, o + 16, 0);
           ctx.fillStyle = rgbString(r * 0.68, g * 0.68, bl * 0.68);
           ctx.fill();
+
+          // Git City Architecture: +x facade slabs & illuminated windows
+          if (cityAlpha > 0.02 && isBuilding && tall > 7) {
+            const floorH = 0.42;
+            const nFloors = Math.floor(z / floorH);
+            if (nFloors >= 1) {
+              // Floor separator lines
+              ctx.strokeStyle = "rgba(0,0,0," + (0.28 * cityAlpha).toFixed(3) + ")";
+              ctx.lineWidth = 0.75;
+              ctx.beginPath();
+              for (let fl = 1; fl <= nFloors; fl++) {
+                const fz = fl * floorH;
+                ctx.moveTo(px(x1, y0), py(x1, y0, fz));
+                ctx.lineTo(px(x1, y1), py(x1, y1, fz));
+              }
+              ctx.stroke();
+
+              // Window bays
+              if (tall > 12) {
+                const bayInset = 0.12 * w;
+                const bayW = 0.31 * w;
+                const bayGap = 0.14 * w;
+                for (let fl = 0; fl < nFloors; fl++) {
+                  const fz0 = fl * floorH + floorH * 0.22;
+                  const fz1 = fl * floorH + floorH * 0.78;
+                  for (let bay = 0; bay < 2; bay++) {
+                    const by0 = y0 + (bay === 0 ? bayInset : bayInset + bayW + bayGap);
+                    const by1 = by0 + bayW;
+                    const wSeed = (i * 397 + fl * 47 + bay * 23 + 101) % 100;
+                    const threshold = lv[i] === 4 ? 68 : lv[i] === 3 ? 52 : lv[i] === 2 ? 36 : 22;
+                    const isLit = wSeed < threshold;
+
+                    ctx.beginPath();
+                    ctx.moveTo(px(x1, by0), py(x1, by0, fz0));
+                    ctx.lineTo(px(x1, by1), py(x1, by1, fz0));
+                    ctx.lineTo(px(x1, by1), py(x1, by1, fz1));
+                    ctx.lineTo(px(x1, by0), py(x1, by0, fz1));
+                    ctx.closePath();
+
+                    if (isLit) {
+                      const tone = wSeed % 3;
+                      ctx.fillStyle =
+                        tone === 0
+                          ? "rgba(254, 240, 138, " + (0.92 * cityAlpha).toFixed(3) + ")"
+                          : tone === 1
+                          ? "rgba(167, 243, 208, " + (0.88 * cityAlpha).toFixed(3) + ")"
+                          : "rgba(255, 255, 242, " + (0.95 * cityAlpha).toFixed(3) + ")";
+                    } else {
+                      ctx.fillStyle = "rgba(4, 20, 12, " + (0.75 * cityAlpha).toFixed(3) + ")";
+                    }
+                    ctx.fill();
+                  }
+                }
+              }
+            }
+          }
         }
+
         ctx.beginPath();
         quadPath(ctx, polys, o, radius);
         ctx.fillStyle = rgbString(r, g, bl);
         ctx.fill();
+
+        // Git City Architecture: Rooftop terrace, mechanical penthouse, and skyscraper spires
+        if (cityAlpha > 0.02 && isBuilding) {
+          // 1. Recessed Rooftop Terrace Parapet
+          const pinset = 0.11 * w;
+          const rx0 = x0 + pinset;
+          const ry0 = y0 + pinset;
+          const rx1 = x1 - pinset;
+          const ry1 = y1 - pinset;
+          ctx.beginPath();
+          ctx.moveTo(px(rx0, ry0), py(rx0, ry0, z));
+          ctx.lineTo(px(rx1, ry0), py(rx1, ry0, z));
+          ctx.lineTo(px(rx1, ry1), py(rx1, ry1, z));
+          ctx.lineTo(px(rx0, ry1), py(rx0, ry1, z));
+          ctx.closePath();
+          ctx.fillStyle = "rgba(0, 0, 0, " + (0.16 * cityAlpha).toFixed(3) + ")";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, " + (0.16 * cityAlpha).toFixed(3) + ")";
+          ctx.lineWidth = 0.75;
+          ctx.stroke();
+
+          // 2. Rooftop Mechanical Penthouse (medium skyscrapers: z > 1.2 && z <= 2.8)
+          if (z > 1.2 && z <= 2.8) {
+            const mx0 = x0 + w * 0.32;
+            const my0 = y0 + w * 0.32;
+            const mx1 = x0 + w * 0.68;
+            const my1 = y0 + w * 0.68;
+            const mz = z + 0.18;
+
+            ctx.beginPath();
+            ctx.moveTo(px(mx0, my0), py(mx0, my0, mz));
+            ctx.lineTo(px(mx1, my0), py(mx1, my0, mz));
+            ctx.lineTo(px(mx1, my1), py(mx1, my1, mz));
+            ctx.lineTo(px(mx0, my1), py(mx0, my1, mz));
+            ctx.closePath();
+            ctx.fillStyle = rgbString(r * 0.92, g * 0.92, bl * 0.92);
+            ctx.fill();
+
+            if (f & 1) {
+              ctx.beginPath();
+              ctx.moveTo(px(mx0, my1), py(mx0, my1, z));
+              ctx.lineTo(px(mx1, my1), py(mx1, my1, z));
+              ctx.lineTo(px(mx1, my1), py(mx1, my1, mz));
+              ctx.lineTo(px(mx0, my1), py(mx0, my1, mz));
+              ctx.closePath();
+              ctx.fillStyle = rgbString(r * 0.78, g * 0.78, bl * 0.78);
+              ctx.fill();
+            }
+
+            if (f & 2) {
+              ctx.beginPath();
+              ctx.moveTo(px(mx1, my0), py(mx1, my0, z));
+              ctx.lineTo(px(mx1, my1), py(mx1, my1, z));
+              ctx.lineTo(px(mx1, my1), py(mx1, my1, mz));
+              ctx.lineTo(px(mx1, my0), py(mx1, my0, mz));
+              ctx.closePath();
+              ctx.fillStyle = rgbString(r * 0.62, g * 0.62, bl * 0.62);
+              ctx.fill();
+            }
+          }
+
+          // 3. Landmark Skyscraper Antenna Spire with Aviation Warning Beacon (z > 2.8 or lv[i] === 4 and z > 2.2)
+          if (z > 2.8 || (lv[i] === 4 && z > 2.2)) {
+            const cx = (x0 + x1) / 2;
+            const cy = (y0 + y1) / 2;
+            const spireH = 0.52 + ((i % 5) * 0.08);
+            const spBaseX = px(cx, cy);
+            const spBaseY = py(cx, cy, z);
+            const spTopX = px(cx, cy);
+            const spTopY = py(cx, cy, z + spireH);
+
+            // Spire needle
+            ctx.beginPath();
+            ctx.moveTo(spBaseX, spBaseY);
+            ctx.lineTo(spTopX, spTopY);
+            ctx.strokeStyle = "rgba(226, 232, 240, " + (0.95 * cityAlpha).toFixed(3) + ")";
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+
+            // Aviation Beacon (Ruby red safety light atop megatowers)
+            const beaconR = 1.6;
+            ctx.beginPath();
+            ctx.arc(spTopX, spTopY, beaconR + 1.2, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(239, 68, 68, " + (0.35 * cityAlpha).toFixed(3) + ")";
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(spTopX, spTopY, beaconR, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(254, 202, 202, " + (0.95 * cityAlpha).toFixed(3) + ")";
+            ctx.fill();
+          }
+        }
+
+        // Git City Architecture: Ground streets / plaza grid lines on empty days
+        if (cityAlpha > 0.02 && lv[i] === 0) {
+          ctx.strokeStyle = "rgba(" + fg[0] + "," + fg[1] + "," + fg[2] + "," + (0.045 * cityAlpha).toFixed(3) + ")";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          quadPath(ctx, polys, o, radius);
+          ctx.stroke();
+        }
         if (outline > 0.004) {
           ctx.strokeStyle = "rgba(" + fg[0] + "," + fg[1] + "," + fg[2] + "," + outline.toFixed(3) + ")";
           ctx.lineWidth = 1;
@@ -863,7 +1156,7 @@ export function ContributionSkyline({
         elev = elevGoal;
       }
 
-      const kc = reduced ? 1 : 1 - Math.exp(-dt * 7);
+      const kc = reduced ? 1 : 1 - Math.exp(-dt * 18);
       for (let k = 0; k < 15; k++) {
         const d = colGoal[k] - col[k];
         if (Math.abs(d) > 0.4) {
@@ -1079,7 +1372,12 @@ export function ContributionSkyline({
     });
     ro.observe(stage);
 
-    const mo = new MutationObserver(retheme);
+    const mo = new MutationObserver(() => {
+      retheme();
+      setTimeout(retheme, 40);
+      setTimeout(retheme, 160);
+      setTimeout(retheme, 320);
+    });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style", "data-theme"] });
     const onReduce = () => {
       reduced = reduceMq.matches;
@@ -1136,7 +1434,7 @@ export function ContributionSkyline({
 
   React.useEffect(() => {
     engine.current?.kick();
-  }, [view, legendLevel]);
+  }, [view, legendLevel, cityMode]);
 
   React.useEffect(() => {
     engine.current?.load();
@@ -1144,7 +1442,15 @@ export function ContributionSkyline({
 
   React.useEffect(() => {
     engine.current?.retheme();
-  }, [palette]);
+    const t1 = setTimeout(() => engine.current?.retheme(), 40);
+    const t2 = setTimeout(() => engine.current?.retheme(), 160);
+    const t3 = setTimeout(() => engine.current?.retheme(), 320);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [palette, isDark]);
 
   // The tooltip's width is needed to keep it inside the card; measure it when its text changes.
   React.useLayoutEffect(() => {
@@ -1171,7 +1477,10 @@ export function ContributionSkyline({
   const ease = "cubic-bezier(0.65, 0, 0.35, 1)";
   const levelNames = ["No " + plural, "Light", "Moderate", "Heavy", "Heaviest"];
 
-  const hints = ["Hover a day for details · arrow keys to explore", "Drag to orbit · double-click to reset"];
+  const hints = [
+    "Hover a day for details · arrow keys to explore",
+    cityMode ? "🏙️ Git City view · Drag to orbit · double-click to reset" : "Drag to orbit · double-click to reset",
+  ];
   const hint = hints[is3d && orbit ? 1 : 0];
 
   return (
@@ -1193,41 +1502,69 @@ export function ContributionSkyline({
             </>
           )}
         </h3>
-        {showToggle && (
-          <div
-            role="group"
-            aria-label="Chart view"
-            className="relative inline-flex rounded-lg border p-0.5 bg-muted/40"
-            style={{ borderColor: "hsl(var(--border) / 0.7)" }}
+        <div className="flex items-center gap-2">
+          {/* Git City Mode button */}
+          <button
+            type="button"
+            aria-pressed={cityMode}
+            aria-label="Toggle Git City architectural buildings"
+            title={cityMode ? "Git City: Architectural Buildings active" : "Git City: Minimal Bars active"}
+            onClick={() => {
+              const next = !cityMode;
+              setCityMode(next);
+              if (next && !is3d) setView("3d");
+            }}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all duration-300 focus-visible:outline-2 ${
+              cityMode && is3d
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            }`}
           >
+            <BuildingIcon />
+            <span className="hidden xs:inline sm:inline">Git City</span>
             <span
-              aria-hidden="true"
-              className="absolute top-0.5 bottom-0.5 left-0.5 w-8 rounded-md transition-transform duration-500 motion-reduce:transition-none"
-              style={{
-                background: "hsl(var(--foreground))",
-                transform: is3d ? "translateX(100%)" : "translateX(0)",
-                transitionTimingFunction: ease,
-              }}
+              className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                cityMode && is3d ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" : "bg-muted-foreground/40"
+              }`}
             />
-            {(["2d", "3d"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={view === v}
-                aria-label={v === "2d" ? "Flat heat map" : "3D skyline"}
-                title={v === "2d" ? "Flat heat map" : "3D skyline"}
-                onClick={() => setView(v)}
-                className="relative z-10 grid h-7 w-8 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 transition-colors duration-500 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          </button>
+
+          {showToggle && (
+            <div
+              role="group"
+              aria-label="Chart view"
+              className="relative inline-flex rounded-lg border p-0.5 bg-muted/40"
+              style={{ borderColor: "hsl(var(--border) / 0.7)" }}
+            >
+              <span
+                aria-hidden="true"
+                className="absolute top-0.5 bottom-0.5 left-0.5 w-8 rounded-md transition-transform duration-500 motion-reduce:transition-none"
                 style={{
-                  color: view === v ? "hsl(var(--background))" : "hsl(var(--muted-foreground))",
-                  outlineColor: "hsl(var(--foreground))",
+                  background: "hsl(var(--foreground))",
+                  transform: is3d ? "translateX(100%)" : "translateX(0)",
+                  transitionTimingFunction: ease,
                 }}
-              >
-                {v === "2d" ? <GridIcon /> : <CubeIcon />}
-              </button>
-            ))}
-          </div>
-        )}
+              />
+              {(["2d", "3d"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  aria-label={v === "2d" ? "Flat heat map" : "3D skyline"}
+                  title={v === "2d" ? "Flat heat map" : "3D skyline"}
+                  onClick={() => setView(v)}
+                  className="relative z-10 grid h-7 w-8 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 transition-colors duration-500 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                  style={{
+                    color: view === v ? "hsl(var(--background))" : "hsl(var(--muted-foreground))",
+                    outlineColor: "hsl(var(--foreground))",
+                  }}
+                >
+                  {v === "2d" ? <GridIcon /> : <CubeIcon />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="relative rounded-xl border bg-background/50 overflow-hidden" style={{ borderColor: "hsl(var(--border) / 0.6)" }}>
