@@ -67,7 +67,7 @@ export function Header() {
         className="fixed top-6 inset-x-6 mx-auto max-w-4xl z-50 hidden md:flex h-14 items-center justify-between glass-pill px-6 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.25)]"
         initial={{ y: -100, opacity: 0 }}
         animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
-        transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Left Side: Logo */}
         <Link
@@ -87,7 +87,7 @@ export function Header() {
                 key={link.href}
                 to={link.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative px-4 py-2 text-xs font-semibold tracking-tight transition-colors duration-300 ${
+                className={`relative px-4 py-2 text-xs font-semibold tracking-tight transition-colors duration-150 ease-out ${
                   isActive ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -108,7 +108,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             to="/resume"
-            className="glass-pill text-foreground text-xs font-semibold px-4 py-2 min-h-[36px] inline-flex items-center justify-center rounded-full transition-all hover:scale-105 active:scale-[0.96] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="glass-pill text-foreground text-xs font-semibold px-4 py-2 min-h-[36px] inline-flex items-center justify-center rounded-full transition-[transform,background-color,border-color,box-shadow] duration-150 ease-out hover:scale-105 active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Resume
           </Link>
@@ -123,7 +123,7 @@ export function Header() {
           className="fixed top-4 inset-x-4 z-50 md:hidden h-14 glass-pill rounded-full px-5 flex items-center justify-between shadow-lg"
           initial={{ y: -100, opacity: 0 }}
           animate={isVisible ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <Link
             to="/"
@@ -133,7 +133,7 @@ export function Header() {
           </Link>
           <SheetTrigger asChild>
             <button
-              className="group flex items-center justify-center w-11 h-11 text-foreground rounded-full hover:bg-secondary/80 active:scale-[0.92] transition-transform duration-150 cursor-pointer"
+              className="group flex items-center justify-center w-11 h-11 text-foreground rounded-full hover:bg-secondary/80 active:scale-[0.96] transition-transform duration-150 ease-out cursor-pointer"
               aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
               <MorphIcon
@@ -160,7 +160,7 @@ export function Header() {
                 const isActive = isPathActive(location.pathname, link.href);
 
                 return (
-                  <motion.div key={link.href} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div key={link.href} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
                     <SheetClose asChild>
                       <Link
                         to={link.href}
@@ -220,7 +220,7 @@ export function Header() {
               <SheetClose asChild>
                 <Link
                   to="/resume"
-                  className="glass-pill text-foreground text-sm font-semibold px-8 py-3 rounded-full transition-[transform,background-color,border-color] duration-200 ease-out hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="glass-pill text-foreground text-sm font-semibold px-8 py-3 rounded-full transition-[transform,background-color,border-color] duration-150 ease-out hover:scale-105 active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   View Resume
                 </Link>

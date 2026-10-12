@@ -218,7 +218,7 @@ export function Skills() {
               Tech Stack
             </motion.p>
             <MaskedHeading
-              as="h3"
+              as="h2"
               text="Tools I keep reaching for."
               className="mb-6 font-serif text-5xl font-bold leading-[1.05] text-foreground md:text-6xl"
               viewportMargin="-50px"

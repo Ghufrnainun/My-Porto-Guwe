@@ -17,6 +17,19 @@ const Resume = () => {
     description:
       'Resume of Ghufron Ainun Najib: Computer Engineering student and developer building web and mobile products with Flutter, TypeScript, and Node.js.',
     canonicalPath: '/resume',
+    jsonLd: {
+      '@type': 'ProfilePage',
+      name: 'Resume — Ghufron Ainun Najib',
+      url: 'https://ghufronainun.tech/resume',
+      description:
+        'Resume of Ghufron Ainun Najib: Computer Engineering student and developer building web and mobile products with Flutter, TypeScript, and Node.js.',
+      mainEntity: {
+        '@type': 'Person',
+        name: 'Ghufron Ainun Najib',
+        url: 'https://ghufronainun.tech',
+        jobTitle: 'Software Developer',
+      },
+    },
   });
 
   return (
@@ -25,7 +38,7 @@ const Resume = () => {
       <Button
         variant="ghost"
         size="sm"
-        className="w-full min-h-[44px] sm:min-h-9 gap-2 text-zinc-800 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white active:scale-[0.96] transition-all sm:w-auto"
+        className="w-full min-h-[44px] sm:min-h-9 gap-2 text-zinc-800 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white active:scale-[0.97] transition-[background-color,color,transform] duration-150 ease-out sm:w-auto"
         asChild
       >
         <Link to="/">
@@ -35,7 +48,7 @@ const Resume = () => {
       </Button>
       <Button
         onClick={() => window.print()}
-        className="w-full min-h-[44px] sm:min-h-9 gap-2 active:scale-[0.96] transition-transform sm:w-auto"
+        className="w-full min-h-[44px] sm:min-h-9 gap-2 active:scale-[0.97] transition-[box-shadow,transform] duration-150 ease-out sm:w-auto"
       >
         <Printer className="size-4" />
         Print / Save as PDF

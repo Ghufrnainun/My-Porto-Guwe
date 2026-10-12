@@ -103,7 +103,7 @@ function OrgExpItem({
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       className={cn(
-        'group relative rounded-xl p-4 sm:p-5 transition-all duration-200 cursor-default border',
+        'group relative rounded-xl p-4 sm:p-5 transition-[background-color,border-color,box-shadow] duration-200 ease-out cursor-default border',
         isCurrentHovered
           ? 'bg-secondary/35 dark:bg-white/[0.04] border-border/70 dark:border-white/12 shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
           : 'border-transparent hover:bg-secondary/20 hover:border-border/40'
@@ -117,7 +117,7 @@ function OrgExpItem({
           animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.6, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 22 }}
           className={cn(
-            'size-3 rounded-full border-2 border-background transition-all duration-200',
+            'size-3 rounded-full border-2 border-background transition-[background-color,transform,box-shadow] duration-200 ease-out',
             isCurrentHovered
               ? 'bg-primary scale-125 ring-4 ring-primary/25 shadow-[0_0_10px_rgba(235,94,40,0.6)]'
               : 'bg-muted-foreground/45 group-hover:bg-primary/80'
@@ -282,7 +282,7 @@ export function Education() {
               initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }}
               animate={ch1InView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.65, ease: easeExpo }}
-              className="group relative rounded-2xl border border-border/80 bg-card/60 p-6 sm:p-8 backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:bg-card/85 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:bg-white/[0.02] dark:hover:bg-white/[0.04]"
+              className="group relative rounded-2xl border border-border/80 bg-card/60 p-6 sm:p-8 backdrop-blur-sm transition-[border-color,background-color,box-shadow] duration-250 ease-out hover:border-primary/40 hover:bg-card/85 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:bg-white/[0.02] dark:hover:bg-white/[0.04]"
             >
               <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                 <motion.div
@@ -352,7 +352,7 @@ export function Education() {
                         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                         animate={ch1InView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.4, delay: 0.42 + i * 0.06, ease: easeExpo }}
-                        className="inline-flex items-center rounded-lg border border-border/60 bg-secondary/60 px-3 py-1 font-mono text-xs text-foreground/85 transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+                        className="inline-flex items-center rounded-lg border border-border/60 bg-secondary/60 px-3 py-1 font-mono text-xs text-foreground/85 transition-[background-color,border-color,transform] duration-150 ease-out hover:-translate-y-0.5 active:scale-[0.97] hover:border-primary/40 hover:bg-secondary hover:text-foreground"
                       >
                         {area}
                       </motion.span>

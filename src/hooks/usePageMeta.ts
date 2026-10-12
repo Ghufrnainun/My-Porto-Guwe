@@ -47,6 +47,27 @@ function upsertCanonical(href: string) {
 
 const JSON_LD_ID = 'page-jsonld';
 
+// SSR/static-prerender capture: pages call usePageMeta during render; in the
+// browser the effect writes to <head>, but on the server there is no document,
+// so record the meta in a store and let scripts/prerender.mjs inject it into
+// the static HTML instead.
+let capturedMeta: PageMeta | null = null;
+
+export function clearCapturedMeta() {
+  capturedMeta = null;
+}
+
+export function getCapturedMeta() {
+  return capturedMeta ? { ...capturedMeta } : null;
+}
+
+function recordMeta(meta: PageMeta) {
+  capturedMeta = {
+    ...meta,
+    jsonLd: meta.jsonLd ? JSON.parse(JSON.stringify(meta.jsonLd)) : undefined,
+  };
+}
+
 function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[]) {
   let el = document.getElementById(JSON_LD_ID) as HTMLScriptElement | null;
   if (!el) {
@@ -55,7 +76,19 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
     el.type = 'application/ld+json';
     document.head.appendChild(el);
   }
-  el.textContent = JSON.stringify(Array.isArray(data) ? data : [data]);
+  // Strip duplicate inner @context if an item already has one before wrapping in @graph
+  const rawItems = Array.isArray(data) ? data : [data];
+  const items = rawItems.map((item) => {
+    if (item && typeof item === 'object' && '@context' in item) {
+      const { '@context': _, ...rest } = item as Record<string, unknown>;
+      return rest;
+    }
+    return item;
+  });
+  el.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': items,
+  });
 }
 
 /**
@@ -64,6 +97,12 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
  * directive and JSON-LD structured data without a full page reload.
  */
 export function usePageMeta(meta: PageMeta) {
+  // During server-side rendering there is no document; record so the
+  // prerender script can inject the meta into static HTML.
+  if (typeof document === 'undefined') {
+    recordMeta(meta);
+  }
+
   // Serialize so effect re-runs when jsonLd contents change (e.g. async post load)
   const jsonLdKey = meta.jsonLd ? JSON.stringify(meta.jsonLd) : '';
 
@@ -71,7 +110,9 @@ export function usePageMeta(meta: PageMeta) {
     const path = meta.canonicalPath ?? window.location.pathname;
     const url = `${SITE_URL}${path}`;
     const description = meta.description ?? '';
-    const image = meta.ogImage ?? DEFAULT_OG_IMAGE;
+    const image = meta.ogImage
+      ? (/^https?:\/\//.test(meta.ogImage) ? meta.ogImage : `${SITE_URL}${meta.ogImage}`)
+      : DEFAULT_OG_IMAGE;
 
     document.title = meta.title;
     upsertMeta('name', 'title', meta.title);
@@ -96,6 +137,7 @@ export function usePageMeta(meta: PageMeta) {
     upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertMeta('name', 'twitter:url', url);
     upsertMeta('name', 'twitter:title', meta.title);
+    upsertMeta('name', 'twitter:creator', '@ghufronainun');
     if (description) upsertMeta('name', 'twitter:description', description);
     else removeMeta('name', 'twitter:description');
     upsertMeta('name', 'twitter:image', image);

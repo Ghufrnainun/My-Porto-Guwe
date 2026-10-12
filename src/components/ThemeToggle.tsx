@@ -126,7 +126,7 @@ export function ThemeToggle({
         variant="ghost"
         size="icon"
         onClick={toggleTheme}
-        className="relative h-9 w-9 rounded-full overflow-hidden hover:bg-secondary/80 active:scale-[0.92] transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center cursor-pointer"
+        className="relative h-9 w-9 rounded-full overflow-hidden hover:bg-secondary/80 active:scale-[0.96] transition-[transform,background-color] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-primary flex items-center justify-center cursor-pointer"
         aria-label="Toggle theme"
         title="Toggle Light/Dark Theme (Morph Icon + Spring Physics)"
       >

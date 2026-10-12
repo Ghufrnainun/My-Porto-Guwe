@@ -29,12 +29,12 @@ export function ProjectsPreview() {
 
           <Link
             to="/projects"
-            className="group inline-flex min-h-[44px] items-center gap-2 px-3 -mr-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground transition-colors duration-200 ease-out hover:text-primary active:scale-[0.96]"
+            className="group inline-flex min-h-[44px] items-center gap-2 px-3 -mr-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground transition-[color,transform] duration-150 ease-out hover:text-primary active:scale-[0.97]"
             aria-label="View all projects"
           >
             View all
             <ArrowRight
-              className="size-3.5 transition-transform duration-200 ease-out group-hover:translate-x-1"
+              className="size-3.5 transition-transform duration-150 ease-out group-hover:translate-x-1"
               strokeWidth={1.5}
             />
           </Link>

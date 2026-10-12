@@ -118,10 +118,10 @@ export function About() {
                   rotateY,
                   transformStyle: 'preserve-3d',
                 }}
-                className="group relative rounded-2xl p-2.5 bg-card/70 transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_24px_60px_rgba(235,94,40,0.15)] cursor-pointer select-none"
+                className="group relative rounded-2xl p-2.5 bg-card/70 transition-[box-shadow,background-color] duration-300 ease-out shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_24px_60px_rgba(235,94,40,0.15)] cursor-pointer select-none"
               >
                 {/* Luminous Ambient Border Gradient */}
-                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-primary/50 via-accent/30 to-border/40 opacity-60 transition-all duration-500 group-hover:opacity-100 group-hover:from-primary/80 group-hover:via-amber-500/40 group-hover:to-primary/40 -z-10 blur-[0.5px]" />
+                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-primary/50 via-accent/30 to-border/40 opacity-60 transition-opacity duration-300 ease-out group-hover:opacity-100 group-hover:from-primary/80 group-hover:via-amber-500/40 group-hover:to-primary/40 -z-10 blur-[0.5px]" />
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-card via-card/90 to-card/70 -z-10" />
 
                 {/* Photo Container with Layered Parallax Depth (translateZ: 16px) */}
@@ -135,7 +135,11 @@ export function About() {
                   <img
                     src="/Photo.webp"
                     alt={profile.name}
-                    className="w-full h-full object-cover transition-[transform,filter] duration-500 ease-out filter grayscale contrast-105 group-hover:grayscale-0 group-hover:contrast-100 group-hover:scale-[1.03]"
+                    width={400}
+                    height={500}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-[transform,filter] duration-350 ease-smooth-out filter grayscale contrast-105 group-hover:grayscale-0 group-hover:contrast-100 group-hover:scale-[1.03]"
                   />
 
                   {/* Dynamic Specular Sheen / Glare Floating on Lens Plane (translateZ: 34px) */}

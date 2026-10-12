@@ -51,7 +51,7 @@ export function TechBadge({ tech = '', size = 'sm', showIcon = true, className =
 
   return (
     <span
-      className={`group inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/50 font-mono transition-all duration-200 hover:border-foreground/30 hover:bg-secondary/80 ${
+      className={`group inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/50 font-mono transition-[color,background-color,border-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-secondary/80 ${
         size === 'sm' ? 'px-2.5 py-1 text-[9.5px] font-medium tracking-wide' : 'px-3 py-1.5 text-xs font-medium'
       } text-muted-foreground hover:text-foreground ${className}`}
       style={{

@@ -1,0 +1,34 @@
+# Ghufron Ainun Najib
+
+> Full-stack developer in Semarang, Indonesia. Web products built end to end — TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL.
+
+## About
+
+Ghufron Ainun Najib is a full-stack developer and Bachelor of Applied Science in Computer Engineering student at Politeknik Negeri Semarang (Polines), graduating August 2028 (GPA 3.91/4.00). Open to opportunities.
+
+## Projects
+
+- [TempeMail](https://ghufronainun.tech/projects/tempe-mail): disposable email service on Cloudflare Workers. Multi-domain, REST API, webhooks, MCP server for AI agents.
+- [Curated Design](https://ghufronainun.tech/projects/curated-design): searchable directory of 292 design resources for AI coding, markdown-first and open to contributions.
+- [SewaInAja](https://ghufronainun.tech/projects/sewainaja): rental platform — Flutter mobile app plus Next.js 16 admin/API, Firebase and Midtrans payments, 4-person team.
+- [LSP Polines](https://ghufronainun.tech/projects/lsp-polines): certification platform, Laravel + Livewire + MySQL, led a 5-person team.
+- [IMPP Website](https://ghufronainun.tech/projects/impp-website): public site and CMS for Ikatan Mahasiswa Pemalang Polines, Laravel + MySQL.
+
+## Skills
+
+TypeScript, JavaScript, React, Next.js, Node.js, Cloudflare Workers, Flutter, Laravel, PHP, Python, Tailwind CSS, PostgreSQL, Firebase, Supabase, Convex, Docker, Git, Figma.
+
+## Certification
+
+MikroTik MTCRE and MTCNA (2025), Oracle Database SQL and Database Design (2024), TEPPS 580.
+
+## Contact
+
+- Email: ghufrnainunajib@gmail.com
+- GitHub: https://github.com/Ghufrnainun
+- LinkedIn: https://www.linkedin.com/in/ghufronainunnajib/
+- Website: https://ghufronainun.tech
+
+## Optional
+
+- [Full Profile](https://ghufronainun.tech/llms-full.txt): Extended biography, detailed project outcomes, coursework, and complete certification records.

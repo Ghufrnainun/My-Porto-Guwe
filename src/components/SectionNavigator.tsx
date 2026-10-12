@@ -63,35 +63,34 @@ export function SectionNavigator() {
       className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col gap-3"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : 20 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
       {sections.map((section) => (
         <motion.button
           key={section.id}
           onClick={() => scrollToSection(section.id)}
           className="group relative flex items-center justify-end"
-          whileHover={{ x: -4 }}
-          transition={{ type: 'spring', stiffness: 300 }}
+          whileHover={{ x: -2 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           {/* Label tooltip */}
           <span
-            className="absolute right-8 px-2 py-1 text-xs font-medium bg-card border border-border rounded 
-                       opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+            className="pointer-events-none absolute right-8 px-2.5 py-1 text-[11px] font-mono font-medium bg-card/95 border border-border/80 rounded-md shadow-md backdrop-blur-md opacity-0 translate-x-1 scale-95 group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100 transition-[opacity,transform] duration-150 ease-out origin-right whitespace-nowrap"
           >
             {section.label}
           </span>
 
           {/* Dot indicator */}
           <motion.div
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+            className={`w-2.5 h-2.5 rounded-full transition-colors duration-150 ${
               activeSection === section.id
-                ? 'bg-primary scale-125'
+                ? 'bg-primary'
                 : 'bg-muted-foreground/30 hover:bg-muted-foreground/60'
             }`}
             animate={{
               scale: activeSection === section.id ? 1.25 : 1,
             }}
-            transition={{ type: 'spring', stiffness: 300 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           />
 
           {/* Active indicator ring */}

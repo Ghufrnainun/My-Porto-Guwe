@@ -18,8 +18,8 @@ export function ProjectCover({
           src={project.image}
           alt={`${project.title} project preview`}
           className={cn(
-            'size-full object-cover object-top transition-all duration-700 ease-out will-change-transform',
-            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+            'size-full object-cover object-top transition-[opacity,transform] duration-500 ease-smooth-out will-change-transform',
+            isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'
           )}
           loading="lazy"
           onLoad={() => setIsLoaded(true)}

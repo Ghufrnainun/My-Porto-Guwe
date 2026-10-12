@@ -7,15 +7,27 @@ const Projects = () => {
   usePageMeta({
     title: 'Projects | Ghufron Ainun Najib — Full-Stack Developer',
     description:
-      'Selected projects by Ghufron Ainun Najib: TempeMail, SewaInAja, LSP Polines certification platform, and the IMPP organization website.',
+      'Selected projects by Ghufron Ainun Najib: TempeMail, Curated Design, SewaInAja, LSP Polines certification platform, and the IMPP organization website.',
     canonicalPath: '/projects',
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: 'Projects — Ghufron Ainun Najib',
-      url: 'https://ghufronainun.tech/projects',
-      description: 'Portfolio of full-stack web projects',
-    },
+    jsonLd: [
+      {
+        '@type': 'CollectionPage',
+        name: 'Projects — Ghufron Ainun Najib',
+        url: 'https://ghufronainun.tech/projects',
+        description: 'Portfolio of full-stack web and mobile engineering projects by Ghufron Ainun Najib',
+      },
+      {
+        '@type': 'ItemList',
+        name: 'Featured Projects',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'TempeMail', url: 'https://ghufronainun.tech/projects/tempe-mail' },
+          { '@type': 'ListItem', position: 2, name: 'Curated Design', url: 'https://ghufronainun.tech/projects/curated-design' },
+          { '@type': 'ListItem', position: 3, name: 'SewaInAja', url: 'https://ghufronainun.tech/projects/sewainaja' },
+          { '@type': 'ListItem', position: 4, name: 'LSP Polines', url: 'https://ghufronainun.tech/projects/lsp-polines' },
+          { '@type': 'ListItem', position: 5, name: 'IMPP Website', url: 'https://ghufronainun.tech/projects/impp-website' },
+        ],
+      },
+    ],
   });
 
   return (

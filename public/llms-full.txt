@@ -1,0 +1,70 @@
+# Ghufron Ainun Najib — Full Profile
+
+> Full-stack developer in Semarang, Indonesia. Web products built end to end — TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL.
+
+## About
+
+Ghufron Ainun Najib is a full-stack developer based in Semarang, Indonesia. He studies Bachelor of Applied Science in Computer Engineering at Politeknik Negeri Semarang (Polines), expected graduation August 2028, GPA 3.91/4.00. Currently open to opportunities.
+
+## Work Style
+
+Backends that hold up, frontends that feel right. Comfortable owning a product end to end: architecture, APIs, edge deployment, and the tactile interfaces that ship them. Solo on most projects, team lead when the project needs one.
+
+## Projects
+
+### TempeMail (2026, solo)
+Disposable email service running entirely on Cloudflare Workers. Multi-domain with auto-provisioning across 20+ domains, no VPS, no SMTP server. REST API, HMAC-signed webhook delivery, an MCP server for AI agents, and a dark-theme vanilla JS frontend with inbox search and API key management. 110 tests passing.
+- Stack: TypeScript, Cloudflare Workers, D1, Hono
+- Repo: https://github.com/Ghufrnainun/tempe-mail
+- Live: https://temp.ghufronainun.tech
+
+### Curated Design (2026, solo)
+Curated directory of design resources for AI coding: component libraries, design systems, inspiration, dev tools, AI prompts — 292 resources across 5 categories with verified live links. Markdown-first pipeline so adding a resource is a one-line edit. CI deploy to Cloudflare Pages with unit tests for the parser and filter logic. Open contribution flow with PR templates and triage labels.
+- Stack: React, Vite, Markdown, Cloudflare Pages, GitHub Actions
+- Repo: https://github.com/Ghufrnainun/curated-design
+- Live: https://design.ghuf.app
+
+### SewaInAja (2026, full-stack, 4-person team)
+Rental platform spanning a Flutter mobile experience and a Next.js 16 admin and API surface. Built customer-facing mobile flows, the administration and API surface with TypeScript 5, and integrated Firebase services and Midtrans payment handling. Delivered as a shared, publicly documented codebase.
+- Stack: Flutter, Next.js 16, TypeScript 5, Firebase, Midtrans
+- Repo: https://github.com/sewainaja-pbl
+
+### LSP Polines Certification Platform (2025, team lead, 5-person team)
+Certification website with ownership across team leadership, the authentication module, and Git workflow setup: repository rules, branching strategy, and a repeatable contribution workflow.
+- Stack: Laravel, Livewire, Tailwind CSS, MySQL
+
+### IMPP Organization Website (2025, solo)
+Public website and CMS for Ikatan Mahasiswa Pemalang Polines: public-facing site plus a CMS for activities, structure, and gallery content.
+- Stack: Laravel, MySQL, Tailwind CSS
+
+## Skills
+
+Languages: JavaScript, TypeScript, PHP, Python, Dart, HTML, CSS, SQL.
+Frontend: React, Next.js, Tailwind CSS.
+Backend and data: Laravel, Node.js, Convex, Supabase, Firebase, PostgreSQL.
+Mobile and AI: Flutter.
+Workflow: Git, GitHub, Docker, Figma.
+
+## Education
+
+Bachelor of Applied Science in Computer Engineering — Politeknik Negeri Semarang (Polines), August 2024 - August 2028. GPA 3.91/4.00. Focus: web development, system design, database design, software engineering.
+
+## Leadership
+
+- Coordinator, Communication & Information Division, Ikatan Mahasiswa Pemalang Polines (June 2025 - June 2026) — led the division running the organization's digital channels; developed and maintained the organization website and content workflow.
+- Maintenance Staff, Polytechnic Computer Club (May 2025 - May 2026) — hardware support and departmental financial records.
+
+## Certification
+
+- MikroTik Certified Routing Engineer (MTCRE), 2025 — credential 2512RE1559, verifiable at https://mikrotik.com/certificates
+- MikroTik Certified Network Associate (MTCNA), 2025 — credential 2511NA7322, verifiable at https://mikrotik.com/certificates
+- Oracle Database Programming with SQL, Oracle Academy, 2024
+- Oracle Database Design, Oracle Academy, 2024
+- TEPPS 580 (English Proficiency for Technical Purposes), 2024 — 580/677
+
+## Contact
+
+- Email: ghufrnainunajib@gmail.com
+- GitHub: https://github.com/Ghufrnainun
+- LinkedIn: https://www.linkedin.com/in/ghufronainunnajib/
+- Website: https://ghufronainun.tech

@@ -11,10 +11,10 @@ export default function Blog() {
       'Notes and write-ups on full-stack development, TypeScript, and shipping web products — by Ghufron Ainun Najib.',
     canonicalPath: '/blog',
     jsonLd: {
-      '@context': 'https://schema.org',
       '@type': 'Blog',
       name: 'Ghufron Ainun Najib — Writing Log',
       url: 'https://ghufronainun.tech/blog',
+      description: 'Notes and write-ups on full-stack development, TypeScript, and shipping web products — by Ghufron Ainun Najib.',
     },
   });
 

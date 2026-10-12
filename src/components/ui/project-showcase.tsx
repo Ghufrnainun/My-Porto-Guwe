@@ -30,7 +30,7 @@ export const defaultProjects: Project[] = [
     description: "Rental platform spanning a Flutter mobile experience and a Next.js 16 admin surface with Firebase & Midtrans.",
     year: "2026",
     link: "/projects/sewainaja",
-    image: "/sewainaja.png",
+    image: "/sewainaja.webp",
     tags: ["Flutter", "Next.js 16", "Midtrans"],
   },
   {
@@ -46,7 +46,7 @@ export const defaultProjects: Project[] = [
     description: "Official student organization platform with content management, dynamic event publishing, and community engagement.",
     year: "2025",
     link: "/projects/impp-website",
-    image: "/impp-screenshot.png",
+    image: "/impp-screenshot.webp",
     tags: ["Content CMS", "Event Publishing", "Community"],
   },
 ]
@@ -140,10 +140,11 @@ export function ProjectShowcase({
               <img
                 key={project.title}
                 src={project.image || "/placeholder.svg"}
-                alt=""
+                alt={`${project.title} preview`}
                 loading="eager"
+                decoding="async"
                 className={cn(
-                  "absolute inset-0 w-full h-full object-cover transition-all duration-300 ease-out",
+                  "absolute inset-0 w-full h-full object-cover transition-[opacity,transform] duration-250 ease-out",
                   hoveredIndex === index
                     ? "opacity-100 scale-100"
                     : "opacity-0 scale-105"
@@ -194,11 +195,11 @@ export function ProjectShowcase({
                 onMouseEnter={() => handleMouseEnter(index)}
                 onMouseLeave={handleMouseLeave}
               >
-                <div className="relative py-7 sm:py-9 border-t border-border/60 transition-all duration-300 ease-out">
+                <div className="relative py-7 sm:py-9 border-t border-border/60 transition-colors duration-200 ease-out">
                   {/* Refined Liquid Glass Hover Selector */}
                   <div
                     className={cn(
-                      "absolute inset-0 -mx-3 sm:-mx-5 px-3 sm:px-5 rounded-2xl transition-all duration-300 ease-out pointer-events-none",
+                      "absolute inset-0 -mx-3 sm:-mx-5 px-3 sm:px-5 rounded-2xl transition-[opacity,transform,background-color,border-color] duration-200 ease-out pointer-events-none",
                       isCurrentHovered
                         ? "opacity-100 bg-secondary/45 dark:bg-white/[0.04] border border-border/70 dark:border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-xs scale-100"
                         : "opacity-0 scale-98 border border-transparent"
@@ -215,7 +216,7 @@ export function ProjectShowcase({
                             {/* Animated underline */}
                             <span
                               className={cn(
-                                "absolute left-0 -bottom-1 h-[1.5px] bg-foreground transition-all duration-300 ease-out",
+                                "absolute left-0 -bottom-1 h-[1.5px] bg-foreground transition-[width] duration-250 ease-out",
                                 isCurrentHovered ? "w-full" : "w-0"
                               )}
                             />

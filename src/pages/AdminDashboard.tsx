@@ -89,7 +89,7 @@ export default function AdminDashboard() {
           <Button
             onClick={() => navigate('/admin/posts/new')}
             size="lg"
-            className="shadow-lg hover:shadow-xl transition-all"
+            className="shadow-lg hover:shadow-xl transition-[box-shadow,transform] duration-150 ease-out active:scale-[0.97]"
           >
             <Plus className="h-5 w-5 mr-2" />
             Create New Post

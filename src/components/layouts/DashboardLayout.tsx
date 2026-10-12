@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 bg-card border-r border-border transition-all duration-300 ease-in-out flex flex-col',
+          'fixed inset-y-0 left-0 z-50 bg-card border-r border-border transition-[width] duration-250 ease-smooth-out flex flex-col',
           isSidebarOpen ? 'w-64' : 'w-20'
         )}
       >
@@ -198,7 +198,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main
         className={cn(
-          'flex-1 transition-all duration-300 ease-in-out p-8',
+          'flex-1 transition-[margin-left] duration-250 ease-smooth-out p-8',
           isSidebarOpen ? 'ml-64' : 'ml-20'
         )}
       >

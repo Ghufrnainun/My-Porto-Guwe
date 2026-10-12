@@ -48,11 +48,11 @@ export function SideProjects({ className = '', hasContainer = true }: SideProjec
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{
-                  duration: 0.4,
-                  delay: shouldReduceMotion ? 0 : index * 0.06,
-                  ease: [0.21, 0.47, 0.32, 0.98],
+                  duration: 0.35,
+                  delay: shouldReduceMotion ? 0 : index * 0.04,
+                  ease: [0.22, 1, 0.36, 1],
                 }}
-                className={`group relative flex flex-col justify-between rounded-xl border p-5 md:p-6 transition-all duration-200 ${
+                className={`group relative flex flex-col justify-between rounded-xl border p-5 md:p-6 transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ${
                   isFeaturedCard
                     ? 'lg:col-span-2 border-primary/30 bg-card/60 hover:border-primary/60 hover:bg-card/90 shadow-sm'
                     : 'col-span-1 border-border/50 bg-card/30 hover:border-border/90 hover:bg-card/70'
@@ -108,7 +108,7 @@ export function SideProjects({ className = '', hasContainer = true }: SideProjec
                       href={project.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors py-2 px-1 rounded active:scale-95"
+                      className="inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors duration-150 py-2 px-1 rounded active:scale-[0.97]"
                       aria-label={`View ${project.title} source code on GitHub`}
                     >
                       <Github className="size-3.5" />
@@ -120,7 +120,7 @@ export function SideProjects({ className = '', hasContainer = true }: SideProjec
                         href={project.demo}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-medium hover:underline transition-colors py-2 px-1 rounded active:scale-95"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-primary font-medium hover:underline transition-colors duration-150 py-2 px-1 rounded active:scale-[0.97]"
                         aria-label={`Visit ${project.title} live demo`}
                       >
                         <span>Live Demo</span>

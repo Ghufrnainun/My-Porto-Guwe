@@ -2,6 +2,26 @@
 User-agent: *
 Allow: /
 
-# Canonical host + sitemap
-Host: ghufronainun.tech
+# AI Assistants & Search Bots (GEO / AI Overviews)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Test, preview, and private routes — keep out of the index
+Disallow: /admin
+Disallow: /auth
+Disallow: /test-animate
+Disallow: /preview-hero
+Disallow: /preview-preloader-boot
+
+# Canonical host, sitemap, and LLM documentation
 Sitemap: https://ghufronainun.tech/sitemap.xml
+# llms.txt: https://ghufronainun.tech/llms.txt

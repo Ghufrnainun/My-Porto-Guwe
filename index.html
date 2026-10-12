@@ -16,7 +16,7 @@
     />
     <meta
       name="description"
-      content="Full-stack developer building things for the web. Web products, built end to end."
+      content="Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end."
     />
     <meta name="author" content="Ghufron Ainun Najib" />
     <meta name="robots" content="index, follow" />
@@ -35,7 +35,7 @@
     />
     <meta
       property="og:description"
-      content="Full-stack developer building things for the web. Web products, built end to end."
+      content="Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end."
     />
     <meta
       property="og:image"
@@ -57,7 +57,7 @@
     />
     <meta
       name="twitter:description"
-      content="Full-stack developer building things for the web. Web products, built end to end."
+      content="Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end."
     />
     <meta
       name="twitter:image"
@@ -67,6 +67,7 @@
       name="twitter:image:alt"
       content="Ghufron Ainun Najib — Full-Stack Developer Portfolio"
     />
+    <meta name="twitter:creator" content="@ghufronainun" />
 
     <!-- Structured Data / JSON-LD -->
     <script type="application/ld+json">
@@ -78,13 +79,25 @@
             "@id": "https://ghufronainun.tech/#person",
             "name": "Ghufron Ainun Najib",
             "url": "https://ghufronainun.tech",
+            "email": "mailto:ghufrnainunajib@gmail.com",
             "image": "https://ghufronainun.tech/og-image.png",
             "jobTitle": "Full-Stack Developer",
-            "description": "Full-stack developer building things for the web. Web products, built end to end.",
+            "description": "Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end.",
+            "mainEntityOfPage": "https://ghufronainun.tech",
             "address": {
               "@type": "PostalAddress",
               "addressLocality": "Semarang",
               "addressCountry": "ID"
+            },
+            "nationality": {
+              "@type": "Country",
+              "name": "Indonesia"
+            },
+            "knowsLanguage": ["Indonesian", "English"],
+            "alumniOf": {
+              "@type": "CollegeOrUniversity",
+              "name": "Politeknik Negeri Semarang (Polines)",
+              "url": "https://polines.ac.id"
             },
             "sameAs": [
               "https://github.com/Ghufrnainun",
@@ -105,6 +118,16 @@
             ]
           },
           {
+            "@type": "ProfilePage",
+            "@id": "https://ghufronainun.tech/#profilepage",
+            "url": "https://ghufronainun.tech",
+            "name": "Ghufron Ainun Najib | Full-Stack Developer Portfolio",
+            "description": "Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end.",
+            "mainEntity": {
+              "@id": "https://ghufronainun.tech/#person"
+            }
+          },
+          {
             "@type": "WebSite",
             "@id": "https://ghufronainun.tech/#website",
             "url": "https://ghufronainun.tech",
@@ -121,6 +144,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
   </head>
 
   <body>
@@ -202,7 +226,9 @@
           margin: 0 auto;
         "
       >
-        <h1>Ghufron Ainun Najib</h1>
+        <p style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem">
+          Ghufron Ainun Najib
+        </p>
         <p>
           <strong>Full-Stack Developer</strong> — I engineer full-stack web
           products. From robust backend architectures to the tactile interfaces

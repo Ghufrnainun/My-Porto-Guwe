@@ -10,7 +10,7 @@ const Index = () => {
   usePageMeta({
     title: 'Ghufron Ainun Najib | Full-Stack Developer Portfolio',
     description:
-      'Full-stack developer building things for the web. Web products, built end to end.',
+      'Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end.',
     canonicalPath: '/',
   });
 

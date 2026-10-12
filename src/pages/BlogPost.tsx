@@ -22,21 +22,45 @@ export default function BlogPost() {
     ogType: 'article',
     ogImage: post?.featured_image ?? undefined,
     jsonLd: post
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'BlogPosting',
-          headline: post.title,
-          description: post.excerpt ?? undefined,
-          url: `https://ghufronainun.tech/blog/${post.slug}`,
-          image: post.featured_image ?? undefined,
-          datePublished: post.published_at ?? post.created_at,
-          dateModified: post.updated_at,
-          author: {
-            '@type': 'Person',
-            name: 'Ghufron Ainun Najib',
-            url: 'https://ghufronainun.tech',
+      ? [
+          {
+            '@type': 'BlogPosting',
+            headline: post.title,
+            description: post.excerpt ?? undefined,
+            url: `https://ghufronainun.tech/blog/${post.slug}`,
+            image: post.featured_image ?? undefined,
+            datePublished: post.published_at ?? post.created_at,
+            dateModified: post.updated_at,
+            author: {
+              '@type': 'Person',
+              name: 'Ghufron Ainun Najib',
+              url: 'https://ghufronainun.tech',
+            },
           },
-        }
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://ghufronainun.tech/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Blog',
+                item: 'https://ghufronainun.tech/blog',
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: post.title,
+                item: `https://ghufronainun.tech/blog/${post.slug}`,
+              },
+            ],
+          },
+        ]
       : undefined,
   });
 
@@ -118,9 +142,9 @@ export default function BlogPost() {
         <article className="container mx-auto px-4 max-w-3xl">
           <Link
             to="/blog"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8"
+            className="group inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out mb-8 active:scale-[0.98]"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-200 ease-out group-hover:-translate-x-1" />
             Back to blog
           </Link>
 

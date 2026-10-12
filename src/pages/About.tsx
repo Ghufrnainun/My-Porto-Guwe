@@ -10,6 +10,19 @@ const About = () => {
     description:
       'Computer Engineering student and full-stack developer based in Semarang. Building reliable web products with TypeScript, React, and Node.js.',
     canonicalPath: '/about',
+    jsonLd: {
+      '@type': 'AboutPage',
+      name: 'About Ghufron Ainun Najib',
+      url: 'https://ghufronainun.tech/about',
+      description:
+        'Computer Engineering student and full-stack developer based in Semarang. Building reliable web products with TypeScript, React, and Node.js.',
+      mainEntity: {
+        '@type': 'Person',
+        name: 'Ghufron Ainun Najib',
+        url: 'https://ghufronainun.tech',
+        jobTitle: 'Full-Stack Developer',
+      },
+    },
   });
 
   return (

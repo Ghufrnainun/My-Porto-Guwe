@@ -5,8 +5,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "node scripts/generate-sitemap.mjs && tsc && vite build",
-        "build:assets": "node scripts/build-brand-assets.mjs",
+        "build": "node scripts/generate-sitemap.mjs && tsc && vite build && node scripts/prerender.mjs",
+        "build:assets": "node scripts/build-brand-assets.mjs && node scripts/build-og-image.mjs",
         "preview": "vite preview",
         "build:dev": "vite build --mode development",
         "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
