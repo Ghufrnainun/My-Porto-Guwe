@@ -9,15 +9,17 @@ import {
 } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowUpRight, FileText, Clock } from 'lucide-react';
+import { MapPin, ArrowUpRight, FileText, Clock, Github } from 'lucide-react';
 import { profile } from '@/data/profile';
 import { ContactModal } from '@/components/ContactModal';
+import { useGithubContributions } from '@/hooks/useGithubContributions';
 
 export function About() {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const { total: githubCommitsTotal } = useGithubContributions('Ghufrnainun');
 
   // 3D Spring Tilt & Glare States
   const cardRef = useRef<HTMLDivElement>(null);
@@ -195,6 +197,29 @@ export function About() {
                     <span className="text-[11px] opacity-75">7.05° S · 110.43° E</span>
                   </div>
                 </div>
+
+                {/* Live GitHub Commit Activity Micro-Badge (translateZ: 14px) */}
+                <Link
+                  to="/projects#github-activity"
+                  style={{
+                    transform: shouldReduceMotion ? 'none' : 'translateZ(14px)',
+                  }}
+                  className="mt-2 px-3.5 py-2 rounded-xl bg-background/85 hover:bg-background border border-border/60 hover:border-emerald-500/50 text-xs font-mono flex items-center justify-between gap-2 text-muted-foreground transition-all duration-200 group/gh shadow-sm cursor-pointer select-none"
+                >
+                  <span className="flex items-center gap-2.5 text-foreground/90 font-medium">
+                    <span className="relative flex size-2 items-center justify-center shrink-0">
+                      <span className="absolute inline-flex size-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping [animation-duration:2.5s]" />
+                      <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                    </span>
+                    <span>{githubCommitsTotal ? `${githubCommitsTotal.toLocaleString()} commits this year` : '1,560+ commits this year'}</span>
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold group-hover/gh:underline">
+                    <Github className="size-3" />
+                    <span>Skyline</span>
+                    <ArrowUpRight className="size-3 transition-transform duration-200 group-hover/gh:translate-x-0.5 group-hover/gh:-translate-y-0.5" />
+                  </span>
+                </Link>
               </motion.div>
             </div>
 
