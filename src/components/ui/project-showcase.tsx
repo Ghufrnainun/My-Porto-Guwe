@@ -18,6 +18,14 @@ export interface Project {
 
 export const defaultProjects: Project[] = [
   {
+    title: "PB UNDIP Platform",
+    description: "Official athletic club portal & real-time badminton scoreboard suite with reactive court sync, PIN auth, and Cloudflare R2 registration.",
+    year: "2026",
+    link: "/projects/pbundip",
+    image: "/pbundip.png",
+    tags: ["Next.js 16", "Convex Realtime", "Cloudflare R2"],
+  },
+  {
     title: "TempeMail",
     description: "Disposable email service that runs entirely on Cloudflare Workers. Multi-domain, REST API, webhooks, and MCP server.",
     year: "2026",

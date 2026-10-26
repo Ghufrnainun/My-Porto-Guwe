@@ -22,6 +22,33 @@ export interface PortfolioProject {
 
 export const featuredProjects: PortfolioProject[] = [
   {
+    title: 'PB UNDIP Platform & Scoreboard',
+    slug: 'pbundip',
+    summary:
+      'Official athletic club portal and real-time tournament scoreboard suite built for Persatuan Bulutangkis Universitas Diponegoro, featuring reactive court synchronization, role-isolated PIN authentication, athlete registration, and Cloudflare R2 document storage.',
+    year: '2026',
+    role: 'Solo Developer',
+    team: { size: 1, label: 'Solo project' },
+    visibility: 'private',
+    problem:
+      'Persatuan Bulutangkis Universitas Diponegoro needed a robust, all-in-one digital platform: a zero-latency live scoreboard that umpires can control from mobile devices with broadcast-grade videotron displays, paired with a secure athlete registration workflow and club administration.',
+    contributions: [
+      'Engineered the reactive real-time court scoring engine using Convex with rally-point rules, dynamic service court tracking, deuce capping, and state recovery.',
+      'Designed a custom multi-role authentication system featuring master PIN (SHA-256), temporary 6-digit access codes for event marshals with brute-force lockout, and WhatsApp auto-login dispatch.',
+      'Built the athlete registration pipeline supporting private document uploads to Cloudflare R2 via presigned URLs and administrative batch export to XLSX.',
+      'Developed responsive spectator scoreboard layouts (Modern TV broadcast, LED, Minimalist, Neon) optimized for zero-refresh videotron displays.',
+    ],
+    outcomes: [
+      'Deployed to production at pbundip.web.id with reactive WebSocket subscriptions eliminating polling overhead.',
+      'Streamlined tournament court operations with dedicated umpire mobile controls and public videotron broadcasting.',
+    ],
+    technologies: ['Next.js 16', 'React 19', 'TypeScript', 'Convex', 'Cloudflare R2', 'Tailwind CSS', 'Framer Motion'],
+    color: '#059669',
+    image: '/pbundip.png',
+    gallery: ['/pbundip.png'],
+    demo: 'https://pbundip.web.id/',
+  },
+  {
     title: 'TempeMail',
     slug: 'tempe-mail',
     summary:

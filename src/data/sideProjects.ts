@@ -39,15 +39,6 @@ export const sideProjects: readonly SideProject[] = [
     github: 'https://github.com/Ghufrnainun/NetraSense',
   },
   {
-    title: 'scoreHub',
-    category: 'Real-time Sports Platform',
-    description:
-      'Web-based live scoreboard and match controller for badminton with mobile umpire control, live spectator display view, and OWASP-compliant temporary PIN access codes.',
-    year: '2026',
-    technologies: ['Next.js', 'Convex', 'TypeScript', 'Tailwind CSS', 'Shadcn UI'],
-    github: 'https://github.com/Ghufrnainun/scoreHub',
-  },
-  {
     title: 'Weather Prediction IoT',
     category: 'IoT & Machine Learning',
     description:
