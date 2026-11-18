@@ -1,15 +1,9 @@
-import { ArrowLeft, Printer } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { ArrowUpRight, ExternalLink, Printer } from 'lucide-react';
 import { featuredProjects } from '@/data/featuredProjects';
-import {
-  certifications,
-  education,
-  organizationExperience,
-  profile,
-  skillTiers,
-} from '@/data/profile';
+import { certifications, education, organizationExperience, profile, skillTiers } from '@/data/profile';
 import { usePageMeta } from '@/hooks/usePageMeta';
+
+const sectionTitle = 'border-b border-white/10 pb-2 font-mono text-xs font-medium uppercase tracking-[.16em] text-blue-200/65';
 
 const Resume = () => {
   usePageMeta({
@@ -25,161 +19,122 @@ const Resume = () => {
         'Resume of Ghufron Ainun Najib: Computer Engineering student and developer building web and mobile products with Flutter, TypeScript, and Node.js.',
       mainEntity: {
         '@type': 'Person',
-        name: 'Ghufron Ainun Najib',
-        url: 'https://ghufronainun.tech',
+        name: profile.name,
+        url: profile.website,
         jobTitle: 'Software Developer',
       },
     },
   });
 
   return (
-  <div className="min-h-screen bg-gray-100 py-6 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 print:bg-white print:p-0">
-    <nav className="fixed inset-x-0 top-0 z-50 flex flex-col gap-2 border-b border-gray-200 bg-white/90 p-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 dark:border-zinc-800 dark:bg-zinc-900/95 print:hidden">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full min-h-[44px] sm:min-h-9 gap-2 text-zinc-800 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white active:scale-[0.97] transition-[background-color,color,transform] duration-150 ease-out sm:w-auto"
-        asChild
-      >
-        <Link to="/">
-          <ArrowLeft className="size-4" />
-          Back to Portfolio
-        </Link>
-      </Button>
-      <Button
-        onClick={() => window.print()}
-        className="w-full min-h-[44px] sm:min-h-9 gap-2 active:scale-[0.97] transition-[box-shadow,transform] duration-150 ease-out sm:w-auto"
-      >
-        <Printer className="size-4" />
-        Print / Save as PDF
-      </Button>
-    </nav>
-
-    <div className="h-28 sm:h-16 print:hidden" />
-
-    <main className="relative mx-auto min-h-[297mm] max-w-[210mm] bg-white p-5 text-[10.5pt] leading-relaxed text-zinc-900 shadow-xl sm:p-8 md:p-[20mm] print:w-full print:p-[15mm] print:shadow-none">
-      <header className="mb-6 text-center">
-        <h1 className="mb-2 text-2xl font-bold uppercase tracking-wide text-black sm:text-3xl [text-wrap:balance]">
-          {profile.name}
-        </h1>
-        <p className="mb-2 text-sm text-gray-800 tabular-nums">
-          {profile.phone} | {profile.email} | {profile.location}
-        </p>
-        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm text-blue-700 underline">
-          <a href={profile.website} className="inline-flex items-center min-h-[32px] hover:text-blue-900">ghufronainun.tech</a>
-          <a href={profile.github} className="inline-flex items-center min-h-[32px] hover:text-blue-900">GitHub</a>
-          <a href={profile.linkedin} className="inline-flex items-center min-h-[32px] hover:text-blue-900">LinkedIn</a>
+    <>
+    <main className="resume-document mx-auto w-full max-w-5xl p-4 text-white sm:p-7 lg:p-9">
+      <header className="flex flex-col gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-mono text-xs font-medium uppercase tracking-[.2em] text-blue-300">Document <span className="text-white/25">/</span> Resume</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-.035em] sm:text-4xl">{profile.name}</h1>
+          <p className="mt-2 text-base text-white/60">Software Developer · Computer Engineering Student</p>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-white/70">I build web and mobile products and ship them to real users. My recent work spans an edge-hosted email service, a Flutter and Next.js marketplace, and a certification platform built with a campus team.</p>
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/55">
+            <a className="break-all transition hover:text-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300" href={`mailto:${profile.email}`}>{profile.email}</a>
+            <span>{profile.phone}</span>
+            <span>{profile.location}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs">
+            {[
+              { label: 'Website', href: profile.website },
+              { label: 'GitHub', href: profile.github },
+              { label: 'LinkedIn', href: profile.linkedin },
+            ].map(({ label, href }) => <a key={label} href={href} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1 text-sm text-blue-200 transition hover:text-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">{label}<ArrowUpRight size={12} /></a>)}
+          </div>
         </div>
+        <button onClick={() => window.print()} aria-label="Print resume or save as PDF" className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-white/15 px-3 text-sm text-white/75 transition hover:border-blue-300/50 hover:bg-blue-300/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300 print:hidden">
+          <Printer size={15} /> Print / Save PDF
+        </button>
       </header>
 
-      <section className="mb-6">
-        <p className="text-justify text-gray-900">
-          I build web and mobile products and ship them to real users. In the past year I deployed an
-          edge-hosted email service on Cloudflare Workers, worked across a Flutter and Next.js rental
-          marketplace in a team of four, and led five developers building a certification platform for
-          my campus. I like work that crosses boundaries, and I care that what I ship still holds up
-          months after launch.
-        </p>
-      </section>
+      <div className="grid gap-8 pt-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,.8fr)]">
+        <div className="min-w-0 space-y-8">
+          <section>
+            <h2 className={sectionTitle}>Selected projects</h2>
+            <div className="mt-4 space-y-5">
+              {featuredProjects.map((project) => <article key={project.slug} className="resume-entry border-l border-blue-300/45 pl-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h3 className="font-medium text-white/90">{project.title}</h3><span className="text-xs tabular-nums text-white/40">{project.year}</span>
+                </div>
+                <p className="mt-1 text-xs text-white/45">{project.role} · {project.team.label} · {project.visibility === 'private' ? 'Private repository' : 'Public repository'}</p>
+                {project.contributions.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-base leading-7 text-white/70">{project.contributions.map((item) => <li key={item}>{item}</li>)}</ul> : <p className="mt-2 text-base leading-7 text-white/70">{project.summary}</p>}
+                <p className="mt-2 text-xs text-white/45">{project.technologies.join(' · ')}</p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  {project.repository && <a className="inline-flex min-h-8 items-center gap-1 text-sm text-blue-200 hover:text-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300" href={project.repository} target="_blank" rel="noreferrer">Repository <ExternalLink size={12} /></a>}
+                  {project.demo && <a className="inline-flex min-h-8 items-center gap-1 text-sm text-blue-200 hover:text-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300" href={project.demo} target="_blank" rel="noreferrer">Demo <ExternalLink size={12} /></a>}
+                </div>
+              </article>)}
+            </div>
+          </section>
 
-      <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Education</h2>
-        <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
-          <span>{education.university}</span>
-          <span className="tabular-nums">{education.period}</span>
+          <section>
+            <h2 className={sectionTitle}>Leadership &amp; experience</h2>
+            <div className="mt-4 space-y-5">
+              {organizationExperience.map((item) => <article key={`${item.organization}-${item.role}`} className="resume-entry border-l border-white/20 pl-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><h3 className="font-medium text-white/90">{item.role}</h3><span className="text-xs tabular-nums text-white/40">{item.period}</span></div>
+                <p className="mt-1 text-sm text-white/55">{item.organization}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-base leading-7 text-white/70">{item.responsibilities.map((responsibility) => <li key={responsibility}>{responsibility}</li>)}</ul>
+              </article>)}
+            </div>
+          </section>
         </div>
-        <p className="font-bold text-gray-900">{education.degree} - GPA <span className="tabular-nums">{education.gpa}</span></p>
-        <p className="text-gray-900">Expected graduation: <span className="tabular-nums">{education.expectedGraduation}</span></p>
-      </section>
 
-      <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Projects</h2>
-        <div className="space-y-4">
-          {featuredProjects.map((project) => (
-            <article key={project.slug}>
-              <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
-                <span>{project.title}</span>
-                <span className="tabular-nums">{project.year}</span>
-              </div>
-              <p className="italic text-gray-800">
-                {project.role} | {project.team.label} | {project.visibility === 'private' ? 'Private repository' : 'Public repository'}
-              </p>
-              {project.contributions.length > 0 ? (
-                <ul className="ml-5 list-disc text-gray-900">
-                  {project.contributions.map((contribution) => <li key={contribution}>{contribution}</li>)}
-                </ul>
-              ) : (
-                <p className="text-justify text-gray-900">{project.summary}</p>
-              )}
-              <p className="text-gray-900"><strong>Technology:</strong> {project.technologies.join(', ')}</p>
-              {project.repository && <a className="text-blue-700 underline hover:text-blue-900" href={project.repository}>{project.repository}</a>}
-              {project.demo && <a className="block text-blue-700 underline hover:text-blue-900" href={project.demo}>{project.demo}</a>}
+        <aside className="min-w-0 space-y-8">
+          <section>
+            <h2 className={sectionTitle}>Education</h2>
+            <article className="mt-4">
+              <h3 className="font-medium leading-6 text-white/90">{education.degree}</h3>
+              <p className="mt-1 text-base text-white/60">{education.university}</p>
+              <p className="mt-2 text-xs text-white/45">{education.period}</p>
+              <p className="mt-2 text-base leading-7 text-white/70">GPA <span className="tabular-nums">{education.gpa}</span> · Expected graduation {education.expectedGraduation}</p>
             </article>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Leadership &amp; Organization</h2>
-        <div className="space-y-4">
-          {organizationExperience.map((experience) => (
-            <article key={`${experience.organization}-${experience.role}`}>
-              <div className="flex flex-col font-bold text-gray-900 sm:flex-row sm:justify-between sm:gap-4">
-                <span>{experience.organization}</span>
-                <span className="tabular-nums">{experience.period}</span>
-              </div>
-              <p className="italic text-gray-800">{experience.role}</p>
-              <ul className="ml-5 list-disc text-gray-900">
-                {experience.responsibilities.map((responsibility) => <li key={responsibility}>{responsibility}</li>)}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
+          <section>
+            <h2 className={sectionTitle}>Skills</h2>
+            <div className="mt-4 space-y-3">
+              {skillTiers.map((tier) => <div key={tier.label}><h3 className="text-xs font-medium text-white/45">{tier.label}</h3><p className="mt-1 text-base leading-7 text-white/70">{tier.skills.map((skill) => skill.name).join(' · ')}</p></div>)}
+            </div>
+          </section>
 
-      <section className="mb-6">
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Skills</h2>
-        <div className="space-y-1 text-gray-900">
-          {skillTiers.map((tier) => (
-            <p key={tier.label}><strong>{tier.label}:</strong> {tier.skills.map((skill) => skill.name).join(', ')}</p>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 border-b-2 border-black text-lg font-bold uppercase [text-wrap:balance]">Credentials</h2>
-        <ul className="ml-5 list-disc text-gray-900">
-          {certifications.map((certification) => (
-            <li key={certification.title} className="mb-1">
-              <span className="font-bold">{certification.title}</span>
-              <span className="text-gray-700"> · {certification.issuer} </span>
-              <span className="tabular-nums font-medium text-gray-600">({certification.year})</span>
-              {certification.credentialId && (
-                <span className="font-mono text-[9.5pt] text-gray-600"> — ID {certification.credentialId}</span>
-              )}
-              {certification.score && (
-                <span className="font-medium text-gray-600"> — {certification.score}</span>
-              )}
-              {certification.isVerifiedTransaction && certification.verificationUrl && (
-                <a
-                  href={certification.verificationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-1 text-blue-700 underline hover:text-blue-900"
-                >
-                  verify
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+          <section>
+            <h2 className={sectionTitle}>Certifications</h2>
+            <ul className="mt-4 space-y-3">
+              {certifications.map((cert) => <li key={cert.title}>
+                <p className="text-base font-medium leading-6 text-white/85">{cert.title}</p>
+                <p className="mt-1 text-sm text-white/50">{cert.issuer} · {cert.year}{cert.score ? ` · ${cert.score}` : ''}</p>
+                {cert.credentialId && <p className="mt-1 break-all font-mono text-[11px] text-white/40">ID {cert.credentialId}</p>}
+                {cert.isVerifiedTransaction && cert.verificationUrl && <a href={cert.verificationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-8 items-center gap-1 text-sm text-blue-200 hover:text-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">Verify credential <ExternalLink size={12} /></a>}
+              </li>)}
+            </ul>
+          </section>
+        </aside>
+      </div>
     </main>
-
-    <style type="text/css" media="print">
-      {`@page { size: auto; margin: 0; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } html, body { height: auto; overflow: visible !important; }`}
-    </style>
-  </div>
+    <style>{`@media print {
+      @page { size: A4; margin: 12mm; }
+      html, body, #root, .gh-os, .os-window { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; color: #111 !important; }
+      .gh-os { position: static !important; display: block !important; }
+      .gh-os > :not(.os-window) { display: none !important; }
+      .os-window { position: static !important; inset: auto !important; display: block !important; width: auto !important; box-shadow: none !important; border: 0 !important; backdrop-filter: none !important; }
+      .os-window > :first-child { display: none !important; }
+      .os-window > :last-child { display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; }
+      .resume-document { width: 100% !important; max-width: none !important; padding: 0 !important; background: #fff !important; color: #111 !important; }
+      .resume-document * { background-color: transparent !important; border-color: #d1d5db !important; color: #222 !important; }
+      .resume-document h1 { font-size: 26pt !important; }
+      .resume-document h2 { color: #1d4ed8 !important; font-size: 11pt !important; }
+      .resume-document h3 { font-size: 10pt !important; }
+      .resume-document p, .resume-document li { font-size: 9.5pt !important; line-height: 1.4 !important; }
+      .resume-document .resume-entry { break-inside: avoid; }
+      .resume-document a { text-decoration: underline; }
+    }`}</style>
+    </>
   );
 };
 

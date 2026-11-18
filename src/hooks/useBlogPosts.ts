@@ -37,6 +37,8 @@ export function usePublishedPosts() {
   return useQuery({
     queryKey: ['blog-posts', 'published'],
     queryFn: async () => {
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) return [];
+
       const { data, error } = await supabase
         .from('blog_posts')
         .select(
@@ -111,6 +113,8 @@ export function usePostBySlug(slug: string) {
   return useQuery({
     queryKey: ['blog-post', slug],
     queryFn: async () => {
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) return null;
+
       const { data, error } = await supabase
         .from('blog_posts')
         .select(

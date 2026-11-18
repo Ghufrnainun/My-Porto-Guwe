@@ -12,7 +12,8 @@
         "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
         "test:portfolio": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-portfolio-data.mjs",
         "test:profile": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-profile-data.mjs",
-        "test:ux": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-navigation.mjs"
+        "test:ux": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-navigation.mjs",
+        "test:widget-layout": "node scripts/verify-widget-layout.mjs"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",

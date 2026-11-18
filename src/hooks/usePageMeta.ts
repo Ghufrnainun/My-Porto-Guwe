@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { OsShellContext } from '@/components/os/OsShellContext';
 
 const SITE_URL = 'https://ghufronainun.tech';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
@@ -97,9 +99,12 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
  * directive and JSON-LD structured data without a full page reload.
  */
 export function usePageMeta(meta: PageMeta) {
+  const location = useLocation();
+  const shell = useContext(OsShellContext);
+  const isActiveRoute = !shell?.activePath || location.pathname === shell.activePath.split(/[?#]/, 1)[0];
   // During server-side rendering there is no document; record so the
   // prerender script can inject the meta into static HTML.
-  if (typeof document === 'undefined') {
+  if (typeof document === 'undefined' && isActiveRoute) {
     recordMeta(meta);
   }
 
@@ -107,6 +112,7 @@ export function usePageMeta(meta: PageMeta) {
   const jsonLdKey = meta.jsonLd ? JSON.stringify(meta.jsonLd) : '';
 
   useEffect(() => {
+    if (!isActiveRoute) return;
     const path = meta.canonicalPath ?? window.location.pathname;
     const url = `${SITE_URL}${path}`;
     const description = meta.description ?? '';
@@ -149,7 +155,7 @@ export function usePageMeta(meta: PageMeta) {
       document.getElementById(JSON_LD_ID)?.remove();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.title, meta.description, meta.canonicalPath, meta.ogType, meta.ogImage, meta.noindex, jsonLdKey]);
+  }, [meta.title, meta.description, meta.canonicalPath, meta.ogType, meta.ogImage, meta.noindex, jsonLdKey, isActiveRoute, shell?.activePath]);
 }
 
 export const seoConstants = { SITE_URL, DEFAULT_OG_IMAGE, SITE_NAME };

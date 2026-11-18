@@ -46,7 +46,7 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      if (location.pathname === '/') {
+      if (location.pathname === '/' || location.pathname === '/old') {
         setIsVisible(scrollY > window.innerHeight * 0.1);
       } else {
         setIsVisible(true);
@@ -57,6 +57,8 @@ export function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location.pathname]);
+
+  if (location.pathname === '/') return null;
 
   return (
     <>
