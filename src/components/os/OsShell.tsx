@@ -11,6 +11,7 @@ import { useTheme } from 'next-themes';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Check,
+  Globe,
   Maximize2,
   Minimize2,
   Minus,
@@ -19,10 +20,13 @@ import {
   Search,
   SlidersHorizontal,
   Sun,
+  Volume2,
+  VolumeX,
   Wifi,
   X,
   Image as ImageIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { profile } from '@/data/profile';
 import { featuredProjects } from '@/data/featuredProjects';
@@ -32,18 +36,31 @@ import {
   WindowFocusContext,
   type OsAppearance,
   type OsAppId,
+  type OsLanguage,
   type OsPowerState,
   type SettingsPaneId,
+  type SystemFontId,
   type WallpaperId,
 } from '@/components/os/OsShellContext';
 import {
   MailApp,
   NotesApp,
+  SafariApp,
   SystemSettingsApp,
   TerminalApp,
 } from '@/components/os/OsBuiltInApps';
-import { Avatar } from '@/components/os/OsWindowChrome';
 import { MacOSDock, type MacOSDockItem } from '@/components/ui/mac-os-dock';
+import { useOsNotification } from '@/components/os/OsNotificationContext';
+import { OsNotificationBannerContainer } from '@/components/os/OsNotificationBanner';
+import { OsNotificationCenter } from '@/components/os/OsNotificationCenter';
+import { DynamicIsland } from '@/components/os/DynamicIsland';
+import { AppSwitcherHUD, type AppSwitcherItem } from '@/components/os/AppSwitcherHUD';
+import { RECENT_TRACKS, type ListeningTrack } from '@/data/recentTracks';
+import {
+  playWindowOpenSound,
+  playWindowCloseSound,
+  playTrashEmptySound,
+} from '@/lib/soundEffects';
 
 type OsShellProps = {
   appName: string;
@@ -59,6 +76,19 @@ type WindowFrame = {
   width: number;
   height: number;
 };
+
+type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+const RESIZE_HANDLES: { dir: ResizeDir; className: string }[] = [
+  { dir: 'n', className: 'inset-x-3 top-0 h-1.5 cursor-ns-resize' },
+  { dir: 's', className: 'inset-x-3 bottom-0 h-1.5 cursor-ns-resize' },
+  { dir: 'e', className: 'inset-y-3 right-0 w-1.5 cursor-ew-resize' },
+  { dir: 'w', className: 'inset-y-3 left-0 w-1.5 cursor-ew-resize' },
+  { dir: 'nw', className: 'left-0 top-0 h-3.5 w-3.5 cursor-nwse-resize' },
+  { dir: 'ne', className: 'right-0 top-0 h-3.5 w-3.5 cursor-nesw-resize' },
+  { dir: 'sw', className: 'bottom-0 left-0 h-3.5 w-3.5 cursor-nesw-resize' },
+  { dir: 'se', className: 'bottom-0 right-0 h-3.5 w-3.5 cursor-nwse-resize' },
+];
 
 type OsWindow = {
   id: OsAppId;
@@ -86,8 +116,19 @@ type MenuDef = {
 
 const MENUBAR_HEIGHT = 32;
 const DOCK_RESERVED_HEIGHT = 92;
-const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v2';
+const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v3';
+const LANGUAGE_STORAGE_KEY = 'ganos-system-language';
 const WALLPAPER_ROTATE_INTERVAL_MS = 120_000;
+
+const readLanguagePref = (): OsLanguage => {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const val = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return val === 'id' || val === 'en' ? val : 'en';
+  } catch {
+    return 'en';
+  }
+};
 
 const APP_SPECS: Record<
   OsAppId,
@@ -108,10 +149,17 @@ const APP_SPECS: Record<
     size: { width: 920, height: 560 },
     minSize: { width: 420, height: 280 },
   },
-  blog: {
-    name: 'Writing',
-    title: 'Writing',
+  safari: {
+    name: 'Safari',
+    title: 'Safari',
     icon: '/macos-icons/safari.png',
+    size: { width: 940, height: 600 },
+    minSize: { width: 440, height: 320 },
+  },
+  blog: {
+    name: 'Writing Log',
+    title: 'Writing Log',
+    icon: '/macos-icons/folder-documents.png',
     path: '/blog',
     size: { width: 880, height: 580 },
     minSize: { width: 420, height: 300 },
@@ -166,18 +214,18 @@ const isValidWallpaperId = (value: unknown): value is WallpaperId =>
   typeof value === 'string' && WALLPAPERS.some((item) => item.id === value);
 
 const readWallpaperPrefs = (): { id: WallpaperId; autoRotate: boolean } => {
-  if (typeof window === 'undefined') return { id: 'dusk', autoRotate: true };
+  if (typeof window === 'undefined') return { id: 'zephyr', autoRotate: true };
   try {
     const raw = JSON.parse(
       window.localStorage.getItem(WALLPAPER_STORAGE_KEY) ?? 'null',
     ) as { id?: unknown; autoRotate?: unknown } | null;
     return {
-      id: isValidWallpaperId(raw?.id) ? raw.id : 'dusk',
+      id: isValidWallpaperId(raw?.id) ? raw.id : 'zephyr',
       autoRotate:
         typeof raw?.autoRotate === 'boolean' ? raw.autoRotate : true,
     };
   } catch {
-    return { id: 'dusk', autoRotate: true };
+    return { id: 'zephyr', autoRotate: true };
   }
 };
 
@@ -224,7 +272,12 @@ const routeToAppId = (pathname: string): OsAppId | null => {
   return null;
 };
 
-export function OsShell({ appName, children, renderWindow }: OsShellProps) {
+export function OsShell({
+  appName,
+  lockScreen = false,
+  children,
+  renderWindow,
+}: OsShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { setTheme, resolvedTheme } = useTheme();
@@ -233,6 +286,19 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
   const currentRouteApp = routeToAppId(location.pathname);
   const routePath = `${location.pathname}${location.search}${location.hash}`;
 
+  const {
+    pushNotification,
+    isCenterOpen,
+    setIsCenterOpen,
+    unreadCount,
+    isFocusMode,
+    setIsFocusMode,
+    soundEnabled,
+    setSoundEnabled,
+    appBadges,
+    clearAppBadge,
+  } = useOsNotification();
+
   const [now, setNow] = useState(() => new Date());
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [launcherQuery, setLauncherQuery] = useState('');
@@ -240,14 +306,41 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
   const [spotlightQuery, setSpotlightQuery] = useState('');
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [power, setPower] = useState<OsPowerState>('on');
+  const [power, setPower] = useState<OsPowerState>(() => {
+    if (!lockScreen) return 'on';
+    if (typeof window === 'undefined') return 'on';
+    try {
+      return window.sessionStorage.getItem('ganos_unlocked') === 'true'
+        ? 'on'
+        : 'locked';
+    } catch {
+      return 'locked';
+    }
+  });
   const [brightness, setBrightness] = useState(1);
   const [appearance, setAppearanceState] = useState<OsAppearance>('dark');
+  const [systemFont, setSystemFontState] = useState<SystemFontId>(() => {
+    if (typeof window === 'undefined') return 'jakarta';
+    try {
+      const stored = window.localStorage.getItem(
+        'ganos-system-font',
+      ) as SystemFontId | null;
+      if (stored === 'inter' || stored === 'geist' || stored === 'jakarta') {
+        return stored;
+      }
+    } catch {
+      /* ignore */
+    }
+    return 'jakarta';
+  });
+  const [language, setLanguageState] = useState<OsLanguage>(readLanguagePref);
   const [settingsPane, setSettingsPane] = useState<SettingsPaneId>('about');
   const [notesPayload, setNotesPayload] = useState<string | undefined>();
+  const [safariPayload, setSafariPayload] = useState<string | undefined>();
   const [launchingId, setLaunchingId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [dockRevealed, setDockRevealed] = useState(false);
+  const [widgetGalleryOpen, setWidgetGalleryOpen] = useState(false);
   const [note, setNote] = useState(
     'A note to self: make useful things, keep learning, and leave the codebase better than you found it.',
   );
@@ -284,6 +377,89 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     origY: number;
   } | null>(null);
 
+  const [activeTrack, setActiveTrack] = useState<ListeningTrack>(RECENT_TRACKS[0]);
+  const [isPlayingTrack, setIsPlayingTrack] = useState(false);
+  const [trackPlaybackSec, setTrackPlaybackSec] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [snapTarget, setSnapTarget] = useState<'left' | 'right' | 'top' | null>(null);
+  const snapTargetRef = useRef<'left' | 'right' | 'top' | null>(null);
+
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [switcherIndex, setSwitcherIndex] = useState(0);
+
+  const togglePlayTrack = useCallback(
+    (track?: ListeningTrack) => {
+      const audio = audioRef.current;
+      if (track && track.id !== activeTrack.id) {
+        setActiveTrack(track);
+        setTrackPlaybackSec(0);
+        setIsPlayingTrack(true);
+        if (audio) {
+          audio.src = track.streamUrl || '';
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+        return;
+      }
+
+      setIsPlayingTrack((prev) => {
+        const next = !prev;
+        if (audio) {
+          if (next) {
+            if (!audio.src && activeTrack.streamUrl) {
+              audio.src = activeTrack.streamUrl;
+            }
+            audio.play().catch(() => {});
+          } else {
+            audio.pause();
+          }
+        }
+        return next;
+      });
+    },
+    [activeTrack],
+  );
+
+  const nextTrack = useCallback(() => {
+    const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
+    const next = RECENT_TRACKS[(currentIndex + 1) % RECENT_TRACKS.length];
+    setActiveTrack(next);
+    setTrackPlaybackSec(0);
+    setIsPlayingTrack(true);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = next.streamUrl || '';
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+  }, [activeTrack]);
+
+  const prevTrack = useCallback(() => {
+    const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
+    const prev =
+      RECENT_TRACKS[
+        (currentIndex - 1 + RECENT_TRACKS.length) % RECENT_TRACKS.length
+      ];
+    setActiveTrack(prev);
+    setTrackPlaybackSec(0);
+    setIsPlayingTrack(true);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = prev.streamUrl || '';
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+  }, [activeTrack]);
+
+  useEffect(() => {
+    if (!isPlayingTrack) return;
+    const timer = window.setInterval(() => {
+      setTrackPlaybackSec((sec) => (sec >= 30 ? 0 : sec + 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isPlayingTrack]);
+
   const isDark =
     appearance === 'auto'
       ? resolvedTheme !== 'light'
@@ -296,6 +472,28 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     },
     [setTheme],
   );
+
+  const setSystemFont = useCallback((font: SystemFontId) => {
+    setSystemFontState(font);
+    try {
+      window.localStorage.setItem('ganos-system-font', font);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setLanguage = useCallback((next: OsLanguage) => {
+    setLanguageState(next);
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-font', systemFont);
+  }, [systemFont]);
 
   const activeWallpaper = useMemo(
     () => WALLPAPERS.find((w) => w.id === wallpaperId) ?? WALLPAPERS[0],
@@ -381,25 +579,6 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     return () => window.removeEventListener('pointerdown', onPointerDown);
   }, [openMenu]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (power !== 'on') return;
-      if (event.key === 'Escape') {
-        setOpenMenu(null);
-        setLauncherOpen(false);
-        setSpotlightOpen(false);
-      }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        setOpenMenu(null);
-        setLauncherOpen(false);
-        setSpotlightOpen((open) => !open);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [power]);
 
   // Keep windows clamped on viewport resize
   useEffect(() => {
@@ -461,12 +640,16 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       setOpenMenu(null);
       setLauncherOpen(false);
       setSpotlightOpen(false);
+      clearAppBadge(id);
 
       if (id === 'settings' && payload) {
         setSettingsPane(payload as SettingsPaneId);
       }
       if (id === 'notes' && payload) {
         setNotesPayload(payload);
+      }
+      if (id === 'safari' && payload) {
+        setSafariPayload(payload);
       }
 
       const alreadyOpen = windows.some((w) => w.id === id);
@@ -516,12 +699,94 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       if (targetPath && targetPath !== routePath) {
         navigate(targetPath);
       }
+      playWindowOpenSound();
     },
-    [navigate, routePath, windows],
+    [clearAppBadge, navigate, routePath, windows],
   );
+
+  // Welcome to GanOS notification on boot / unlock
+  useEffect(() => {
+    if (power !== 'on') return;
+
+    const hasShownWelcome = window.sessionStorage.getItem('ganos_welcome_shown');
+    if (!hasShownWelcome) {
+      const timer = window.setTimeout(() => {
+        pushNotification({
+          id: 'welcome-notification',
+          appId: 'settings',
+          appName: 'GanOS System',
+          appIcon: '/macos-icons/settings.png',
+          title: 'Welcome to GanOS',
+          body: 'Choose your language / Pilih bahasa workspace:',
+          durationMs: 14000,
+          secondaryActionLabel: '🇬🇧 English',
+          onSecondaryAction: () => {
+            setLanguage('en');
+            pushNotification({
+              appId: 'settings',
+              appName: 'GanOS System',
+              appIcon: '/macos-icons/settings.png',
+              title: '🇬🇧 English Selected',
+              body: "Press ⌘K for Spotlight search or explore the dock to get started.",
+              actionLabel: 'Explore Projects',
+              onAction: () => openApp('projects'),
+            });
+          },
+          actionLabel: '🇮🇩 Bahasa Indonesia',
+          onAction: () => {
+            setLanguage('id');
+            pushNotification({
+              appId: 'settings',
+              appName: 'GanOS System',
+              appIcon: '/macos-icons/settings.png',
+              title: '🇮🇩 Bahasa Indonesia Aktif',
+              body: 'Gunakan ⌘K untuk Spotlight Search atau klik dock untuk mulai menjelajahi portofolio.',
+              actionLabel: 'Jelajahi Proyek',
+              onAction: () => openApp('projects'),
+            });
+          },
+        });
+        window.sessionStorage.setItem('ganos_welcome_shown', 'true');
+      }, 2200);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [power, pushNotification, openApp, setLanguage]);
+
+  // Proactive inquiry notification from Ghufron after 24s if Mail hasn't been opened yet
+  useEffect(() => {
+    if (power !== 'on') return;
+
+    const hasShownInquiry = window.sessionStorage.getItem('ganos_inquiry_shown');
+    if (!hasShownInquiry) {
+      const timer = window.setTimeout(() => {
+        if (appBadges.mail) {
+          const isId = language === 'id';
+          pushNotification({
+            appId: 'mail',
+            appName: 'Mail',
+            appIcon: '/macos-icons/mail.png',
+            title: 'Ghufron Ainun Najib',
+            body: isId
+              ? 'Lagi cari frontend/fullstack engineer buat tim atau project kamu? Yuk ngobrol santai!'
+              : 'Looking for a skilled frontend engineer? Let’s connect and talk about your project.',
+            actionLabel: isId ? 'Buka Mail' : 'Open Mail',
+            onAction: () => {
+              clearAppBadge('mail');
+              openApp('mail');
+            },
+          });
+        }
+        window.sessionStorage.setItem('ganos_inquiry_shown', 'true');
+      }, 24000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [power, appBadges.mail, pushNotification, openApp, clearAppBadge, language]);
 
   const closeWindow = useCallback(
     (id: OsAppId) => {
+      playWindowCloseSound();
       setWindows((current) => {
         const remaining = current.filter((w) => w.id !== id);
         const topVisible = [...remaining]
@@ -543,6 +808,7 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
 
   const minimizeWindow = useCallback(
     (id: OsAppId) => {
+      playWindowCloseSound();
       setWindows((current) => {
         const next = current.map((w) =>
           w.id === id ? { ...w, isMinimized: true } : w,
@@ -578,6 +844,134 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     if (routePath !== '/') navigate('/');
   }, [navigate, routePath]);
 
+  const switcherApps: AppSwitcherItem[] = useMemo(() => {
+    if (windows.length > 0) {
+      return windows.map((w) => ({
+        id: w.id,
+        title: APP_SPECS[w.id].name,
+        icon: APP_SPECS[w.id].icon,
+      }));
+    }
+    return (
+      [
+        'projects',
+        'safari',
+        'blog',
+        'about',
+        'notes',
+        'terminal',
+        'mail',
+        'settings',
+      ] as OsAppId[]
+    ).map((id) => ({
+      id,
+      title: APP_SPECS[id].name,
+      icon: APP_SPECS[id].icon,
+    }));
+  }, [windows]);
+
+  // Keyboard shortcuts (Mac + Windows native equivalents)
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (power !== 'on') return;
+
+      if (event.key === 'Escape') {
+        setOpenMenu(null);
+        setLauncherOpen(false);
+        setSpotlightOpen(false);
+        setIsSwitcherOpen(false);
+        return;
+      }
+
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey;
+
+      // 1. Spotlight Search: Cmd+Space (Mac), Ctrl+Space (Windows), Cmd+K / Ctrl+K
+      if (
+        isCmdOrCtrl &&
+        (event.key === ' ' || event.code === 'Space' || event.key.toLowerCase() === 'k')
+      ) {
+        event.preventDefault();
+        setOpenMenu(null);
+        setLauncherOpen(false);
+        setSpotlightOpen((open) => !open);
+        return;
+      }
+
+      // 2. Close active window: Cmd+W (Mac) / Ctrl+W (Windows)
+      // Calling e.preventDefault() prevents Windows browser from closing the browser tab!
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'w') {
+        event.preventDefault();
+        if (focusedId) {
+          closeWindow(focusedId);
+        }
+        return;
+      }
+
+      // 3. Minimize active window: Cmd+M (Mac) / Ctrl+M (Windows)
+      if (isCmdOrCtrl && event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        if (focusedId) {
+          minimizeWindow(focusedId);
+        }
+        return;
+      }
+
+      // 4. Open Settings: Cmd+, (Mac) / Ctrl+, (Windows)
+      if (isCmdOrCtrl && event.key === ',') {
+        event.preventDefault();
+        openApp('settings');
+        return;
+      }
+
+      // 5. App Switcher HUD: Cmd+Tab / Ctrl+Tab
+      if (isCmdOrCtrl && event.key === 'Tab') {
+        event.preventDefault();
+        if (!isSwitcherOpen) {
+          setIsSwitcherOpen(true);
+          setSwitcherIndex(switcherApps.length > 1 ? 1 : 0);
+        } else {
+          if (event.shiftKey) {
+            setSwitcherIndex((prev) => (prev - 1 + switcherApps.length) % switcherApps.length);
+          } else {
+            setSwitcherIndex((prev) => (prev + 1) % switcherApps.length);
+          }
+        }
+        return;
+      }
+    };
+
+    const onKeyUp = (event: globalThis.KeyboardEvent) => {
+      // Releasing Cmd or Ctrl closes the App Switcher and focuses the chosen app
+      if (event.key === 'Meta' || event.key === 'Control') {
+        if (isSwitcherOpen) {
+          setIsSwitcherOpen(false);
+          const target = switcherApps[switcherIndex];
+          if (target) {
+            openApp(target.id);
+            focusWindow(target.id);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [
+    power,
+    focusedId,
+    closeWindow,
+    minimizeWindow,
+    openApp,
+    focusWindow,
+    isSwitcherOpen,
+    switcherApps,
+    switcherIndex,
+  ]);
+
   const startWindowDrag = (
     id: OsAppId,
     event: React.PointerEvent<HTMLDivElement>,
@@ -604,6 +998,26 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       if (!drag) return;
       const dx = moveEvent.clientX - drag.startX;
       const dy = moveEvent.clientY - drag.startY;
+
+      const vw = window.innerWidth;
+      const edgeThreshold = 24;
+
+      if (moveEvent.clientX <= edgeThreshold) {
+        setSnapTarget('left');
+        snapTargetRef.current = 'left';
+      } else if (moveEvent.clientX >= vw - edgeThreshold) {
+        setSnapTarget('right');
+        snapTargetRef.current = 'right';
+      } else if (moveEvent.clientY <= MENUBAR_HEIGHT + 12) {
+        setSnapTarget('top');
+        snapTargetRef.current = 'top';
+      } else {
+        if (snapTargetRef.current !== null) {
+          setSnapTarget(null);
+          snapTargetRef.current = null;
+        }
+      }
+
       setWindows((current) =>
         current.map((w) =>
           w.id === drag.id
@@ -629,7 +1043,132 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       );
     };
     const onUp = () => {
+      const drag = dragRef.current;
+      const snap = snapTargetRef.current;
+      if (drag && snap) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight - MENUBAR_HEIGHT;
+        if (snap === 'left') {
+          setWindows((current) =>
+            current.map((w) =>
+              w.id === drag.id
+                ? {
+                    ...w,
+                    isMaximized: false,
+                    frame: {
+                      x: 8,
+                      y: 8,
+                      width: Math.max(380, Math.round(vw / 2 - 14)),
+                      height: Math.max(
+                        300,
+                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16),
+                      ),
+                    },
+                  }
+                : w,
+            ),
+          );
+        } else if (snap === 'right') {
+          setWindows((current) =>
+            current.map((w) =>
+              w.id === drag.id
+                ? {
+                    ...w,
+                    isMaximized: false,
+                    frame: {
+                      x: Math.round(vw / 2 + 6),
+                      y: 8,
+                      width: Math.max(380, Math.round(vw / 2 - 14)),
+                      height: Math.max(
+                        300,
+                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16),
+                      ),
+                    },
+                  }
+                : w,
+            ),
+          );
+        } else if (snap === 'top') {
+          setWindows((current) =>
+            current.map((w) =>
+              w.id === drag.id ? { ...w, isMaximized: true } : w,
+            ),
+          );
+        }
+      }
+
+      setSnapTarget(null);
+      snapTargetRef.current = null;
       dragRef.current = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const startWindowResize = (
+    id: OsAppId,
+    dir: ResizeDir,
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    const win = windows.find((w) => w.id === id);
+    if (!win || win.isMaximized || window.innerWidth < 768) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (focusedId !== id) focusWindow(id);
+
+    const origFrame = { ...win.frame };
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const minW = APP_SPECS[id].minSize.width;
+    const minH = APP_SPECS[id].minSize.height;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight - MENUBAR_HEIGHT;
+
+      let { x, y, width, height } = origFrame;
+
+      if (dir.includes('e')) {
+        width = Math.max(minW, Math.min(origFrame.width + dx, vw - origFrame.x - 4));
+      }
+      if (dir.includes('s')) {
+        height = Math.max(minH, Math.min(origFrame.height + dy, vh - origFrame.y - 4));
+      }
+      if (dir.includes('w')) {
+        const maxLeft = origFrame.x + origFrame.width - minW;
+        const nextX = Math.max(4, Math.min(origFrame.x + dx, maxLeft));
+        width = origFrame.width + (origFrame.x - nextX);
+        x = nextX;
+      }
+      if (dir.includes('n')) {
+        const maxTop = origFrame.y + origFrame.height - minH;
+        const nextY = Math.max(0, Math.min(origFrame.y + dy, maxTop));
+        height = origFrame.height + (origFrame.y - nextY);
+        y = nextY;
+      }
+
+      setWindows((current) =>
+        current.map((w) =>
+          w.id === id
+            ? {
+                ...w,
+                frame: {
+                  x: Math.round(x),
+                  y: Math.round(y),
+                  width: Math.round(width),
+                  height: Math.round(height),
+                },
+              }
+            : w,
+        ),
+      );
+    };
+
+    const onUp = () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
@@ -656,18 +1195,26 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     {
       id: 'apple',
       label: (
-        <img
-          src="/macos-icons/apple.png"
-          alt="Apple"
-          className={cn('h-[15px] w-[13px] object-contain', !activeWallpaper.isLight && 'invert')}
-        />
+        <span className="flex items-center gap-1.5">
+          <img
+            src="/brand-logo.svg"
+            alt="GanOS"
+            className="h-[16px] w-[16px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+          />
+          <span className="text-[12.5px] font-bold tracking-tight">GanOS</span>
+        </span>
       ),
       entries: [
-        { label: 'About This Mac', onClick: () => openApp('about') },
+        { label: 'About GanOS', onClick: () => openApp('settings', 'about') },
+        { label: 'About Ghufron', onClick: () => openApp('about') },
         'separator',
         {
           label: 'System Settings…',
-          onClick: () => openApp('settings', 'about'),
+          onClick: () => openApp('settings', 'wallpaper'),
+        },
+        {
+          label: 'Safari (/old)',
+          onClick: () => openApp('safari'),
         },
         'separator',
         { label: 'Sleep', onClick: () => setPower('sleeping') },
@@ -679,7 +1226,7 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       label: <span className="font-bold">{activeMenuAppName}</span>,
       entries: [
         {
-          label: 'About This Portfolio',
+          label: 'About GanOS',
           onClick: () => openApp('settings', 'about'),
         },
         'separator',
@@ -730,6 +1277,16 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       label: 'View',
       entries: [
         {
+          label: 'Edit Desktop Widgets…',
+          checked: widgetGalleryOpen,
+          onClick: () => {
+            if (routePath !== '/') navigate('/');
+            setFocusedId(null);
+            setWidgetGalleryOpen((v) => !v);
+          },
+        },
+        'separator',
+        {
           label: maximizedWindow ? 'Restore Window' : 'Zoom Window',
           disabled: !focusedId,
           onClick: () => focusedId && toggleMaximize(focusedId),
@@ -765,8 +1322,8 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
           onClick: () => window.open(profile.linkedin, '_blank', 'noreferrer'),
         },
         {
-          label: 'Legacy Portfolio (/old)',
-          onClick: () => navigate('/old'),
+          label: 'Safari (/old)',
+          onClick: () => openApp('safari'),
         },
       ],
     },
@@ -815,8 +1372,9 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
   // Dock groups matching R0shish 1:1
   const dockOrder: OsAppId[] = [
     'projects',
-    'blog',
+    'safari',
     'about',
+    'blog',
     'notes',
     'terminal',
     'mail',
@@ -833,7 +1391,11 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       iconSrc: spec.icon,
       isRunning,
       isLaunching: launchingId === id,
-      onClick: () => openApp(id),
+      badge: appBadges[id],
+      onClick: () => {
+        clearAppBadge(id);
+        openApp(id);
+      },
     };
   };
 
@@ -859,8 +1421,9 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
           setLauncherOpen((v) => !v);
         },
       },
-      makeDockItem('blog'),
+      makeDockItem('safari'),
       makeDockItem('about'),
+      makeDockItem('blog'),
       makeDockItem('notes'),
       makeDockItem('terminal'),
       makeDockItem('mail'),
@@ -884,9 +1447,14 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       ...minimizedItems,
       {
         key: 'trash',
-        title: 'Trash',
+        title: 'Trash (Click to empty)',
         iconSrc: '/macos-icons/trash.png',
-        onClick: () => openApp('projects'),
+        onClick: () => {
+          playTrashEmptySound();
+          toast.success('Trash Emptied', {
+            description: 'Recycle bin is clean and quiet.',
+          });
+        },
       },
     ],
   ].filter((group) => group.length > 0);
@@ -903,6 +1471,28 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
         icon: APP_SPECS[id].icon,
         action: () => openApp(id),
       })),
+      {
+        id: 'system:weather',
+        category: 'Applications',
+        title: 'Weather',
+        subtitle: 'Semarang live weather & forecast',
+        icon: '/macos-icons/weather.svg',
+        action: () => {
+          setSpotlightOpen(false);
+          setWidgetGalleryOpen(true);
+        },
+      },
+      {
+        id: 'system:widgets',
+        category: 'Applications',
+        title: 'Add Widgets',
+        subtitle: 'Customize & configure Sonoma desktop widgets',
+        icon: '/macos-icons/widgets.svg',
+        action: () => {
+          setSpotlightOpen(false);
+          setWidgetGalleryOpen(true);
+        },
+      },
       ...featuredProjects.map((project) => ({
         id: `project:${project.slug}`,
         category: 'Projects',
@@ -922,10 +1512,10 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
       {
         id: 'link:old',
         category: 'Links',
-        title: 'Legacy Portfolio (/old)',
-        subtitle: 'View previous editorial design',
+        title: 'Safari — ghufronainun.tech/old',
+        subtitle: 'Open previous portfolio inside Safari window',
         icon: '/macos-icons/safari.png',
-        action: () => navigate('/old'),
+        action: () => openApp('safari'),
       },
     ];
     if (!q) return all.slice(0, 8);
@@ -934,10 +1524,10 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
         .toLowerCase()
         .includes(q),
     );
-  }, [navigate, openApp, spotlightQuery]);
+  }, [openApp, setWidgetGalleryOpen, spotlightQuery]);
 
   const formattedDate = now
-    .toLocaleDateString('en-GB', {
+    .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -962,6 +1552,10 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     setAutoRotateWallpaper,
     appearance,
     setAppearance,
+    systemFont,
+    setSystemFont,
+    language,
+    setLanguage,
     isDark,
     brightness,
     setBrightness,
@@ -970,12 +1564,63 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
     setSettingsPane,
     power,
     setPower,
+    widgetGalleryOpen,
+    setWidgetGalleryOpen,
     isFocused: true,
+    activeTrack,
+    setActiveTrack,
+    isPlayingTrack,
+    setIsPlayingTrack,
+    trackPlaybackSec,
+    setTrackPlaybackSec,
+    togglePlayTrack,
+    nextTrack,
+    prevTrack,
+    audioRef,
   };
 
-  const launcherApps = (Object.keys(APP_SPECS) as OsAppId[]).filter((id) =>
-    APP_SPECS[id].name.toLowerCase().includes(launcherQuery.toLowerCase()),
+  const launcherItems = useMemo(
+    () => [
+      ...(Object.keys(APP_SPECS) as OsAppId[]).map((id) => ({
+        id,
+        name: APP_SPECS[id].name,
+        icon: APP_SPECS[id].icon,
+        action: () => openApp(id),
+        keywords: [APP_SPECS[id].name.toLowerCase(), APP_SPECS[id].title.toLowerCase()],
+      })),
+      {
+        id: 'weather',
+        name: 'Weather',
+        icon: '/macos-icons/weather.svg',
+        action: () => {
+          setLauncherOpen(false);
+          setWidgetGalleryOpen(true);
+        },
+        keywords: ['weather', 'cuaca', 'semarang', 'temperature', 'suhu', 'forecast'],
+      },
+      {
+        id: 'widgets',
+        name: 'Add Widgets',
+        icon: '/macos-icons/widgets.svg',
+        action: () => {
+          setLauncherOpen(false);
+          setWidgetGalleryOpen(true);
+        },
+        keywords: ['widgets', 'widget', 'add', 'desktop', 'edit', 'customize', 'gallery'],
+      },
+    ],
+    [openApp, setWidgetGalleryOpen],
   );
+
+  const filteredLauncherItems = useMemo(() => {
+    const q = launcherQuery.trim().toLowerCase();
+    if (!q) return launcherItems;
+    return launcherItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.keywords?.some((k) => k.includes(q)),
+    );
+  }, [launcherItems, launcherQuery]);
 
   return (
     <OsShellContext.Provider value={shellContextValue}>
@@ -994,9 +1639,9 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
           ))}
         </div>
 
-        {/* Desktop surface */}
+        {/* Desktop surface (isolated in z-0 stacking context so windows always sit above desktop icons/widgets) */}
         <div
-          className="absolute inset-x-0 bottom-0"
+          className="absolute inset-x-0 bottom-0 z-0"
           style={{ top: MENUBAR_HEIGHT }}
           onPointerDown={(event) => {
             if (event.target === event.currentTarget) focusDesktop();
@@ -1005,146 +1650,185 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
           {children}
         </div>
 
-        {/* Floating Windows */}
-        {windows.map((win) => {
-          if (win.isMinimized) return null;
-          const isFocused = focusedId === win.id;
-          const spec = APP_SPECS[win.id];
-          const style: React.CSSProperties = win.isMaximized
-            ? {
-                left: 0,
-                top: MENUBAR_HEIGHT,
-                width: '100vw',
-                height: `calc(100svh - ${MENUBAR_HEIGHT}px)`,
-                zIndex: win.zIndex,
-              }
-            : {
-                left: win.frame.x,
-                top: win.frame.y + MENUBAR_HEIGHT,
-                width: win.frame.width,
-                height: win.frame.height,
-                zIndex: win.zIndex,
-              };
-
-          return (
-            <div
-              key={win.id}
-              role="dialog"
-              aria-label={spec.title}
-              style={style}
-              onPointerDownCapture={() => {
-                if (focusedId !== win.id) focusWindow(win.id);
-              }}
-              onPointerDown={(event) => startWindowDrag(win.id, event)}
-              onDoubleClick={(event) => {
-                if (
-                  (event.target as HTMLElement).closest('.handle') &&
-                  !(event.target as HTMLElement).closest('button, input, a')
-                ) {
-                  toggleMaximize(win.id);
-                }
-              }}
+        {/* Window Snap Preview Ghost (macOS Sequoia / Windows Aero Snap) */}
+        <AnimatePresence>
+          {snapTarget && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14 }}
               className={cn(
-                'absolute flex flex-col overflow-hidden transition-[border-radius,box-shadow] duration-200',
-                !win.isMaximized && 'rounded-[26px]',
-                !isFocused && 'inactive-window',
+                'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-150',
+                snapTarget === 'left' &&
+                  'left-2 top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
+                snapTarget === 'right' &&
+                  'left-[calc(50vw+4px)] top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
+                snapTarget === 'top' &&
+                  'left-2 top-[36px] w-[calc(100vw-16px)] h-[calc(100svh-44px)]',
               )}
-            >
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Floating Windows */}
+        <AnimatePresence>
+          {windows.map((win) => {
+            if (win.isMinimized) return null;
+            const isFocused = focusedId === win.id;
+            const spec = APP_SPECS[win.id];
+            const style: React.CSSProperties = win.isMaximized
+              ? {
+                  left: 0,
+                  top: MENUBAR_HEIGHT,
+                  width: '100vw',
+                  height: `calc(100svh - ${MENUBAR_HEIGHT}px)`,
+                  zIndex: win.zIndex,
+                }
+              : {
+                  left: win.frame.x,
+                  top: win.frame.y + MENUBAR_HEIGHT,
+                  width: win.frame.width,
+                  height: win.frame.height,
+                  zIndex: win.zIndex,
+                };
+
+            return (
               <motion.div
+                key={win.id}
+                role="dialog"
+                aria-label={spec.title}
+                style={style}
                 initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                exit={reduceMotion ? undefined : { opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 440, damping: 36 }}
+                onPointerDownCapture={() => {
+                  if (focusedId !== win.id) focusWindow(win.id);
+                }}
+                onPointerDown={(event) => startWindowDrag(win.id, event)}
+                onDoubleClick={(event) => {
+                  if (
+                    (event.target as HTMLElement).closest('.handle') &&
+                    !(event.target as HTMLElement).closest('button, input, a')
+                  ) {
+                    toggleMaximize(win.id);
+                  }
+                }}
                 className={cn(
-                  'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/75 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-3xl backdrop-saturate-150 dark:bg-[#3a3039]/70 dark:text-white/90',
-                  'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
+                  'absolute flex flex-col overflow-hidden transition-[border-radius,box-shadow] duration-200',
                   !win.isMaximized && 'rounded-[26px]',
-                  isFocused
-                    ? 'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_0_0.5px_rgba(0,0,0,0.6)]'
-                    : 'shadow-[0_14px_36px_rgba(0,0,0,0.35)]',
-                  win.isMaximized && 'rounded-none shadow-none ring-0',
+                  !isFocused && 'inactive-window',
                 )}
               >
-                {/* Traffic light controls matching R0shish */}
-                <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
-                  <button
-                    type="button"
-                    aria-label="Close"
-                    onClick={() => closeWindow(win.id)}
-                    className={cn(
-                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
-                      isFocused
-                        ? 'bg-[#ff5f57]'
-                        : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20',
-                    )}
-                  >
-                    <X
-                      size={8}
-                      strokeWidth={3}
-                      className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Minimize"
-                    onClick={() => minimizeWindow(win.id)}
-                    className={cn(
-                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
-                      isFocused
-                        ? 'bg-[#febc2e]'
-                        : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20',
-                    )}
-                  >
-                    <Minus
-                      size={8}
-                      strokeWidth={3}
-                      className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
-                    onClick={() => toggleMaximize(win.id)}
-                    className={cn(
-                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
-                      isFocused
-                        ? 'bg-[#28c840]'
-                        : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20',
-                    )}
-                  >
-                    <Plus
-                      size={8}
-                      strokeWidth={3}
-                      className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100"
-                    />
-                  </button>
-                </div>
+                <div
+                  className={cn(
+                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/75 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-3xl backdrop-saturate-150 dark:bg-[#3a3039]/70 dark:text-white/90',
+                    'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
+                    !win.isMaximized && 'rounded-[26px]',
+                    isFocused
+                      ? 'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_0_0.5px_rgba(0,0,0,0.6)]'
+                      : 'shadow-[0_14px_36px_rgba(0,0,0,0.35)]',
+                    win.isMaximized && 'rounded-none shadow-none ring-0',
+                  )}
+                >
+                  {/* Traffic light controls matching R0shish */}
+                  <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      onClick={() => closeWindow(win.id)}
+                      className={cn(
+                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        isFocused
+                          ? 'bg-[#ff5f57]'
+                          : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20',
+                      )}
+                    >
+                      <X
+                        size={8}
+                        strokeWidth={3}
+                        className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Minimize"
+                      onClick={() => minimizeWindow(win.id)}
+                      className={cn(
+                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        isFocused
+                          ? 'bg-[#febc2e]'
+                          : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20',
+                      )}
+                    >
+                      <Minus
+                        size={8}
+                        strokeWidth={3}
+                        className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
+                      onClick={() => toggleMaximize(win.id)}
+                      className={cn(
+                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        isFocused
+                          ? 'bg-[#28c840]'
+                          : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20',
+                      )}
+                    >
+                      <Plus
+                        size={8}
+                        strokeWidth={3}
+                        className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                      />
+                    </button>
+                  </div>
 
-                {/* Window body */}
-                <div className="relative min-h-0 flex-grow">
-                  <WindowFocusContext.Provider value={isFocused}>
-                    {win.id === 'settings' ? (
-                      <SystemSettingsApp />
-                    ) : win.id === 'notes' ? (
-                      <NotesApp initialId={notesPayload} />
-                    ) : win.id === 'terminal' ? (
-                      <TerminalApp onClose={() => closeWindow('terminal')} />
-                    ) : win.id === 'mail' ? (
-                      <MailApp />
-                    ) : win.path && renderWindow ? (
-                      <div className="h-full overflow-y-auto bg-white dark:bg-[#282025]">
-                        {renderWindow(win.path)}
-                      </div>
-                    ) : (
-                      <div className="h-full overflow-y-auto bg-white dark:bg-[#282025]">
-                        {children}
-                      </div>
-                    )}
-                  </WindowFocusContext.Provider>
+                  {/* Window body */}
+                  <div className="relative min-h-0 flex-grow">
+                    <WindowFocusContext.Provider value={isFocused}>
+                      {win.id === 'settings' ? (
+                        <SystemSettingsApp />
+                      ) : win.id === 'safari' ? (
+                        <SafariApp initialUrl={safariPayload} />
+                      ) : win.id === 'notes' ? (
+                        <NotesApp initialId={notesPayload} />
+                      ) : win.id === 'terminal' ? (
+                        <TerminalApp onClose={() => closeWindow('terminal')} />
+                      ) : win.id === 'mail' ? (
+                        <MailApp />
+                      ) : win.path && renderWindow ? (
+                        <div className="h-full w-full overflow-hidden">
+                          {renderWindow(win.path)}
+                        </div>
+                      ) : (
+                        <div className="h-full w-full overflow-hidden">
+                          {children}
+                        </div>
+                      )}
+                    </WindowFocusContext.Provider>
+                  </div>
+
+                  {/* 8-direction macOS window resize handles */}
+                  {!win.isMaximized &&
+                    RESIZE_HANDLES.map((handle) => (
+                      <div
+                        key={handle.dir}
+                        aria-hidden="true"
+                        onPointerDown={(event) =>
+                          startWindowResize(win.id, handle.dir, event)
+                        }
+                        className={cn(' absolute z-30', handle.className)}
+                      />
+                    ))}
                 </div>
               </motion.div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </AnimatePresence>
 
         {/* Dock */}
         <div className="pointer-events-none absolute inset-x-0 bottom-2 z-[26] flex justify-center [&>*]:pointer-events-auto">
@@ -1176,8 +1860,9 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
                   value={launcherQuery}
                   onChange={(event) => setLauncherQuery(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' && launcherApps[0]) {
-                      openApp(launcherApps[0]);
+                    if (event.key === 'Enter' && filteredLauncherItems[0]) {
+                      setLauncherOpen(false);
+                      filteredLauncherItems[0].action();
                     }
                   }}
                   placeholder="Search"
@@ -1195,20 +1880,23 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
                 }}
                 className="mt-[8vh] grid w-full max-w-5xl grid-cols-[repeat(auto-fill,120px)] justify-center gap-x-8 gap-y-6 px-8"
               >
-                {launcherApps.map((id) => (
+                {filteredLauncherItems.map((item) => (
                   <button
-                    key={id}
+                    key={item.id}
                     type="button"
-                    onClick={() => openApp(id)}
-                    className="flex cursor-default flex-col items-center gap-2"
+                    onClick={() => {
+                      setLauncherOpen(false);
+                      item.action();
+                    }}
+                    className="group flex cursor-default flex-col items-center gap-2 transition-transform duration-150 active:scale-95"
                   >
                     <img
-                      src={APP_SPECS[id].icon}
-                      alt=""
-                      className="h-24 w-24 object-contain active:brightness-75"
+                      src={item.icon}
+                      alt={item.name}
+                      className="h-24 w-24 object-contain transition-transform duration-200 group-hover:scale-105 active:brightness-75 drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
                     />
-                    <span className="text-[13px] [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                      {APP_SPECS[id].name}
+                    <span className="text-[13px] font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+                      {item.name}
                     </span>
                   </button>
                 ))}
@@ -1219,18 +1907,25 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
 
         {/* Top Menu Bar (32px, transparent over wallpaper) */}
         <header className="pointer-events-none absolute inset-x-0 top-0 z-30 [&>*]:pointer-events-auto">
+          <DynamicIsland />
           <nav
             ref={menubarRef}
             style={{ height: MENUBAR_HEIGHT }}
             className={cn(
-              'flex items-center justify-between text-[13px] font-medium transition-colors',
+              'relative flex items-center justify-between text-[13px] font-medium transition-colors',
               maximizedWindow
-                ? 'bg-[#ececec]/90 text-black backdrop-blur-2xl dark:bg-[#1e1e1e]/90 dark:text-white'
+                ? 'text-black dark:text-white'
                 : activeWallpaper.isLight
                   ? 'text-black'
                   : 'text-white [text-shadow:0_0_8px_rgba(0,0,0,0.25)]',
             )}
           >
+            {maximizedWindow && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -z-10 bg-[#ececec]/90 backdrop-blur-2xl dark:bg-[#1e1e1e]/90"
+              />
+            )}
             <div className="flex h-full items-center pl-2.5">
               {menus.map((menu) => (
                 <div
@@ -1259,7 +1954,7 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
                   {openMenu === menu.id && (
                     <div
                       role="menu"
-                      className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/85 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/80 dark:text-white"
+                      className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/90 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/90 dark:text-white"
                     >
                       {menu.entries.map((entry, idx) =>
                         entry === 'separator' ? (
@@ -1445,6 +2140,26 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
                       </div>
                     </div>
 
+                    <div className="rounded-[18px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenMenu(null);
+                          if (routePath !== '/') navigate('/');
+                          setFocusedId(null);
+                          setWidgetGalleryOpen((v) => !v);
+                        }}
+                        className="flex w-full cursor-default items-center justify-between rounded-xl px-2 py-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <span className="text-[12px] font-semibold">
+                          Desktop Widgets
+                        </span>
+                        <span className="rounded-full bg-[#0a84ff] px-2.5 py-0.5 text-[11px] font-medium text-white">
+                          {widgetGalleryOpen ? 'Done' : 'Add / Remove'}
+                        </span>
+                      </button>
+                    </div>
+
                     <div className="rounded-[18px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
                       <div className="mb-1.5 text-[12px] font-semibold">
                         Display
@@ -1474,14 +2189,162 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
                         />
                       </div>
                     </div>
+
+                    {/* Focus Mode & Sound Effects */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusMode((v) => !v)}
+                          className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        >
+                          <span
+                            className={cn(
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                              isFocusMode
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-black/10 dark:bg-white/15',
+                            )}
+                          >
+                            <Moon size={14} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-semibold leading-tight">
+                              {language === 'id' ? 'Fokus' : 'Focus'}
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight opacity-60">
+                              {isFocusMode
+                                ? language === 'id'
+                                  ? 'Jangan Ganggu'
+                                  : 'Do Not Disturb'
+                                : language === 'id'
+                                  ? 'Mati'
+                                  : 'Off'}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <button
+                          type="button"
+                          onClick={() => setSoundEnabled((v) => !v)}
+                          className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        >
+                          <span
+                            className={cn(
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                              soundEnabled
+                                ? 'bg-[#0a84ff] text-white'
+                                : 'bg-black/10 dark:bg-white/15',
+                            )}
+                          >
+                            {soundEnabled ? (
+                              <Volume2 size={14} />
+                            ) : (
+                              <VolumeX size={14} />
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-semibold leading-tight">
+                              {language === 'id' ? 'Efek Suara' : 'Sound'}
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight opacity-60">
+                              {soundEnabled
+                                ? language === 'id'
+                                  ? 'Aktif'
+                                  : 'On'
+                                : language === 'id'
+                                  ? 'Bisu'
+                                  : 'Muted'}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Language Switcher Tile */}
+                    <div className="rounded-[18px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = language === 'en' ? 'id' : 'en';
+                          setLanguage(next);
+                          pushNotification({
+                            appId: 'settings',
+                            appName: 'GanOS System',
+                            appIcon: '/macos-icons/settings.png',
+                            title:
+                              next === 'id'
+                                ? '🇮🇩 Bahasa Indonesia'
+                                : '🇬🇧 English',
+                            body:
+                              next === 'id'
+                                ? 'Bahasa sistem diubah ke Bahasa Indonesia.'
+                                : 'System language changed to English.',
+                            silent: true,
+                          });
+                        }}
+                        className="flex w-full cursor-default items-center justify-between rounded-xl px-2 py-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
+                            <Globe size={14} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-semibold leading-tight">
+                              {language === 'id'
+                                ? 'Bahasa Sistem'
+                                : 'System Language'}
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight opacity-60">
+                              {language === 'id'
+                                ? 'Bahasa Indonesia (ID)'
+                                : 'English (EN)'}
+                            </span>
+                          </span>
+                        </div>
+                        <span className="rounded-full bg-black/10 px-2 py-0.5 text-[10.5px] font-semibold text-neutral-800 dark:bg-white/15 dark:text-neutral-200">
+                          {language === 'id' ? 'Ganti / Switch' : 'Switch'}
+                        </span>
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </div>
 
-              <div className="flex gap-2 px-2.5">
+              {isFocusMode && (
+                <div
+                  title="Do Not Disturb is active"
+                  className="flex h-6 items-center px-1 text-purple-300"
+                >
+                  <Moon size={13} />
+                </div>
+              )}
+
+              <button
+                type="button"
+                data-notification-toggle="true"
+                aria-label="Notification Center"
+                aria-expanded={isCenterOpen}
+                onClick={() => {
+                  setOpenMenu(null);
+                  setIsCenterOpen((v) => !v);
+                }}
+                className={cn(
+                  'flex h-6 cursor-default items-center gap-1.5 rounded-full px-2.5 transition-colors hover:bg-white/15',
+                  isCenterOpen && 'bg-white/20',
+                )}
+              >
                 <span className="hidden sm:inline">{formattedDate}</span>
                 <span>{formattedTime}</span>
-              </div>
+                {unreadCount > 0 && !isCenterOpen && (
+                  <span
+                    aria-label={`${unreadCount} unread notifications`}
+                    className="h-1.5 w-1.5 rounded-full bg-[#0a84ff]"
+                  />
+                )}
+              </button>
             </div>
           </nav>
         </header>
@@ -1609,39 +2472,72 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
           style={{ opacity: (1 - brightness) * 0.75 }}
         />
 
-        {/* Optional Lock / Sleep Screens triggered only via Apple menu */}
-        {power === 'locked' && (
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setPower('on')}
-            onKeyDown={() => setPower('on')}
-            className="absolute inset-0 z-[60] flex cursor-default flex-col items-center justify-between py-[10vh] text-white"
-            style={{ background: activeWallpaper.background }}
-          >
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-xl" />
-            <div className="relative text-center [text-shadow:0_2px_12px_rgba(0,0,0,0.3)]">
-              <div className="text-[20px] font-semibold opacity-90">
-                {now.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                  timeZone: 'Asia/Jakarta',
-                })}
+        {/* Initial & On-Demand Lock Screen with Wallpaper + User Brand Logo */}
+        <AnimatePresence>
+          {power === 'locked' && (
+            <motion.div
+              role="button"
+              tabIndex={0}
+              aria-label="Unlock GanOS"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 1.03 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => {
+                try {
+                  window.sessionStorage.setItem('ganos_unlocked', 'true');
+                } catch {
+                  /* ignore */
+                }
+                setPower('on');
+              }}
+              onKeyDown={() => {
+                try {
+                  window.sessionStorage.setItem('ganos_unlocked', 'true');
+                } catch {
+                  /* ignore */
+                }
+                setPower('on');
+              }}
+              className="absolute inset-0 z-[60] flex cursor-pointer flex-col items-center justify-between py-[9vh] text-white focus:outline-none"
+              style={{ background: activeWallpaper.background }}
+            >
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
+
+              {/* Top Date & Time (matching macOS Lock Screen reference) */}
+              <div className="relative text-center [text-shadow:0_2px_18px_rgba(0,0,0,0.28)]">
+                <div className="text-[18px] font-medium tracking-tight text-white/90 sm:text-[20px]">
+                  {now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    timeZone: 'Asia/Jakarta',
+                  })}
+                </div>
+                <div className="mt-1 text-[84px] font-bold leading-none tracking-tight text-white sm:text-[104px]">
+                  {formattedTime.replace(/\s?[AP]M/i, '')}
+                </div>
               </div>
-              <div className="text-[88px] font-bold leading-none tracking-tight">
-                {formattedTime.replace(/\s?[AP]M/i, '')}
+
+              {/* Bottom Brand Logo Avatar & Unlock Prompt */}
+              <div className="relative flex flex-col items-center gap-2.5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.35)] ring-1 ring-white/35 backdrop-blur-md transition-transform hover:scale-105">
+                  <img
+                    src="/brand-logo.svg"
+                    alt="GanOS Logo"
+                    className="h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
+                  />
+                </div>
+                <div className="text-[14px] font-semibold tracking-tight text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+                  {profile.name}
+                </div>
+                <div className="rounded-full bg-black/25 px-3 py-0.5 text-[11.5px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur-md">
+                  Click or press any key to unlock
+                </div>
               </div>
-            </div>
-            <div className="relative flex flex-col items-center gap-2">
-              <Avatar className="h-16 w-16 text-[24px] ring-2 ring-white/30" />
-              <div className="font-semibold">{profile.name}</div>
-              <div className="text-[12px] opacity-75">
-                Click or press any key to unlock
-              </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {power === 'sleeping' && (
           <div
             role="button"
@@ -1652,6 +2548,20 @@ export function OsShell({ appName, children, renderWindow }: OsShellProps) {
             className="absolute inset-0 z-[60] bg-black"
           />
         )}
+
+        {/* GanOS Notification System */}
+        <OsNotificationBannerContainer />
+        <OsNotificationCenter />
+
+        {/* macOS / Windows App Switcher HUD (⌘Tab / Ctrl+Tab) */}
+        <AppSwitcherHUD
+          isOpen={isSwitcherOpen}
+          apps={switcherApps}
+          selectedIndex={switcherIndex}
+        />
+
+        {/* Global background audio element for Music / Dynamic Island */}
+        <audio ref={audioRef} preload="auto" className="hidden" />
 
         <style>{`
           html:has(.gh-os),body:has(.gh-os){height:100%;overflow:hidden;overscroll-behavior:none}

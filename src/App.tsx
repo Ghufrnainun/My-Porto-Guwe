@@ -19,6 +19,7 @@ import { CinematicFooter } from '@/components/ui/motion-footer';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { AppPreloader } from '@/components/AppPreloader';
 import { OsShell } from '@/components/os/OsShell';
+import { OsNotificationProvider } from '@/components/os/OsNotificationContext';
 
 const About = lazyWithRetry(() => import('./pages/About'), 'About');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'Projects');
@@ -63,7 +64,7 @@ const AnimatedAppContent = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full"
+          className={isOsRoute ? 'h-full w-full' : 'w-full'}
         >
           <Suspense fallback={isOsRoute ? <div role="status" aria-live="polite" className="mx-auto mt-8 w-fit rounded-[10px] border border-white/10 bg-[#17191D] px-4 py-3 text-sm text-[#B7C0CB]">Opening {appName}…</div> : null}>
           <Routes location={routeLocation} key={routeLocation.pathname}>
@@ -114,7 +115,7 @@ const AnimatedAppContent = () => {
     <div className="relative min-h-screen w-full overflow-x-hidden bg-background font-sans selection:bg-white/20">
       <ScrollToTop />
       {!isOsRoute && <><InteractiveBackground /><div className="noise-overlay" /></>}
-      {isOsRoute ? <OsShell appName={appName} mode="desktop" renderWindow={renderWindow}>{renderRouteContent(desktopLocation)}</OsShell> : <>
+      {isOsRoute ? <OsShell appName={appName} mode="desktop" lockScreen={path === '/'} renderWindow={renderWindow}>{renderRouteContent(desktopLocation)}</OsShell> : <>
         <main className="relative z-10 min-h-screen w-full border-b border-border bg-transparent pb-20 shadow-md">
           <Header />
           {routeContent}
@@ -134,18 +135,20 @@ const App = () => {
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <AuthProvider>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <AppPreloader>
-                <AnimatedAppContent />
-              </AppPreloader>
-            </BrowserRouter>
+            <OsNotificationProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <AppPreloader>
+                  <AnimatedAppContent />
+                </AppPreloader>
+              </BrowserRouter>
+            </OsNotificationProvider>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>

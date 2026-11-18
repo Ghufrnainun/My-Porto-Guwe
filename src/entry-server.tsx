@@ -3,6 +3,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { OsNotificationProvider } from '@/components/os/OsNotificationContext';
 import { OsShell } from '@/components/os/OsShell';
 import {
   clearCapturedMeta,
@@ -35,19 +36,21 @@ export function renderRoute(path: string) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <TooltipProvider>
-          <MemoryRouter initialEntries={[path]}>
-            <OsShell appName={appName} mode={routePath === '/' ? 'desktop' : 'window'} lockScreen={routePath === '/'}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:id" element={<BlogPost />} />
-                <Route path="/resume" element={<Resume />} />
-              </Routes>
-            </OsShell>
-          </MemoryRouter>
+          <OsNotificationProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <OsShell appName={appName} mode={routePath === '/' ? 'desktop' : 'window'} lockScreen={routePath === '/'}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/projects" element={<Projects />} />
+                  <Route path="/projects/:slug" element={<ProjectCaseStudy />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:id" element={<BlogPost />} />
+                  <Route path="/resume" element={<Resume />} />
+                </Routes>
+              </OsShell>
+            </MemoryRouter>
+          </OsNotificationProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

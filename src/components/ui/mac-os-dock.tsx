@@ -18,6 +18,7 @@ export type MacOSDockItem = {
   isRunning?: boolean;
   isMinimizedWindow?: boolean;
   isLaunching?: boolean;
+  badge?: number | string | null;
   onClick: () => void;
 };
 
@@ -33,7 +34,10 @@ const DOCK_RANGE = 170;
 
 const magnify = (distance: number) => {
   if (Math.abs(distance) > DOCK_RANGE) return DOCK_BASE;
-  return DOCK_BASE + (DOCK_MAX - DOCK_BASE) * Math.cos((distance / DOCK_RANGE) * (Math.PI / 2));
+  return (
+    DOCK_BASE +
+    (DOCK_MAX - DOCK_BASE) * Math.cos((distance / DOCK_RANGE) * (Math.PI / 2))
+  );
 };
 
 const springConfig = { mass: 0.2, stiffness: 520, damping: 42 };
@@ -97,10 +101,16 @@ const DockItemButton: React.FC<{
           {hovered && (
             <motion.span
               role="tooltip"
-              initial={{ opacity: 0, x: '-50%' }}
-              animate={{ opacity: 1, x: '-50%' }}
-              exit={{ opacity: 0, x: '-50%', transition: { duration: 0.1 } }}
-              transition={{ duration: 0.1 }}
+              initial={{ opacity: 0, y: 6, scale: 0.94, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
+              exit={{
+                opacity: 0,
+                y: 3,
+                scale: 0.96,
+                x: '-50%',
+                transition: { duration: 0.12 },
+              }}
+              transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
               className="pointer-events-none absolute -top-[38px] left-1/2 flex h-[26px] items-center whitespace-pre rounded-[8px] bg-[#1e1e1e]/80 px-2.5 text-[13px] text-white shadow-[0_4px_12px_rgba(0,0,0,0.25),inset_0_0_0_0.5px_rgba(255,255,255,0.18)] backdrop-blur-xl"
             >
               {item.title}
@@ -108,7 +118,7 @@ const DockItemButton: React.FC<{
           )}
         </AnimatePresence>
 
-        <span className="relative h-full w-full active:brightness-[0.55]">
+        <span className="relative h-full w-full transition-transform duration-100 ease-out active:scale-[0.92]">
           {item.isMinimizedWindow ? (
             <MinimizedThumbnail iconSrc={item.iconSrc} />
           ) : (
@@ -127,6 +137,21 @@ const DockItemButton: React.FC<{
             className="absolute -bottom-[5px] h-[5px] w-[5px] rounded-full bg-white/75"
           />
         )}
+
+        <AnimatePresence>
+          {Boolean(item.badge) && (
+            <motion.span
+              aria-label={`${item.badge} notifications`}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="pointer-events-none absolute -right-1 -top-1 z-20 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-bold tracking-tight text-white shadow-[0_2px_6px_rgba(0,0,0,0.4),0_0_0_1.5px_rgba(255,255,255,0.85)]"
+            >
+              {item.badge}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.button>
     </div>
   );
@@ -197,6 +222,14 @@ const MobileDock: React.FC<{ items: MacOSDockItem[] }> = ({ items }) => {
                   draggable={false}
                   className="h-full w-full object-contain select-none"
                 />
+                {Boolean(item.badge) && (
+                  <span
+                    aria-label={`${item.badge} notifications`}
+                    className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold text-white shadow-sm ring-1 ring-white"
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </motion.button>
             ))}
           </motion.div>
@@ -209,7 +242,7 @@ const MobileDock: React.FC<{ items: MacOSDockItem[] }> = ({ items }) => {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'flex h-11 w-11 items-center justify-center rounded-full bg-white/20 shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.35)] backdrop-blur-2xl transition-transform dark:bg-black/25',
-          isOpen && 'rotate-180',
+          isOpen && 'rotate-180'
         )}
       >
         <ChevronUp className="h-5 w-5 text-white" aria-hidden="true" />

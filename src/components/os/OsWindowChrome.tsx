@@ -6,7 +6,7 @@ export const Avatar: React.FC<{ className?: string }> = ({ className }) => (
   <div
     className={cn(
       'flex shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#a8adb8] to-[#7e838f] font-medium tracking-wide text-white select-none',
-      className,
+      className
     )}
   >
     GA
@@ -40,7 +40,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         'handle relative flex h-[52px] shrink-0 items-center gap-2.5 px-3 transition-opacity duration-200',
         hasControls && 'pl-[92px]',
         !isFocused && '[&>*]:opacity-50',
-        className,
+        className
       )}
     >
       {leading}
@@ -48,26 +48,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <div
           className={cn(
             'truncate text-[15px] font-bold',
-            centerTitle && 'pointer-events-none absolute inset-x-28 text-center',
+            centerTitle && 'pointer-events-none absolute inset-x-28 text-center'
           )}
         >
           {title}
         </div>
       )}
-      {center ? <div className="flex min-w-0 flex-grow justify-center">{center}</div> : <div className="flex-grow" />}
+      {center ? (
+        <div className="flex min-w-0 flex-grow justify-center">{center}</div>
+      ) : (
+        <div className="flex-grow" />
+      )}
       {trailing}
     </div>
   );
 };
 
-export const ToolbarGroup: React.FC<{ children: ReactNode; className?: string }> = ({
-  children,
-  className,
-}) => (
+export const ToolbarGroup: React.FC<{
+  children: ReactNode;
+  className?: string;
+}> = ({ children, className }) => (
   <div
     className={cn(
       'flex h-9 items-center rounded-full bg-white/80 px-1 shadow-[0_1px_3px_rgba(0,0,0,0.12),inset_0_0_0_0.5px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:bg-white/[0.07] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.15),inset_0_0_0_0.5px_rgba(255,255,255,0.08)]',
-      className,
+      className
     )}
   >
     {children}
@@ -98,9 +102,9 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-black/75 transition-colors enabled:active:bg-black/10 disabled:opacity-30 dark:text-white/85 dark:enabled:active:bg-white/15',
+      'flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-black/75 transition-all duration-100 ease-out enabled:active:scale-[0.94] enabled:active:bg-black/10 disabled:opacity-30 dark:text-white/85 dark:enabled:active:bg-white/15',
       isActive && 'bg-black/10 dark:bg-white/15',
-      className,
+      className
     )}
   >
     {icon}
@@ -137,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   <aside
     className={cn(
       'flex w-52 shrink-0 select-none flex-col border-r border-black/5 max-sm:w-36 dark:border-white/[0.06]',
-      className,
+      className
     )}
   >
     <div className="handle h-[52px] shrink-0" />
@@ -156,13 +160,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               onClick={() => onSelect(item.id)}
               className={cn(
-                'flex h-8 w-full cursor-default items-center gap-2 rounded-lg px-2 text-left text-[13px] transition-colors',
+                'flex h-8 w-full cursor-default items-center gap-2 rounded-lg px-2 text-left text-[13px] transition-all duration-100 ease-out active:scale-[0.98]',
                 selectedId === item.id
                   ? 'bg-black/[0.08] font-medium dark:bg-white/10'
-                  : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.05]',
+                  : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
               )}
             >
-              {item.dot && <span className={cn('mx-[3px] h-3 w-3 shrink-0 rounded-full', item.dot)} />}
+              {item.dot && (
+                <span
+                  className={cn(
+                    'mx-[3px] h-3 w-3 shrink-0 rounded-full',
+                    item.dot
+                  )}
+                />
+              )}
               {item.icon}
               <span className="truncate">{item.label}</span>
             </button>
@@ -173,7 +184,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   </aside>
 );
 
-export const SettingsGroup: React.FC<{ children: ReactNode }> = ({ children }) => (
+export const SettingsGroup: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => (
   <div className="divide-y divide-black/5 rounded-xl bg-white px-4 ring-[0.5px] ring-black/5 dark:divide-white/[0.07] dark:bg-white/[0.05] dark:ring-white/10">
     {children}
   </div>

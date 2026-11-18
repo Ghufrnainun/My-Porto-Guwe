@@ -132,13 +132,26 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
 
                 {/* Brand Logo inside the ring */}
                 <div className="relative flex items-center justify-center p-4">
-                  <Logo className="size-14 sm:size-16 text-primary" animated={!shouldReduceMotion} />
+                  <Logo className="size-14 sm:size-16 text-[#d97736] drop-shadow-[0_0_16px_rgba(217,119,54,0.45)]" animated={!shouldReduceMotion} />
                 </div>
+              </div>
+
+              {/* macOS-style horizontal boot progress bar */}
+              <div className="mt-6 h-1.5 w-44 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/15">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-[#d97736] via-white to-[#0a84ff]"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0.1 : 0.82,
+                    ease: easeOutQuint,
+                  }}
+                />
               </div>
 
               {/* Minimalist Loading Label */}
               <motion.div
-                className="mt-6 flex items-center gap-2.5 font-mono text-[11px] tracking-[0.28em] text-muted-foreground uppercase"
+                className="mt-4 flex items-center gap-2.5 font-mono text-[11px] tracking-[0.28em] text-muted-foreground uppercase"
                 initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -147,8 +160,8 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
                   ease: easeOutQuint,
                 }}
               >
-                <span className="inline-block size-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-                <span>Loading…</span>
+                <span className="inline-block size-1.5 rounded-full bg-[#d97736] animate-pulse" aria-hidden="true" />
+                <span>Starting GanOS…</span>
               </motion.div>
             </motion.div>
           </motion.div>

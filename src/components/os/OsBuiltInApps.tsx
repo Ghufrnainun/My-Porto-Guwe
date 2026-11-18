@@ -1,13 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Bookmark,
   Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  Globe,
+  History,
   Info,
+  Lock,
+  Music,
   Paintbrush,
+  PanelLeft,
+  Plus,
+  RotateCw,
   Search,
   Send,
+  Share,
   Image as ImageIcon,
   Sun,
+  X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +43,12 @@ import {
   type SettingsPaneId,
 } from '@/components/os/OsShellContext';
 import {
+  isSoundEnabled,
+  setSoundEnabled,
+  playToggleSound,
+} from '@/lib/soundEffects';
+import { useOsNotification } from '@/components/os/OsNotificationContext';
+import {
   Avatar,
   SettingsGroup,
   SettingsRow,
@@ -35,6 +57,690 @@ import {
   ToolbarButton,
   ToolbarGroup,
 } from '@/components/os/OsWindowChrome';
+
+interface SafariTab {
+  id: string;
+  title: string;
+  url: string;
+  history: string[];
+  historyIndex: number;
+}
+
+const SAFARI_BOOKMARKS = [
+  {
+    id: 'yt-odoriko',
+    label: 'Odoriko — Vaundy',
+    url: 'https://www.youtube.com/embed/7HgJIAUtICU?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'yt-loser',
+    label: 'LOSER — Kenshi Yonezu',
+    url: 'https://www.youtube.com/embed/Dx_fKPBPYUI?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'yt-attitude',
+    label: 'ATTITUDE — aespa',
+    url: 'https://www.youtube.com/embed/4xDzrJKXOOY?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'yt-flowers',
+    label: 'Flowers — aespa',
+    url: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'yt-kickback',
+    label: 'KICK BACK — Kenshi Yonezu',
+    url: 'https://www.youtube.com/embed/M2cckDmNLMI?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'yt-nightcall',
+    label: 'Nightcall — Kavinsky',
+    url: 'https://www.youtube.com/embed/MV_3Dpw-BRY?autoplay=1',
+    category: 'tracks',
+  },
+  {
+    id: 'fav-old',
+    label: 'Legacy Portfolio (/old)',
+    url: '/old',
+    category: 'fav',
+  },
+  {
+    id: 'fav-projects',
+    label: 'Featured Projects',
+    url: '/projects',
+    category: 'fav',
+  },
+  {
+    id: 'fav-blog',
+    label: 'Engineering Blog',
+    url: '/blog',
+    category: 'fav',
+  },
+  {
+    id: 'fav-resume',
+    label: 'Curriculum Vitae',
+    url: '/resume',
+    category: 'fav',
+  },
+  {
+    id: 'fav-about',
+    label: 'About Ghufron',
+    url: '/about',
+    category: 'fav',
+  },
+];
+
+function formatDisplayUrl(url: string): string {
+  if (url === 'safari:start') return 'Favorites';
+  if (url === '/old') return 'ghufronainun.tech/old';
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname.includes('youtube.com') &&
+      parsed.pathname.includes('/embed/')
+    ) {
+      const vidId = parsed.pathname.split('/embed/')[1]?.split('?')[0];
+      return `youtube.com/watch?v=${vidId}`;
+    }
+    return `${parsed.hostname}${parsed.pathname === '/' ? '' : parsed.pathname}`;
+  } catch {
+    if (url.startsWith('/')) return `ghufronainun.tech${url}`;
+    return url;
+  }
+}
+
+function formatDisplayTitle(url: string): string {
+  if (url === 'safari:start') return 'Start Page';
+  if (url === '/old') return 'Legacy Portfolio';
+  if (url === '/projects') return 'Projects';
+  if (url === '/blog') return 'Writing';
+  if (url === '/resume') return 'Resume';
+  if (url === '/about') return 'About Me';
+  const match = SAFARI_BOOKMARKS.find((b) => b.url === url);
+  if (match) return match.label;
+  if (url.includes('youtube.com/embed/')) {
+    const id = url.split('/embed/')[1]?.split('?')[0];
+    return `YouTube (${id})`;
+  }
+  return formatDisplayUrl(url);
+}
+
+function formatExternalUrl(url: string): string {
+  if (url === 'safari:start') return window.location.origin;
+  if (url.includes('youtube.com/embed/')) {
+    const vidId = url.split('/embed/')[1]?.split('?')[0];
+    return `https://www.youtube.com/watch?v=${vidId}`;
+  }
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${url}`;
+  }
+  return url;
+}
+
+export const SafariApp: React.FC<{ initialUrl?: string }> = ({
+  initialUrl = '/old',
+}) => {
+  const [tabs, setTabs] = useState<SafariTab[]>([
+    {
+      id: 'tab-1',
+      title: formatDisplayTitle(initialUrl),
+      url: initialUrl,
+      history: [initialUrl],
+      historyIndex: 0,
+    },
+  ]);
+  const [activeTabId, setActiveTabId] = useState<string>('tab-1');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [addressInput, setAddressInput] = useState('');
+  const [isReloading, setIsReloading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const activeTab = useMemo(
+    () => tabs.find((t) => t.id === activeTabId) ?? tabs[0],
+    [tabs, activeTabId],
+  );
+
+  // Sync when initialUrl prop updates from external desktop actions (e.g. music widget)
+  useEffect(() => {
+    if (!initialUrl) return;
+    setTabs((prev) => {
+      const current = prev.find((t) => t.id === activeTabId);
+      if (current && current.url === initialUrl) return prev;
+      return prev.map((t) => {
+        if (t.id !== activeTabId) return t;
+        const nextHist = [...t.history.slice(0, t.historyIndex + 1), initialUrl];
+        return {
+          ...t,
+          url: initialUrl,
+          title: formatDisplayTitle(initialUrl),
+          history: nextHist,
+          historyIndex: nextHist.length - 1,
+        };
+      });
+    });
+  }, [initialUrl, activeTabId]);
+
+  const displayUrl = useMemo(
+    () => formatDisplayUrl(activeTab.url),
+    [activeTab.url],
+  );
+
+  const externalUrl = useMemo(
+    () => formatExternalUrl(activeTab.url),
+    [activeTab.url],
+  );
+
+  const canGoBack = activeTab.historyIndex > 0;
+  const canGoForward = activeTab.historyIndex < activeTab.history.length - 1;
+
+  const navigateTo = (rawInput: string) => {
+    let target = rawInput.trim();
+    if (!target) return;
+
+    // Convert YouTube watch links to embed so they work inside iframe
+    if (target.includes('youtube.com/watch') || target.includes('youtu.be/')) {
+      try {
+        let vidId = '';
+        if (target.includes('youtu.be/')) {
+          vidId =
+            target.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0] ?? '';
+        } else {
+          const u = new URL(
+            target.startsWith('http') ? target : `https://${target}`,
+          );
+          vidId = u.searchParams.get('v') ?? '';
+        }
+        if (vidId) {
+          target = `https://www.youtube.com/embed/${vidId}?autoplay=1`;
+        }
+      } catch {
+        /* ignore */
+      }
+    } else if (
+      !target.startsWith('/') &&
+      !target.startsWith('http://') &&
+      !target.startsWith('https://') &&
+      target !== 'safari:start'
+    ) {
+      if (target === 'old' || target === 'legacy') target = '/old';
+      else if (
+        target === 'projects' ||
+        target === 'about' ||
+        target === 'blog' ||
+        target === 'resume'
+      )
+        target = `/${target}`;
+      else if (target.includes('.')) target = `https://${target}`;
+      else target = '/projects';
+    }
+
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.id !== activeTabId) return t;
+        const nextHistory = [...t.history.slice(0, t.historyIndex + 1), target];
+        return {
+          ...t,
+          url: target,
+          title: formatDisplayTitle(target),
+          history: nextHistory,
+          historyIndex: nextHistory.length - 1,
+        };
+      }),
+    );
+    setShowOverview(false);
+    setIsEditingAddress(false);
+  };
+
+  const handleBack = () => {
+    if (!canGoBack) return;
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.id !== activeTabId) return t;
+        const nextIdx = t.historyIndex - 1;
+        const prevUrl = t.history[nextIdx];
+        return {
+          ...t,
+          url: prevUrl,
+          title: formatDisplayTitle(prevUrl),
+          historyIndex: nextIdx,
+        };
+      }),
+    );
+  };
+
+  const handleForward = () => {
+    if (!canGoForward) return;
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.id !== activeTabId) return t;
+        const nextIdx = t.historyIndex + 1;
+        const nextUrl = t.history[nextIdx];
+        return {
+          ...t,
+          url: nextUrl,
+          title: formatDisplayTitle(nextUrl),
+          historyIndex: nextIdx,
+        };
+      }),
+    );
+  };
+
+  const handleReload = () => {
+    setIsReloading(true);
+    setReloadKey((k) => k + 1);
+    window.setTimeout(() => setIsReloading(false), 500);
+  };
+
+  const handleShare = () => {
+    if (navigator.clipboard) {
+      void navigator.clipboard.writeText(externalUrl);
+      toast.success('Link copied to clipboard', {
+        description: externalUrl,
+      });
+    } else {
+      toast('Link: ' + externalUrl);
+    }
+  };
+
+  const handleNewTab = (newUrl: string = 'safari:start') => {
+    const id = `tab-${Date.now()}`;
+    setTabs((prev) => [
+      ...prev,
+      {
+        id,
+        title: formatDisplayTitle(newUrl),
+        url: newUrl,
+        history: [newUrl],
+        historyIndex: 0,
+      },
+    ]);
+    setActiveTabId(id);
+    setShowOverview(false);
+  };
+
+  const handleCloseTab = (tabId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setTabs((prev) => {
+      if (prev.length <= 1) {
+        return [
+          {
+            id: `tab-${Date.now()}`,
+            title: 'Start Page',
+            url: 'safari:start',
+            history: ['safari:start'],
+            historyIndex: 0,
+          },
+        ];
+      }
+      const remaining = prev.filter((t) => t.id !== tabId);
+      if (activeTabId === tabId) {
+        const idx = prev.findIndex((t) => t.id === tabId);
+        const nextActive =
+          remaining[Math.max(0, idx - 1)]?.id ?? remaining[0].id;
+        setActiveTabId(nextActive);
+      }
+      return remaining;
+    });
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-[#f2f2f7] dark:bg-[#282025]">
+      {/* Safari Main Toolbar */}
+      <Toolbar
+        hasControls
+        leading={
+          <>
+            {/* Sidebar Toggle Button */}
+            <ToolbarGroup>
+              <ToolbarButton
+                title={sidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
+                isActive={sidebarOpen}
+                onClick={() => setSidebarOpen((s) => !s)}
+                icon={
+                  <span className="flex items-center gap-0.5 px-0.5">
+                    <PanelLeft size={15} />
+                    <ChevronDown size={11} className={sidebarOpen ? 'rotate-180 transition-transform' : ''} />
+                  </span>
+                }
+              />
+            </ToolbarGroup>
+
+            {/* Back & Forward History Navigation */}
+            <ToolbarGroup>
+              <ToolbarButton
+                title={canGoBack ? 'Click to go back' : 'Back'}
+                disabled={!canGoBack}
+                onClick={handleBack}
+                icon={<ChevronLeft size={16} />}
+              />
+              <span className="h-4 w-[0.5px] bg-black/15 dark:bg-white/15" />
+              <ToolbarButton
+                title={canGoForward ? 'Click to go forward' : 'Forward'}
+                disabled={!canGoForward}
+                onClick={handleForward}
+                icon={<ChevronRight size={16} />}
+              />
+            </ToolbarGroup>
+          </>
+        }
+        center={
+          /* Smart Interactive Address Bar */
+          <ToolbarGroup className="w-full max-w-[440px] justify-between px-3 text-[13px]">
+            <Lock size={12} className="shrink-0 opacity-45" />
+
+            {isEditingAddress ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigateTo(addressInput);
+                }}
+                className="flex-1 px-2"
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  value={addressInput}
+                  onChange={(e) => setAddressInput(e.target.value)}
+                  onBlur={() => setIsEditingAddress(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setIsEditingAddress(false);
+                  }}
+                  placeholder="Enter URL or search..."
+                  className="w-full bg-transparent text-center text-[12.5px] text-black outline-none focus:text-left dark:text-white"
+                />
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddressInput(
+                    activeTab.url === 'safari:start' ? '' : displayUrl,
+                  );
+                  setIsEditingAddress(true);
+                }}
+                title="Click to edit address or enter URL"
+                className="flex-1 truncate px-2 text-center text-black/85 transition-opacity hover:opacity-75 dark:text-white/90"
+              >
+                {displayUrl}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleReload}
+              title="Reload page"
+              aria-label="Reload page"
+              className="shrink-0 opacity-55 transition-opacity hover:opacity-100"
+            >
+              <RotateCw
+                size={12}
+                className={isReloading ? 'animate-spin' : ''}
+              />
+            </button>
+          </ToolbarGroup>
+        }
+        trailing={
+          <ToolbarGroup className="max-sm:hidden">
+            {/* Share / Copy URL Button */}
+            <ToolbarButton
+              title="Copy link to clipboard"
+              onClick={handleShare}
+              icon={<Share size={14} />}
+            />
+            {/* New Tab Button */}
+            <ToolbarButton
+              title="New Tab (inside Safari)"
+              onClick={() => handleNewTab()}
+              icon={<Plus size={15} />}
+            />
+            {/* Tab Overview Toggle Button */}
+            <ToolbarButton
+              title="Show Tab Overview"
+              isActive={showOverview}
+              onClick={() => setShowOverview((v) => !v)}
+              icon={<Copy size={13} />}
+            />
+          </ToolbarGroup>
+        }
+      />
+
+      {/* Safari Tab Strip (when 2+ tabs are open) */}
+      {tabs.length > 1 && (
+        <div className="flex h-[32px] shrink-0 items-center gap-1 border-b border-black/10 bg-[#e4e2e6] px-2.5 text-[12px] dark:border-white/10 dark:bg-[#1f1b20] select-none">
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                setActiveTabId(tab.id);
+                setShowOverview(false);
+              }}
+              className={cn(
+                'group flex h-[25px] max-w-[210px] flex-1 cursor-default items-center justify-between rounded-[7px] px-2.5 transition-all',
+                tab.id === activeTabId
+                  ? 'bg-white font-medium text-black shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#2f272d] dark:text-white'
+                  : 'text-black/60 hover:bg-black/5 dark:text-white/60 dark:hover:bg-white/5',
+              )}
+            >
+              <span className="truncate">{tab.title}</span>
+              <button
+                type="button"
+                onClick={(e) => handleCloseTab(tab.id, e)}
+                title="Close Tab"
+                className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/15"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => handleNewTab()}
+            title="New Tab"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-black/60 transition-colors hover:bg-black/10 hover:text-black dark:text-white/60 dark:hover:bg-white/15 dark:hover:text-white"
+          >
+            <Plus size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* Main Safari Body: Sidebar + Web Content */}
+      <div className="relative flex flex-1 min-h-0 overflow-hidden">
+        {/* Slide-out Bookmarks & History Sidebar */}
+        {sidebarOpen && (
+          <aside className="w-56 shrink-0 border-r border-black/10 bg-white/70 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#20191f]/70 overflow-y-auto select-none">
+            <div className="flex items-center justify-between pb-2 text-[11px] font-bold uppercase tracking-wider text-black/45 dark:text-white/40">
+              <span className="flex items-center gap-1.5">
+                <Bookmark size={12} />
+                <span>Bookmarks</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                title="Close Sidebar"
+                className="text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
+            <div className="space-y-4 pt-1">
+              {/* Favorites Section */}
+              <div>
+                <div className="px-1 text-[11px] font-semibold text-black/40 dark:text-white/35">
+                  Favorites
+                </div>
+                <div className="mt-1 space-y-0.5">
+                  {SAFARI_BOOKMARKS.filter((b) => b.category === 'fav').map(
+                    (b) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => navigateTo(b.url)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] transition-colors',
+                          activeTab.url === b.url
+                            ? 'bg-[#0a84ff] text-white'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-black/80 dark:text-white/85',
+                        )}
+                      >
+                        <Globe size={13} className="shrink-0 opacity-70" />
+                        <span className="truncate">{b.label}</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              {/* Music Videos Section */}
+              <div>
+                <div className="px-1 text-[11px] font-semibold text-black/40 dark:text-white/35">
+                  Recent Tracks
+                </div>
+                <div className="mt-1 space-y-0.5">
+                  {SAFARI_BOOKMARKS.filter((b) => b.category === 'tracks').map(
+                    (b) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => navigateTo(b.url)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] transition-colors',
+                          activeTab.url === b.url
+                            ? 'bg-[#0a84ff] text-white'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-black/80 dark:text-white/85',
+                        )}
+                      >
+                        <Music size={13} className="shrink-0 opacity-70 text-[#ff2d55]" />
+                        <span className="truncate">{b.label}</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {/* Tab Overview Overlay */}
+        {showOverview ? (
+          <div className="flex-1 overflow-y-auto p-6 bg-black/[0.04] dark:bg-black/30">
+            <div className="mx-auto max-w-3xl">
+              <div className="flex items-center justify-between pb-4">
+                <h2 className="text-[16px] font-bold text-black dark:text-white">
+                  Open Tabs ({tabs.length})
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => handleNewTab()}
+                  className="flex items-center gap-1.5 rounded-full bg-[#0a84ff] px-3 py-1 text-[12px] font-medium text-white shadow-sm hover:opacity-90"
+                >
+                  <Plus size={13} />
+                  <span>New Tab</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {tabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setActiveTabId(tab.id);
+                      setShowOverview(false);
+                    }}
+                    className={cn(
+                      'group relative flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-all hover:scale-[1.02]',
+                      tab.id === activeTabId
+                        ? 'border-[#0a84ff] bg-white ring-2 ring-[#0a84ff]/30 dark:bg-[#282025]'
+                        : 'border-black/10 bg-white/60 dark:border-white/10 dark:bg-[#1a1518]/60',
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="truncate text-[12px] font-bold text-black dark:text-white">
+                        {tab.title}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCloseTab(tab.id, e)}
+                        title="Close Tab"
+                        className="rounded-full p-1 opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/15"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+
+                    <div className="truncate font-mono text-[10px] text-black/45 dark:text-white/40">
+                      {formatDisplayUrl(tab.url)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : activeTab.url === 'safari:start' ? (
+          /* Apple Safari Start Page */
+          <div className="flex-1 overflow-y-auto p-8 bg-white dark:bg-[#181317] select-none">
+            <div className="mx-auto max-w-2xl">
+              <div className="pb-8 text-center">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0a84ff] to-[#5ac8fa] text-white shadow-md">
+                  <Compass size={24} />
+                </div>
+                <h1 className="mt-3 text-2xl font-bold tracking-tight text-black dark:text-white">
+                  Favorites
+                </h1>
+                <p className="mt-1 text-sm text-black/50 dark:text-white/50">
+                  Quick bookmarks inside GanOS Safari
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
+                {SAFARI_BOOKMARKS.map((bookmark) => (
+                  <button
+                    key={bookmark.id}
+                    type="button"
+                    onClick={() => navigateTo(bookmark.url)}
+                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-center transition-all hover:-translate-y-0.5 hover:bg-black/[0.05] hover:shadow-md dark:border-white/5 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5 group-hover:scale-105 dark:bg-[#2c232a] dark:ring-white/10">
+                      {bookmark.category === 'tracks' ? (
+                        <Music size={20} className="text-[#ff2d55]" />
+                      ) : (
+                        <Globe size={20} className="text-[#0a84ff]" />
+                      )}
+                    </span>
+                    <span className="line-clamp-1 text-[12.5px] font-semibold text-black dark:text-white">
+                      {bookmark.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Live Iframe View */
+          <iframe
+            key={reloadKey + activeTab.url}
+            src={activeTab.url}
+            title={`Safari — ${displayUrl}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+            allowFullScreen
+            className="w-full flex-grow overflow-hidden rounded-b-[inherit] border-0 bg-white dark:bg-[#141210]"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
 
 const settingsPanes: {
   id: SettingsPaneId;
@@ -100,6 +806,8 @@ export const SystemSettingsApp: React.FC = () => {
     setSettingsPane,
   } = useOsNote();
 
+  const [soundActive, setSoundActive] = useState(() => isSoundEnabled());
+
   const currentPane =
     settingsPanes.find((p) => p.id === settingsPane) ?? settingsPanes[3];
   const currentWallpaper =
@@ -148,7 +856,8 @@ export const SystemSettingsApp: React.FC = () => {
       />
       <section className="flex min-w-0 flex-grow flex-col bg-[#f2f2f7] dark:bg-[#282025]">
         <Toolbar className="max-sm:pl-[92px]" title={currentPane.label} />
-        <div className="flex-grow space-y-4 overflow-y-auto px-5 pb-6">
+        <div className="flex-grow overflow-y-auto px-6 pb-8">
+          <div className="mx-auto max-w-2xl space-y-4">
           {currentPane.id === 'appearance' && (
             <>
               <SettingsGroup>
@@ -191,7 +900,7 @@ export const SystemSettingsApp: React.FC = () => {
                       setAutoRotateWallpaper((current) => !current)
                     }
                     className={cn(
-                      'relative h-6 w-11 rounded-full transition-colors',
+                    'relative h-6 w-11 rounded-full transition-colors',
                       autoRotateWallpaper
                         ? 'bg-[#0a84ff]'
                         : 'bg-black/15 dark:bg-white/20',
@@ -201,6 +910,32 @@ export const SystemSettingsApp: React.FC = () => {
                       className={cn(
                         'block h-5 w-5 rounded-full bg-white shadow transition-transform',
                         autoRotateWallpaper ? 'translate-x-5' : 'translate-x-0.5',
+                      )}
+                    />
+                  </button>
+                </SettingsRow>
+                <SettingsRow label="Play UI sound effects (Web Audio)">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soundActive}
+                    onClick={() => {
+                      const next = !soundActive;
+                      setSoundActive(next);
+                      setSoundEnabled(next);
+                      if (next) playToggleSound();
+                    }}
+                    className={cn(
+                      'relative h-6 w-11 rounded-full transition-colors active:scale-[0.96]',
+                      soundActive
+                        ? 'bg-[#0a84ff]'
+                        : 'bg-black/15 dark:bg-white/20',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'block h-5 w-5 rounded-full bg-white shadow transition-transform',
+                        soundActive ? 'translate-x-5' : 'translate-x-0.5',
                       )}
                     />
                   </button>
@@ -272,22 +1007,36 @@ export const SystemSettingsApp: React.FC = () => {
           {currentPane.id === 'about' && (
             <>
               <div className="flex flex-col items-center gap-2 py-4">
-                <Avatar className="h-20 w-20 text-[30px]" />
-                <div className="text-[20px] font-bold">{profile.name}</div>
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-black/[0.04] p-3 ring-1 ring-black/10 dark:bg-white/[0.06] dark:ring-white/10">
+                  <img
+                    src="/brand-logo.svg"
+                    alt="GanOS"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="text-[20px] font-bold">GanOS</div>
                 <div className="text-black/50 dark:text-white/50">
-                  {profile.email}
+                  {profile.name} · {profile.email}
                 </div>
               </div>
               <SettingsGroup>
-                <SettingsRow label="Name">
+                <SettingsRow label="System">
                   <span className="text-black/50 dark:text-white/50">
-                    ghufron&apos;s Portfolio
+                    GanOS · Ghufron&apos;s Portfolio OS
                   </span>
                 </SettingsRow>
                 <SettingsRow label="Built with">
                   <span className="text-black/50 dark:text-white/50">
                     React, TypeScript, Tailwind CSS, Framer Motion
                   </span>
+                </SettingsRow>
+                <SettingsRow label="Legacy Design">
+                  <a
+                    href="/old"
+                    className="text-[#0a84ff] hover:underline"
+                  >
+                    Open /old in Safari
+                  </a>
                 </SettingsRow>
                 <SettingsRow label="Source">
                   <a
@@ -302,6 +1051,7 @@ export const SystemSettingsApp: React.FC = () => {
               </SettingsGroup>
             </>
           )}
+          </div>
         </div>
       </section>
     </div>
@@ -737,31 +1487,55 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
     if (name === 'neofetch') {
       return (
-        <div className="flex gap-6">
-          <pre className="leading-tight text-green-400">{`        .:'
-    __ :'__
+        <div className="my-1.5 flex flex-col gap-3 font-mono text-[11.5px] sm:flex-row sm:items-center sm:gap-6">
+          <pre className="select-none leading-none text-amber-400">{`
+       .:'
+   __ :'__
  .'\`__\`-'__\`\`.
 :__________.-'
 :_________:
  :_________\`-;
-  \`.__.-.__.'`}</pre>
-          <div>
+  \`.__.-.__.'
+`}</pre>
+          <div className="space-y-0.5 leading-relaxed">
             <div>
-              <span className="text-cyan-400">ghufron</span>@
-              <span className="text-cyan-400">portfolio</span>
+              <span className="font-bold text-cyan-400">ghufron</span>@
+              <span className="font-bold text-cyan-400">ganos-sonoma</span>
             </div>
-            <div>-----------------</div>
+            <div className="text-white/30">---------------------------</div>
             <div>
-              <span className="text-cyan-400">OS:</span> macOS Portfolio
-            </div>
-            <div>
-              <span className="text-cyan-400">Host:</span> {profile.name}
+              <span className="font-semibold text-amber-400">OS:</span> GanOS 15.4 (Sonoma Edition)
             </div>
             <div>
-              <span className="text-cyan-400">Location:</span> {profile.location}
+              <span className="font-semibold text-amber-400">Host:</span> {profile.name} · Full-Stack Developer
             </div>
             <div>
-              <span className="text-cyan-400">Shell:</span> zsh
+              <span className="font-semibold text-amber-400">Location:</span> {profile.location}
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">Kernel:</span> React 18 / TypeScript / Vite
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">Uptime:</span> 7 hours, 24 mins
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">Shell:</span> zsh 5.9 (x86_64-apple-darwin23.0)
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">Font:</span> Plus Jakarta Sans (Open Source)
+            </div>
+            <div>
+              <span className="font-semibold text-amber-400">CPU:</span> Apple M3 Max (16-core)
+            </div>
+            <div className="flex gap-1 pt-1.5">
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-black ring-1 ring-white/20" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-red-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-green-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-yellow-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-blue-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-purple-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-cyan-500" />
+              <span className="inline-block h-2 w-3.5 rounded-[2px] bg-white" />
             </div>
           </div>
         </div>
@@ -801,6 +1575,30 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       submit();
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      const current = input.trim().toLowerCase();
+      if (!current) return;
+      const allCommands = [
+        'help',
+        'whoami',
+        'projects',
+        'skills',
+        'contact',
+        'open',
+        'ls',
+        'cat',
+        'neofetch',
+        'clear',
+        'date',
+        'pwd',
+        'echo',
+        'exit',
+      ];
+      const match = allCommands.find((c) => c.startsWith(current));
+      if (match) {
+        setInput(match);
+      }
     } else if (event.key === 'ArrowUp' && history.length) {
       event.preventDefault();
       const idx =
@@ -887,12 +1685,20 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 export const MailApp: React.FC = () => {
+  const { pushNotification } = useOsNotification();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const canSend = subject.trim().length > 0 && message.trim().length > 0;
 
   const handleSend = () => {
     if (!canSend) return;
+    pushNotification({
+      appId: 'mail',
+      appName: 'Mail',
+      appIcon: '/macos-icons/mail.png',
+      title: 'Mail Client Launched',
+      body: `Ready to send: "${subject}" to ${profile.email}`,
+    });
     const params = new URLSearchParams({ subject, body: message });
     window.location.href = `mailto:${profile.email}?${params
       .toString()
