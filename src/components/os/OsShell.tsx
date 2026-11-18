@@ -1,235 +1,1661 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Github, Home, Mail, Search, StickyNote, X, ChevronLeft, ChevronRight, Code2, FolderKanban, UserRound, FileText, PenLine, NotebookPen, Settings2, LayoutGrid } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import {
+  Check,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Moon,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Sun,
+  Wifi,
+  X,
+  Image as ImageIcon,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { profile } from '@/data/profile';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { OsShellContext } from '@/components/os/OsShellContext';
-import { MacOSDock } from '@/components/ui/mac-os-dock';
+import { featuredProjects } from '@/data/featuredProjects';
+import {
+  OsShellContext,
+  WALLPAPERS,
+  WindowFocusContext,
+  type OsAppearance,
+  type OsAppId,
+  type OsPowerState,
+  type SettingsPaneId,
+  type WallpaperId,
+} from '@/components/os/OsShellContext';
+import {
+  MailApp,
+  NotesApp,
+  SystemSettingsApp,
+  TerminalApp,
+} from '@/components/os/OsBuiltInApps';
+import { Avatar } from '@/components/os/OsWindowChrome';
+import { MacOSDock, type MacOSDockItem } from '@/components/ui/mac-os-dock';
 
-type OsShellProps = { appName: string; mode: 'desktop' | 'window'; lockScreen?: boolean; children: ReactNode; renderWindow?: (path: string) => ReactNode };
-type OsWindow = { id: string; path: string; slot: number; minimized?: boolean; position: { x: number; y: number }; maximized?: boolean };
-const nextWindowSlot = (windows: OsWindow[]) => [0, 1, 2, 3].find((slot) => !windows.some((item) => item.slot === slot)) ?? 0;
-const apps = [
-  { id: 'projects', label: 'Projects', path: '/projects', sprite: 1, group: 'PINNED' },
-  { id: 'about', label: 'About', path: '/about', sprite: 2, group: 'PINNED' },
-  { id: 'resume', label: 'Resume', path: '/resume', sprite: 3, group: 'PINNED' },
-  { id: 'blog', label: 'Writing', path: '/blog', sprite: 4, group: 'CREATIVE' },
-  { id: 'notes', label: 'Notes', sprite: 5, group: 'CREATIVE' },
-  { id: 'settings', label: 'Settings', sprite: 7, group: 'SYSTEM' },
-  { id: 'contact', label: 'Contact', sprite: 6, group: 'TOOLS' },
-] as const;
-
-const appIcons = [LayoutGrid, FolderKanban, UserRound, FileText, PenLine, NotebookPen, Mail, Settings2];
-const AppIcon = ({ index, className = '' }: { index: number; className?: string }) => {
-  const Icon = appIcons[index] ?? LayoutGrid;
-  return <span aria-hidden="true" className={`gh-app-icon gh-app-icon-${index} ${className}`}><Icon /></span>;
+type OsShellProps = {
+  appName: string;
+  mode: 'desktop' | 'window';
+  lockScreen?: boolean;
+  children: ReactNode;
+  renderWindow?: (path: string) => ReactNode;
 };
 
-export function OsShell({ appName, mode, children, renderWindow }: OsShellProps) {
+type WindowFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type OsWindow = {
+  id: OsAppId;
+  path?: string;
+  zIndex: number;
+  isMinimized: boolean;
+  isMaximized: boolean;
+  frame: WindowFrame;
+};
+
+type MenuEntry =
+  | 'separator'
+  | {
+      label: string;
+      disabled?: boolean;
+      checked?: boolean;
+      onClick?: () => void;
+    };
+
+type MenuDef = {
+  id: string;
+  label: ReactNode;
+  entries: MenuEntry[];
+};
+
+const MENUBAR_HEIGHT = 32;
+const DOCK_RESERVED_HEIGHT = 92;
+const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v2';
+const WALLPAPER_ROTATE_INTERVAL_MS = 120_000;
+
+const APP_SPECS: Record<
+  OsAppId,
+  {
+    name: string;
+    title: string;
+    icon: string;
+    path?: string;
+    size: { width: number; height: number };
+    minSize: { width: number; height: number };
+  }
+> = {
+  projects: {
+    name: 'Finder',
+    title: 'Finder',
+    icon: '/macos-icons/finder.png',
+    path: '/projects',
+    size: { width: 920, height: 560 },
+    minSize: { width: 420, height: 280 },
+  },
+  blog: {
+    name: 'Writing',
+    title: 'Writing',
+    icon: '/macos-icons/safari.png',
+    path: '/blog',
+    size: { width: 880, height: 580 },
+    minSize: { width: 420, height: 300 },
+  },
+  about: {
+    name: 'Contacts',
+    title: 'Contacts',
+    icon: '/macos-icons/contacts.png',
+    path: '/about',
+    size: { width: 640, height: 480 },
+    minSize: { width: 380, height: 340 },
+  },
+  notes: {
+    name: 'Notes',
+    title: 'Notes',
+    icon: '/macos-icons/notes.png',
+    size: { width: 880, height: 560 },
+    minSize: { width: 420, height: 280 },
+  },
+  terminal: {
+    name: 'Terminal',
+    title: 'Terminal',
+    icon: '/macos-icons/terminal.png',
+    size: { width: 680, height: 440 },
+    minSize: { width: 380, height: 260 },
+  },
+  resume: {
+    name: 'Preview',
+    title: 'CV.pdf',
+    icon: '/macos-icons/preview.png',
+    path: '/resume',
+    size: { width: 780, height: 580 },
+    minSize: { width: 400, height: 320 },
+  },
+  mail: {
+    name: 'Mail',
+    title: 'New Message',
+    icon: '/macos-icons/mail.png',
+    size: { width: 560, height: 460 },
+    minSize: { width: 380, height: 320 },
+  },
+  settings: {
+    name: 'System Settings',
+    title: 'System Settings',
+    icon: '/macos-icons/settings.png',
+    size: { width: 780, height: 540 },
+    minSize: { width: 500, height: 360 },
+  },
+};
+
+const isValidWallpaperId = (value: unknown): value is WallpaperId =>
+  typeof value === 'string' && WALLPAPERS.some((item) => item.id === value);
+
+const readWallpaperPrefs = (): { id: WallpaperId; autoRotate: boolean } => {
+  if (typeof window === 'undefined') return { id: 'dusk', autoRotate: true };
+  try {
+    const raw = JSON.parse(
+      window.localStorage.getItem(WALLPAPER_STORAGE_KEY) ?? 'null',
+    ) as { id?: unknown; autoRotate?: unknown } | null;
+    return {
+      id: isValidWallpaperId(raw?.id) ? raw.id : 'dusk',
+      autoRotate:
+        typeof raw?.autoRotate === 'boolean' ? raw.autoRotate : true,
+    };
+  } catch {
+    return { id: 'dusk', autoRotate: true };
+  }
+};
+
+const computeDefaultFrame = (
+  appId: OsAppId,
+  cascadeIndex: number,
+): WindowFrame => {
+  const spec = APP_SPECS[appId];
+  if (typeof window === 'undefined') {
+    return {
+      x: 160 + (cascadeIndex % 5) * 24,
+      y: 64 + (cascadeIndex % 5) * 24,
+      width: spec.size.width,
+      height: spec.size.height,
+    };
+  }
+  const vw = window.innerWidth;
+  const vh = window.innerHeight - MENUBAR_HEIGHT;
+  if (vw < 768) {
+    return {
+      x: 8,
+      y: 8,
+      width: Math.max(280, vw - 16),
+      height: Math.max(320, vh - 86),
+    };
+  }
+  const width = Math.min(spec.size.width, vw - 40);
+  const height = Math.min(spec.size.height, vh - DOCK_RESERVED_HEIGHT - 24);
+  const offset = (cascadeIndex % 6) * 22;
+  return {
+    x: Math.max(8, Math.round((vw - width) / 2 - 40 + offset)),
+    y: Math.max(8, Math.round((vh - DOCK_RESERVED_HEIGHT - height) / 2 + offset)),
+    width,
+    height,
+  };
+};
+
+const routeToAppId = (pathname: string): OsAppId | null => {
+  if (pathname === '/projects' || pathname.startsWith('/projects/'))
+    return 'projects';
+  if (pathname === '/about') return 'about';
+  if (pathname === '/resume') return 'resume';
+  if (pathname === '/blog' || pathname.startsWith('/blog/')) return 'blog';
+  return null;
+};
+
+export function OsShell({ appName, children, renderWindow }: OsShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const routeToApp = apps.find((app) => 'path' in app && (location.pathname === app.path || location.pathname.startsWith(`${app.path}/`)));
-  const currentRouteApp = routeToApp?.id ?? (location.pathname.startsWith('/blog') ? 'blog' : null);
+  const { setTheme, resolvedTheme } = useTheme();
+  const reduceMotion = useReducedMotion();
+
+  const currentRouteApp = routeToAppId(location.pathname);
   const routePath = `${location.pathname}${location.search}${location.hash}`;
-  const [now, setNow] = useState(new Date());
+
+  const [now, setNow] = useState(() => new Date());
   const [launcherOpen, setLauncherOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [utilityWindow, setUtilityWindow] = useState<'notes' | 'settings' | 'contact' | null>(null);
-  const [closingWindowId, setClosingWindowId] = useState<string | null>(null);
-  const [windows, setWindows] = useState<OsWindow[]>(() => currentRouteApp ? [{ id: currentRouteApp, path: routePath, slot: 0, position: { x: 0, y: 0 } }] : []);
-  const [note, setNote] = useState('A note to self: make useful things, keep learning, and leave the codebase better than you found it.');
-  const closeTimer = useRef<number | null>(null);
-  const windowRef = useRef<HTMLElement | null>(null);
-  const dragOrigin = useRef<{ pointerX: number; pointerY: number; x: number; y: number; left: number; right: number; top: number; bottom: number } | null>(null);
-  const filteredApps = useMemo(() => apps.filter((app) => app.label.toLowerCase().includes(query.toLowerCase())), [query]);
-  const appGroups = ['PINNED', 'CREATIVE', 'SYSTEM', 'TOOLS'] as const;
-  useEffect(() => { const id = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(id); }, []);
+  const [launcherQuery, setLauncherQuery] = useState('');
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [spotlightQuery, setSpotlightQuery] = useState('');
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [power, setPower] = useState<OsPowerState>('on');
+  const [brightness, setBrightness] = useState(1);
+  const [appearance, setAppearanceState] = useState<OsAppearance>('dark');
+  const [settingsPane, setSettingsPane] = useState<SettingsPaneId>('about');
+  const [notesPayload, setNotesPayload] = useState<string | undefined>();
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [dockRevealed, setDockRevealed] = useState(false);
+  const [note, setNote] = useState(
+    'A note to self: make useful things, keep learning, and leave the codebase better than you found it.',
+  );
+
+  const [wallpaperId, setWallpaperId] = useState<WallpaperId>(
+    () => readWallpaperPrefs().id,
+  );
+  const [autoRotateWallpaper, setAutoRotateWallpaper] = useState<boolean>(
+    () => readWallpaperPrefs().autoRotate,
+  );
+
+  const [windows, setWindows] = useState<OsWindow[]>(() => {
+    if (!currentRouteApp) return [];
+    return [
+      {
+        id: currentRouteApp,
+        path: routePath,
+        zIndex: 10,
+        isMinimized: false,
+        isMaximized: false,
+        frame: computeDefaultFrame(currentRouteApp, 0),
+      },
+    ];
+  });
+  const [focusedId, setFocusedId] = useState<OsAppId | null>(currentRouteApp);
+
+  const menubarRef = useRef<HTMLElement>(null);
+  const zCounter = useRef(12);
+  const dragRef = useRef<{
+    id: OsAppId;
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+  } | null>(null);
+
+  const isDark =
+    appearance === 'auto'
+      ? resolvedTheme !== 'light'
+      : appearance === 'dark';
+
+  const setAppearance = useCallback(
+    (next: OsAppearance) => {
+      setAppearanceState(next);
+      setTheme(next === 'auto' ? 'system' : next);
+    },
+    [setTheme],
+  );
+
+  const activeWallpaper = useMemo(
+    () => WALLPAPERS.find((w) => w.id === wallpaperId) ?? WALLPAPERS[0],
+    [wallpaperId],
+  );
+
+  const cycleWallpaper = useCallback(() => {
+    setWallpaperId((current) => {
+      const idx = WALLPAPERS.findIndex((item) => item.id === current);
+      return WALLPAPERS[(idx + 1) % WALLPAPERS.length].id;
+    });
+  }, []);
+
+  // Persist wallpaper choice
   useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setLauncherOpen(false); setUtilityWindow(null); }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setLauncherOpen(true); }
-      if (event.altKey && event.key === 'ArrowLeft') navigate(-1);
-      if (event.altKey && event.key === 'ArrowRight') navigate(1);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [navigate]);
+    try {
+      window.localStorage.setItem(
+        WALLPAPER_STORAGE_KEY,
+        JSON.stringify({ id: wallpaperId, autoRotate: autoRotateWallpaper }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [wallpaperId, autoRotateWallpaper]);
+
+  // Auto-rotate wallpaper every 2 minutes when enabled
   useEffect(() => {
-    if (currentRouteApp) setWindows((current) => {
-      const existing = current.find((item) => item.id === currentRouteApp);
-      if (existing) return [...current.filter((item) => item.id !== currentRouteApp), { ...existing, path: routePath, minimized: false }];
-      const slot = nextWindowSlot(current);
-      return [...current, { id: currentRouteApp, path: routePath, slot, position: { x: slot * 34, y: slot * 34 } }];
+    if (!autoRotateWallpaper) return;
+    const timer = window.setInterval(cycleWallpaper, WALLPAPER_ROTATE_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [autoRotateWallpaper, cycleWallpaper]);
+
+  // Clock ticker
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Browser fullscreen listener
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  // Sync URL route into window stack
+  useEffect(() => {
+    if (!currentRouteApp) return;
+    const nextZ = ++zCounter.current;
+    setFocusedId(currentRouteApp);
+    setWindows((current) => {
+      const existing = current.find((w) => w.id === currentRouteApp);
+      if (existing) {
+        return current.map((w) =>
+          w.id === currentRouteApp
+            ? { ...w, path: routePath, isMinimized: false, zIndex: nextZ }
+            : w,
+        );
+      }
+      return [
+        ...current,
+        {
+          id: currentRouteApp,
+          path: routePath,
+          zIndex: nextZ,
+          isMinimized: false,
+          isMaximized: false,
+          frame: computeDefaultFrame(currentRouteApp, current.length),
+        },
+      ];
     });
   }, [currentRouteApp, routePath]);
-  useEffect(() => { setClosingWindowId(null); }, [currentRouteApp]);
-  useEffect(() => () => { if (closeTimer.current !== null) window.clearTimeout(closeTimer.current); }, []);
-  useEffect(() => {
-    const clampWindowOnResize = () => setWindows((current) => current.map((item) => {
-      if (window.innerWidth < 640) return item;
-      if (item.id !== currentRouteApp) return item;
-      const rect = windowRef.current?.getBoundingClientRect();
-      if (!rect) return item;
-      return { ...item, position: {
-        x: Math.max(-rect.left + item.position.x, Math.min(item.position.x, window.innerWidth - rect.right + item.position.x)),
-        y: Math.max(40 - rect.top + item.position.y, Math.min(item.position.y, window.innerHeight - 72 - rect.bottom + item.position.y)),
-      } };
-    }));
-    window.addEventListener('resize', clampWindowOnResize);
-    return () => window.removeEventListener('resize', clampWindowOnResize);
-  }, [currentRouteApp]);
 
-  const formattedTime = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }).format(now);
-  const formattedDate = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'Asia/Jakarta' }).format(now);
-  const activeWindow = windows.find((item) => item.id === currentRouteApp);
-  const windowPosition = activeWindow?.position ?? { x: 0, y: 0 };
-  const maximized = activeWindow?.maximized ?? false;
-  const openApp = (app: (typeof apps)[number]) => {
-    setLauncherOpen(false); setQuery('');
-    if ('path' in app) { const existing = windows.find((item) => item.id === app.id); const path = existing?.path ?? app.path; setWindows((current) => { if (existing) return [...current.filter((item) => item.id !== app.id), { ...existing, minimized: false }]; const slot = nextWindowSlot(current); return [...current, { id: app.id, path, slot, position: { x: slot * 34, y: slot * 34 } }]; }); if (routePath !== path) navigate(path); }
-    else setUtilityWindow(app.id);
+  // Close menus on outside click
+  useEffect(() => {
+    if (!openMenu) return;
+    const onPointerDown = (event: globalThis.PointerEvent) => {
+      if (!menubarRef.current?.contains(event.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => window.removeEventListener('pointerdown', onPointerDown);
+  }, [openMenu]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (power !== 'on') return;
+      if (event.key === 'Escape') {
+        setOpenMenu(null);
+        setLauncherOpen(false);
+        setSpotlightOpen(false);
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setOpenMenu(null);
+        setLauncherOpen(false);
+        setSpotlightOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [power]);
+
+  // Keep windows clamped on viewport resize
+  useEffect(() => {
+    const onResize = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight - MENUBAR_HEIGHT;
+      setWindows((current) =>
+        current.map((w) => {
+          if (vw < 768) {
+            return {
+              ...w,
+              frame: {
+                x: 8,
+                y: 8,
+                width: Math.max(280, vw - 16),
+                height: Math.max(320, vh - 86),
+              },
+            };
+          }
+          const width = Math.min(w.frame.width, vw - 24);
+          const height = Math.min(w.frame.height, vh - 40);
+          return {
+            ...w,
+            frame: {
+              x: Math.max(8, Math.min(w.frame.x, vw - width - 8)),
+              y: Math.max(4, Math.min(w.frame.y, vh - height - 20)),
+              width,
+              height,
+            },
+          };
+        }),
+      );
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const focusWindow = useCallback(
+    (id: OsAppId) => {
+      const nextZ = ++zCounter.current;
+      setFocusedId(id);
+      setWindows((current) =>
+        current.map((w) =>
+          w.id === id ? { ...w, zIndex: nextZ, isMinimized: false } : w,
+        ),
+      );
+      const spec = APP_SPECS[id];
+      const existing = windows.find((w) => w.id === id);
+      const targetPath = existing?.path ?? spec.path;
+      if (targetPath && targetPath !== routePath) {
+        navigate(targetPath);
+      }
+    },
+    [navigate, routePath, windows],
+  );
+
+  const openApp = useCallback(
+    (id: OsAppId, payload?: string) => {
+      setOpenMenu(null);
+      setLauncherOpen(false);
+      setSpotlightOpen(false);
+
+      if (id === 'settings' && payload) {
+        setSettingsPane(payload as SettingsPaneId);
+      }
+      if (id === 'notes' && payload) {
+        setNotesPayload(payload);
+      }
+
+      const alreadyOpen = windows.some((w) => w.id === id);
+      if (!alreadyOpen) {
+        setLaunchingId(id);
+        window.setTimeout(
+          () => setLaunchingId((curr) => (curr === id ? null : curr)),
+          750,
+        );
+      }
+
+      const spec = APP_SPECS[id];
+      const targetPath =
+        id === 'projects' && payload
+          ? `/projects/${payload}`
+          : spec.path;
+
+      const nextZ = ++zCounter.current;
+      setFocusedId(id);
+      setWindows((current) => {
+        const existing = current.find((w) => w.id === id);
+        if (existing) {
+          return current.map((w) =>
+            w.id === id
+              ? {
+                  ...w,
+                  path: targetPath ?? w.path,
+                  zIndex: nextZ,
+                  isMinimized: false,
+                }
+              : w,
+          );
+        }
+        return [
+          ...current,
+          {
+            id,
+            path: targetPath,
+            zIndex: nextZ,
+            isMinimized: false,
+            isMaximized: false,
+            frame: computeDefaultFrame(id, current.length),
+          },
+        ];
+      });
+
+      if (targetPath && targetPath !== routePath) {
+        navigate(targetPath);
+      }
+    },
+    [navigate, routePath, windows],
+  );
+
+  const closeWindow = useCallback(
+    (id: OsAppId) => {
+      setWindows((current) => {
+        const remaining = current.filter((w) => w.id !== id);
+        const topVisible = [...remaining]
+          .filter((w) => !w.isMinimized)
+          .sort((a, b) => b.zIndex - a.zIndex)[0];
+        setFocusedId(topVisible?.id ?? null);
+        if (APP_SPECS[id].path) {
+          const nextRouteWindow = [...remaining]
+            .filter((w) => !w.isMinimized && Boolean(w.path))
+            .sort((a, b) => b.zIndex - a.zIndex)[0];
+          const nextPath = nextRouteWindow?.path ?? '/';
+          if (nextPath !== routePath) navigate(nextPath);
+        }
+        return remaining;
+      });
+    },
+    [navigate, routePath],
+  );
+
+  const minimizeWindow = useCallback(
+    (id: OsAppId) => {
+      setWindows((current) => {
+        const next = current.map((w) =>
+          w.id === id ? { ...w, isMinimized: true } : w,
+        );
+        const topVisible = [...next]
+          .filter((w) => !w.isMinimized)
+          .sort((a, b) => b.zIndex - a.zIndex)[0];
+        setFocusedId(topVisible?.id ?? null);
+        if (APP_SPECS[id].path) {
+          const nextRouteWindow = [...next]
+            .filter((w) => !w.isMinimized && Boolean(w.path))
+            .sort((a, b) => b.zIndex - a.zIndex)[0];
+          const nextPath = nextRouteWindow?.path ?? '/';
+          if (nextPath !== routePath) navigate(nextPath);
+        }
+        return next;
+      });
+    },
+    [navigate, routePath],
+  );
+
+  const toggleMaximize = useCallback((id: OsAppId) => {
+    setWindows((current) =>
+      current.map((w) =>
+        w.id === id ? { ...w, isMaximized: !w.isMaximized } : w,
+      ),
+    );
+  }, []);
+
+  const focusDesktop = useCallback(() => {
+    setFocusedId(null);
+    setOpenMenu(null);
+    if (routePath !== '/') navigate('/');
+  }, [navigate, routePath]);
+
+  const startWindowDrag = (
+    id: OsAppId,
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    const win = windows.find((w) => w.id === id);
+    if (!win || win.isMaximized || window.innerWidth < 768) return;
+    if (
+      !(event.target as HTMLElement).closest('.handle') ||
+      (event.target as HTMLElement).closest(
+        'button, input, textarea, a, .window-controls',
+      )
+    ) {
+      return;
+    }
+    dragRef.current = {
+      id,
+      startX: event.clientX,
+      startY: event.clientY,
+      origX: win.frame.x,
+      origY: win.frame.y,
+    };
+    const onMove = (moveEvent: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dx = moveEvent.clientX - drag.startX;
+      const dy = moveEvent.clientY - drag.startY;
+      setWindows((current) =>
+        current.map((w) =>
+          w.id === drag.id
+            ? {
+                ...w,
+                frame: {
+                  ...w.frame,
+                  x: Math.max(
+                    80 - w.frame.width,
+                    Math.min(drag.origX + dx, window.innerWidth - 80),
+                  ),
+                  y: Math.max(
+                    0,
+                    Math.min(
+                      drag.origY + dy,
+                      window.innerHeight - MENUBAR_HEIGHT - 56,
+                    ),
+                  ),
+                },
+              }
+            : w,
+        ),
+      );
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
   };
-  const closeRouteWindow = (id: string) => {
-    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
-    setClosingWindowId(id);
-    closeTimer.current = window.setTimeout(() => { closeTimer.current = null; setClosingWindowId(null); const remaining = windows.filter((item) => item.id !== id); setWindows(remaining); const nextPath = [...remaining].reverse().find((item) => !item.minimized)?.path ?? '/'; if (nextPath !== routePath) navigate(nextPath); }, 150);
+
+  const toggleBrowserFullscreen = () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void document.documentElement.requestFullscreen?.();
+    }
   };
-  const moveWindowTo = (x: number, y: number) => {
-    const rect = windowRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setWindows((current) => current.map((item) => item.id === currentRouteApp ? { ...item, position: {
-      x: Math.max(-rect.left + windowPosition.x, Math.min(x, window.innerWidth - rect.right + windowPosition.x)),
-      y: Math.max(40 - rect.top + windowPosition.y, Math.min(y, window.innerHeight - 72 - rect.bottom + windowPosition.y)),
-    } } : item));
+
+  const maximizedWindow = windows.find(
+    (w) => w.isMaximized && !w.isMinimized,
+  );
+
+  const focusedAppSpec = focusedId ? APP_SPECS[focusedId] : null;
+  const activeMenuAppName = focusedAppSpec?.name ?? (appName === 'Finder' ? 'Finder' : appName);
+
+  const menus: MenuDef[] = [
+    {
+      id: 'apple',
+      label: (
+        <img
+          src="/macos-icons/apple.png"
+          alt="Apple"
+          className={cn('h-[15px] w-[13px] object-contain', !activeWallpaper.isLight && 'invert')}
+        />
+      ),
+      entries: [
+        { label: 'About This Mac', onClick: () => openApp('about') },
+        'separator',
+        {
+          label: 'System Settings…',
+          onClick: () => openApp('settings', 'about'),
+        },
+        'separator',
+        { label: 'Sleep', onClick: () => setPower('sleeping') },
+        { label: 'Lock Screen', onClick: () => setPower('locked') },
+      ],
+    },
+    {
+      id: 'app',
+      label: <span className="font-bold">{activeMenuAppName}</span>,
+      entries: [
+        {
+          label: 'About This Portfolio',
+          onClick: () => openApp('settings', 'about'),
+        },
+        'separator',
+        {
+          label: `Hide ${activeMenuAppName}`,
+          disabled: !focusedId,
+          onClick: () => focusedId && minimizeWindow(focusedId),
+        },
+        {
+          label: `Quit ${activeMenuAppName}`,
+          disabled: !focusedId,
+          onClick: () => focusedId && closeWindow(focusedId),
+        },
+      ],
+    },
+    {
+      id: 'file',
+      label: 'File',
+      entries: [
+        { label: 'New Finder Window', onClick: () => openApp('projects') },
+        { label: 'New Terminal Window', onClick: () => openApp('terminal') },
+        { label: 'New Message', onClick: () => openApp('mail') },
+        'separator',
+        {
+          label: 'Close Window',
+          disabled: !focusedId,
+          onClick: () => focusedId && closeWindow(focusedId),
+        },
+      ],
+    },
+    {
+      id: 'edit',
+      label: 'Edit',
+      entries: [
+        {
+          label: 'Copy Email Address',
+          onClick: () => void navigator.clipboard?.writeText(profile.email),
+        },
+        {
+          label: 'Copy Portfolio Link',
+          onClick: () =>
+            void navigator.clipboard?.writeText(window.location.href),
+        },
+      ],
+    },
+    {
+      id: 'view',
+      label: 'View',
+      entries: [
+        {
+          label: maximizedWindow ? 'Restore Window' : 'Zoom Window',
+          disabled: !focusedId,
+          onClick: () => focusedId && toggleMaximize(focusedId),
+        },
+        'separator',
+        {
+          label: 'Dark Mode',
+          checked: isDark,
+          onClick: () => setAppearance(isDark ? 'light' : 'dark'),
+        },
+        {
+          label: 'Auto-Rotate Wallpaper',
+          checked: autoRotateWallpaper,
+          onClick: () => setAutoRotateWallpaper((v) => !v),
+        },
+      ],
+    },
+    {
+      id: 'go',
+      label: 'Go',
+      entries: [
+        { label: 'Projects', onClick: () => openApp('projects') },
+        { label: 'About Me', onClick: () => openApp('about') },
+        { label: 'CV.pdf', onClick: () => openApp('resume') },
+        { label: 'Writing Log', onClick: () => openApp('blog') },
+        'separator',
+        {
+          label: 'GitHub',
+          onClick: () => window.open(profile.github, '_blank', 'noreferrer'),
+        },
+        {
+          label: 'LinkedIn',
+          onClick: () => window.open(profile.linkedin, '_blank', 'noreferrer'),
+        },
+        {
+          label: 'Legacy Portfolio (/old)',
+          onClick: () => navigate('/old'),
+        },
+      ],
+    },
+    {
+      id: 'window',
+      label: 'Window',
+      entries: [
+        {
+          label: 'Minimize',
+          disabled: !focusedId,
+          onClick: () => focusedId && minimizeWindow(focusedId),
+        },
+        {
+          label: 'Zoom',
+          disabled: !focusedId,
+          onClick: () => focusedId && toggleMaximize(focusedId),
+        },
+        ...(windows.length ? (['separator'] as const) : []),
+        ...windows.map((w) => ({
+          label: APP_SPECS[w.id].title,
+          checked: w.id === focusedId && !w.isMinimized,
+          onClick: () => focusWindow(w.id),
+        })),
+      ],
+    },
+    {
+      id: 'help',
+      label: 'Help',
+      entries: [
+        { label: 'Terminal Commands', onClick: () => openApp('terminal') },
+        { label: 'Contact Ghufron…', onClick: () => openApp('mail') },
+        'separator',
+        {
+          label: 'View Source on GitHub',
+          onClick: () =>
+            window.open(
+              'https://github.com/Ghufrnainun/My-Porto-Guwe',
+              '_blank',
+              'noreferrer',
+            ),
+        },
+      ],
+    },
+  ];
+
+  // Dock groups matching R0shish 1:1
+  const dockOrder: OsAppId[] = [
+    'projects',
+    'blog',
+    'about',
+    'notes',
+    'terminal',
+    'mail',
+    'settings',
+  ];
+
+  const makeDockItem = (id: OsAppId): MacOSDockItem => {
+    const spec = APP_SPECS[id];
+    const isRunning =
+      id === 'projects' || windows.some((w) => w.id === id);
+    return {
+      key: id,
+      title: spec.name,
+      iconSrc: spec.icon,
+      isRunning,
+      isLaunching: launchingId === id,
+      onClick: () => openApp(id),
+    };
   };
-  const startWindowDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'mouse' || !window.matchMedia('(min-width: 640px) and (pointer: fine)').matches || maximized || (event.target as HTMLElement).closest('button')) return;
-    const rect = windowRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    dragOrigin.current = { pointerX: event.clientX, pointerY: event.clientY, ...windowPosition, left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
-    event.currentTarget.setPointerCapture(event.pointerId);
+
+  const minimizedItems: MacOSDockItem[] = windows
+    .filter((w) => w.isMinimized)
+    .map((w) => ({
+      key: `minimized-${w.id}`,
+      title: APP_SPECS[w.id].title,
+      iconSrc: APP_SPECS[w.id].icon,
+      isMinimizedWindow: true,
+      onClick: () => focusWindow(w.id),
+    }));
+
+  const dockGroups: MacOSDockItem[][] = [
+    [
+      makeDockItem('projects'),
+      {
+        key: 'apps',
+        title: 'Apps',
+        iconSrc: '/macos-icons/apps.png',
+        onClick: () => {
+          setOpenMenu(null);
+          setLauncherOpen((v) => !v);
+        },
+      },
+      makeDockItem('blog'),
+      makeDockItem('about'),
+      makeDockItem('notes'),
+      makeDockItem('terminal'),
+      makeDockItem('mail'),
+      {
+        key: 'vscode',
+        title: 'Visual Studio Code',
+        iconSrc: '/macos-icons/vscode.png',
+        onClick: () =>
+          window.open(
+            'https://github.com/Ghufrnainun/My-Porto-Guwe',
+            '_blank',
+            'noreferrer',
+          ),
+      },
+      makeDockItem('settings'),
+    ],
+    windows
+      .filter((w) => !dockOrder.includes(w.id))
+      .map((w) => makeDockItem(w.id)),
+    [
+      ...minimizedItems,
+      {
+        key: 'trash',
+        title: 'Trash',
+        iconSrc: '/macos-icons/trash.png',
+        onClick: () => openApp('projects'),
+      },
+    ],
+  ].filter((group) => group.length > 0);
+
+  // Spotlight search items
+  const spotlightResults = useMemo(() => {
+    const q = spotlightQuery.trim().toLowerCase();
+    const all = [
+      ...(Object.keys(APP_SPECS) as OsAppId[]).map((id) => ({
+        id: `app:${id}`,
+        category: 'Applications',
+        title: APP_SPECS[id].name,
+        subtitle: APP_SPECS[id].title,
+        icon: APP_SPECS[id].icon,
+        action: () => openApp(id),
+      })),
+      ...featuredProjects.map((project) => ({
+        id: `project:${project.slug}`,
+        category: 'Projects',
+        title: project.title,
+        subtitle: `${project.year} · ${project.role}`,
+        icon: '/macos-icons/folder.png',
+        action: () => openApp('projects', project.slug),
+      })),
+      {
+        id: 'link:github',
+        category: 'Links',
+        title: 'GitHub',
+        subtitle: profile.github,
+        icon: '/macos-icons/vscode.png',
+        action: () => window.open(profile.github, '_blank', 'noreferrer'),
+      },
+      {
+        id: 'link:old',
+        category: 'Links',
+        title: 'Legacy Portfolio (/old)',
+        subtitle: 'View previous editorial design',
+        icon: '/macos-icons/safari.png',
+        action: () => navigate('/old'),
+      },
+    ];
+    if (!q) return all.slice(0, 8);
+    return all.filter((item) =>
+      `${item.title} ${item.subtitle} ${item.category}`
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [navigate, openApp, spotlightQuery]);
+
+  const formattedDate = now
+    .toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'Asia/Jakarta',
+    })
+    .replace(',', '');
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+  });
+
+  const shellContextValue = {
+    note,
+    setNote,
+    activePath: routePath,
+    wallpaperId,
+    wallpaperLabel: activeWallpaper.label,
+    setWallpaperId,
+    cycleWallpaper,
+    autoRotateWallpaper,
+    setAutoRotateWallpaper,
+    appearance,
+    setAppearance,
+    isDark,
+    brightness,
+    setBrightness,
+    openApp,
+    settingsPane,
+    setSettingsPane,
+    power,
+    setPower,
+    isFocused: true,
   };
-  const moveWindowDrag = (event: PointerEvent<HTMLDivElement>) => {
-    const origin = dragOrigin.current;
-    if (!origin) return;
-    setWindows((current) => current.map((item) => item.id === currentRouteApp ? { ...item, position: {
-      x: Math.max(-origin.left + origin.x, Math.min(origin.x + event.clientX - origin.pointerX, window.innerWidth - origin.right + origin.x)),
-      y: Math.max(40 - origin.top + origin.y, Math.min(origin.y + event.clientY - origin.pointerY, window.innerHeight - 72 - origin.bottom + origin.y)),
-    } } : item));
-  };
-  const stopWindowDrag = () => { dragOrigin.current = null; };
-  const handleWindowDragKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest('button') || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || maximized) return;
-    event.preventDefault();
-    moveWindowTo(windowPosition.x + (event.key === 'ArrowLeft' ? -16 : event.key === 'ArrowRight' ? 16 : 0), windowPosition.y + (event.key === 'ArrowUp' ? -16 : event.key === 'ArrowDown' ? 16 : 0));
-  };
-  const focusWindow = (id: string) => { const item = windows.find((window) => window.id === id); if (!item) return; setWindows((current) => { const target = current.find((window) => window.id === id); return target ? [...current.filter((window) => window.id !== id), { ...target, minimized: false }] : current; }); if (item.path !== routePath) navigate(item.path); };
-  const minimizeWindow = (id: string) => { const next = windows.map((item) => item.id === id ? { ...item, minimized: true } : item); setWindows(next); const nextPath = [...next].reverse().find((item) => !item.minimized && item.id !== id)?.path ?? '/'; if (nextPath !== routePath) navigate(nextPath); };
-  const shellNoteContext = { note, setNote, activePath: routePath };
+
+  const launcherApps = (Object.keys(APP_SPECS) as OsAppId[]).filter((id) =>
+    APP_SPECS[id].name.toLowerCase().includes(launcherQuery.toLowerCase()),
+  );
 
   return (
-    <OsShellContext.Provider value={shellNoteContext}>
-      <main className="gh-os relative isolate flex min-h-[100svh] w-full flex-col overflow-hidden bg-[var(--os-wallpaper-navy)] text-[var(--os-text-primary)] selection:bg-[#176FC0]/30">
-        <div aria-hidden="true" className="gh-os-wallpaper fixed inset-0 -z-10" />
-        <header className="os-menubar relative z-20 flex h-7 shrink-0 items-center justify-between border-b px-2 text-[10px] backdrop-blur-xl sm:px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <button type="button" aria-label="Go to desktop" onClick={() => navigate('/')} className="os-control grid h-6 w-6 shrink-0 place-items-center rounded-md hover:bg-white/10 focus-visible:outline focus-visible:outline-2"><Home size={13} /></button>
-            <img src="/brand-logo.svg" alt="" className="h-4 w-4 shrink-0" />
-            <span className="shrink-0 font-semibold tracking-wide text-white">Ghufron OS</span>
-            <span className="hidden truncate text-white/45 md:inline">{appName}</span>
-            <span className="hidden truncate border-l border-white/15 pl-3 text-white/45 xl:inline">Built in Semarang · systems + interfaces</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 text-white/70"><button aria-label="Search apps (Ctrl or Command + K)" title="Search apps" onClick={() => { setQuery(''); setLauncherOpen(true); }} className="rounded-md p-1 hover:bg-white/10"><Search size={13} /></button><button aria-label="Go back" title="Go back" onClick={() => navigate(-1)} className="rounded-md p-1 hover:bg-white/10"><ChevronLeft size={13} /></button><button aria-label="Go forward" title="Go forward" onClick={() => navigate(1)} className="rounded-md p-1 hover:bg-white/10"><ChevronRight size={13} /></button><span className="hidden md:inline">{formattedDate}</span><span className="font-mono tabular-nums">{formattedTime.slice(0, 5)} WIB</span></div>
+    <OsShellContext.Provider value={shellContextValue}>
+      <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
+        {/* Wallpaper */}
+        <div aria-hidden="true" className="absolute inset-0 bg-black">
+          {WALLPAPERS.map((wallpaper) => (
+            <div
+              key={wallpaper.id}
+              className="absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none"
+              style={{
+                background: wallpaper.background,
+                opacity: wallpaper.id === activeWallpaper.id ? 1 : 0,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Desktop surface */}
+        <div
+          className="absolute inset-x-0 bottom-0"
+          style={{ top: MENUBAR_HEIGHT }}
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) focusDesktop();
+          }}
+        >
+          {children}
+        </div>
+
+        {/* Floating Windows */}
+        {windows.map((win) => {
+          if (win.isMinimized) return null;
+          const isFocused = focusedId === win.id;
+          const spec = APP_SPECS[win.id];
+          const style: React.CSSProperties = win.isMaximized
+            ? {
+                left: 0,
+                top: MENUBAR_HEIGHT,
+                width: '100vw',
+                height: `calc(100svh - ${MENUBAR_HEIGHT}px)`,
+                zIndex: win.zIndex,
+              }
+            : {
+                left: win.frame.x,
+                top: win.frame.y + MENUBAR_HEIGHT,
+                width: win.frame.width,
+                height: win.frame.height,
+                zIndex: win.zIndex,
+              };
+
+          return (
+            <div
+              key={win.id}
+              role="dialog"
+              aria-label={spec.title}
+              style={style}
+              onPointerDownCapture={() => {
+                if (focusedId !== win.id) focusWindow(win.id);
+              }}
+              onPointerDown={(event) => startWindowDrag(win.id, event)}
+              onDoubleClick={(event) => {
+                if (
+                  (event.target as HTMLElement).closest('.handle') &&
+                  !(event.target as HTMLElement).closest('button, input, a')
+                ) {
+                  toggleMaximize(win.id);
+                }
+              }}
+              className={cn(
+                'absolute flex flex-col overflow-hidden transition-[border-radius,box-shadow] duration-200',
+                !win.isMaximized && 'rounded-[26px]',
+                !isFocused && 'inactive-window',
+              )}
+            >
+              <motion.div
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                className={cn(
+                  'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/75 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-3xl backdrop-saturate-150 dark:bg-[#3a3039]/70 dark:text-white/90',
+                  'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
+                  !win.isMaximized && 'rounded-[26px]',
+                  isFocused
+                    ? 'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_0_0.5px_rgba(0,0,0,0.6)]'
+                    : 'shadow-[0_14px_36px_rgba(0,0,0,0.35)]',
+                  win.isMaximized && 'rounded-none shadow-none ring-0',
+                )}
+              >
+                {/* Traffic light controls matching R0shish */}
+                <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    onClick={() => closeWindow(win.id)}
+                    className={cn(
+                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
+                      isFocused
+                        ? 'bg-[#ff5f57]'
+                        : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20',
+                    )}
+                  >
+                    <X
+                      size={8}
+                      strokeWidth={3}
+                      className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Minimize"
+                    onClick={() => minimizeWindow(win.id)}
+                    className={cn(
+                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
+                      isFocused
+                        ? 'bg-[#febc2e]'
+                        : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20',
+                    )}
+                  >
+                    <Minus
+                      size={8}
+                      strokeWidth={3}
+                      className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
+                    onClick={() => toggleMaximize(win.id)}
+                    className={cn(
+                      'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 enabled:active:brightness-75',
+                      isFocused
+                        ? 'bg-[#28c840]'
+                        : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20',
+                    )}
+                  >
+                    <Plus
+                      size={8}
+                      strokeWidth={3}
+                      className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                    />
+                  </button>
+                </div>
+
+                {/* Window body */}
+                <div className="relative min-h-0 flex-grow">
+                  <WindowFocusContext.Provider value={isFocused}>
+                    {win.id === 'settings' ? (
+                      <SystemSettingsApp />
+                    ) : win.id === 'notes' ? (
+                      <NotesApp initialId={notesPayload} />
+                    ) : win.id === 'terminal' ? (
+                      <TerminalApp onClose={() => closeWindow('terminal')} />
+                    ) : win.id === 'mail' ? (
+                      <MailApp />
+                    ) : win.path && renderWindow ? (
+                      <div className="h-full overflow-y-auto bg-white dark:bg-[#282025]">
+                        {renderWindow(win.path)}
+                      </div>
+                    ) : (
+                      <div className="h-full overflow-y-auto bg-white dark:bg-[#282025]">
+                        {children}
+                      </div>
+                    )}
+                  </WindowFocusContext.Provider>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })}
+
+        {/* Dock */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 z-[26] flex justify-center [&>*]:pointer-events-auto">
+          <MacOSDock
+            groups={dockGroups}
+            isHidden={Boolean(maximizedWindow) && !dockRevealed}
+            onRevealChange={setDockRevealed}
+          />
+        </div>
+
+        {/* Apps Launcher */}
+        <AnimatePresence>
+          {launcherOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => {
+                if (event.target === event.currentTarget)
+                  setLauncherOpen(false);
+              }}
+              className="absolute inset-0 z-[25] flex flex-col items-center bg-black/30 pt-[8vh] text-white backdrop-blur-3xl"
+            >
+              <div className="flex h-9 w-60 items-center gap-2 rounded-full bg-white/15 px-3 shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.25)]">
+                <Search size={14} className="opacity-70" />
+                <input
+                  autoFocus
+                  value={launcherQuery}
+                  onChange={(event) => setLauncherQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && launcherApps[0]) {
+                      openApp(launcherApps[0]);
+                    }
+                  }}
+                  placeholder="Search"
+                  className="flex-grow bg-transparent text-[14px] outline-none placeholder:text-white/60"
+                />
+              </div>
+              <motion.div
+                initial={{ scale: 1.06 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 1.06 }}
+                transition={{ duration: 0.22 }}
+                onClick={(event) => {
+                  if (event.target === event.currentTarget)
+                    setLauncherOpen(false);
+                }}
+                className="mt-[8vh] grid w-full max-w-5xl grid-cols-[repeat(auto-fill,120px)] justify-center gap-x-8 gap-y-6 px-8"
+              >
+                {launcherApps.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => openApp(id)}
+                    className="flex cursor-default flex-col items-center gap-2"
+                  >
+                    <img
+                      src={APP_SPECS[id].icon}
+                      alt=""
+                      className="h-24 w-24 object-contain active:brightness-75"
+                    />
+                    <span className="text-[13px] [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+                      {APP_SPECS[id].name}
+                    </span>
+                  </button>
+                ))}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Menu Bar (32px, transparent over wallpaper) */}
+        <header className="pointer-events-none absolute inset-x-0 top-0 z-30 [&>*]:pointer-events-auto">
+          <nav
+            ref={menubarRef}
+            style={{ height: MENUBAR_HEIGHT }}
+            className={cn(
+              'flex items-center justify-between text-[13px] font-medium transition-colors',
+              maximizedWindow
+                ? 'bg-[#ececec]/90 text-black backdrop-blur-2xl dark:bg-[#1e1e1e]/90 dark:text-white'
+                : activeWallpaper.isLight
+                  ? 'text-black'
+                  : 'text-white [text-shadow:0_0_8px_rgba(0,0,0,0.25)]',
+            )}
+          >
+            <div className="flex h-full items-center pl-2.5">
+              {menus.map((menu) => (
+                <div
+                  key={menu.id}
+                  className={cn(
+                    'relative',
+                    !['apple', 'app'].includes(menu.id) && 'hidden md:block',
+                  )}
+                >
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={openMenu === menu.id}
+                    onClick={() =>
+                      setOpenMenu(openMenu === menu.id ? null : menu.id)
+                    }
+                    onMouseEnter={() => openMenu && setOpenMenu(menu.id)}
+                    className={cn(
+                      'flex h-6 cursor-default items-center rounded-full px-2.5',
+                      menu.id === 'apple' && 'px-3',
+                      openMenu === menu.id && 'bg-white/20',
+                    )}
+                  >
+                    {menu.label}
+                  </button>
+                  {openMenu === menu.id && (
+                    <div
+                      role="menu"
+                      className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/85 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/80 dark:text-white"
+                    >
+                      {menu.entries.map((entry, idx) =>
+                        entry === 'separator' ? (
+                          <div
+                            key={idx}
+                            role="separator"
+                            className="mx-2.5 my-[5px] h-px bg-black/10 dark:bg-white/10"
+                          />
+                        ) : (
+                          <button
+                            key={entry.label}
+                            type="button"
+                            disabled={entry.disabled}
+                            onClick={() => {
+                              setOpenMenu(null);
+                              entry.onClick?.();
+                            }}
+                            className="flex h-[24px] w-full cursor-default items-center rounded-[7px] pl-1.5 pr-5 text-left hover:bg-[#0a84ff] hover:text-white disabled:opacity-30"
+                          >
+                            <span className="w-4 shrink-0">
+                              {entry.checked && <Check size={11} />}
+                            </span>
+                            {entry.label}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Right Status Bar */}
+            <div className="mr-2.5 flex h-full items-center gap-0.5">
+              {/* Battery indicator matching R0shish */}
+              <div
+                className="hidden h-6 items-center px-2 sm:flex"
+                title="Battery 100%, charged"
+              >
+                <div className="relative h-[12px] w-[25px] rounded-[4px] border border-current p-[1.5px] opacity-90">
+                  <div className="h-full w-full rounded-[2px] bg-current" />
+                  <div className="absolute -right-[3px] top-1/2 h-[4px] w-[2px] -translate-y-1/2 rounded-r-sm bg-current" />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Spotlight Search"
+                onClick={() => {
+                  setOpenMenu(null);
+                  setSpotlightOpen(true);
+                }}
+                className="flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15"
+              >
+                <Search size={14} />
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Control Center"
+                  aria-expanded={openMenu === 'control-center'}
+                  onClick={() =>
+                    setOpenMenu(
+                      openMenu === 'control-center' ? null : 'control-center',
+                    )
+                  }
+                  onMouseEnter={() =>
+                    openMenu && setOpenMenu('control-center')
+                  }
+                  className={cn(
+                    'flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15',
+                    openMenu === 'control-center' && 'bg-white/20',
+                  )}
+                >
+                  <SlidersHorizontal size={14} />
+                </button>
+
+                {openMenu === 'control-center' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.16, ease: [0.2, 0.9, 0.3, 1] }}
+                    style={{ transformOrigin: 'top right' }}
+                    className="absolute right-0 top-full z-50 mt-1 w-80 max-w-[calc(100vw-1rem)] space-y-2.5 rounded-[24px] bg-[#f4f2f5]/80 p-3 font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/75 dark:text-white"
+                  >
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="flex flex-col rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <div className="flex items-center gap-2 rounded-xl p-1.5 text-left">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
+                            <Wifi size={14} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-semibold leading-tight">
+                              Wi-Fi
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight opacity-60">
+                              Connected
+                            </span>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAppearance(isDark ? 'light' : 'dark')
+                          }
+                          className="flex cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        >
+                          <span
+                            className={cn(
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                              isDark
+                                ? 'bg-[#0a84ff] text-white'
+                                : 'bg-black/10 dark:bg-white/15',
+                            )}
+                          >
+                            {isDark ? <Moon size={14} /> : <Sun size={14} />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-semibold leading-tight">
+                              Dark Mode
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight opacity-60">
+                              {isDark ? 'On' : 'Off'}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                          <button
+                            type="button"
+                            onClick={toggleBrowserFullscreen}
+                            className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                          >
+                            <span
+                              className={cn(
+                                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                isFullscreen
+                                  ? 'bg-[#0a84ff] text-white'
+                                  : 'bg-black/10 dark:bg-white/15',
+                              )}
+                            >
+                              {isFullscreen ? (
+                                <Minimize2 size={14} />
+                              ) : (
+                                <Maximize2 size={14} />
+                              )}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[12px] font-semibold leading-tight">
+                                Full Screen
+                              </span>
+                              <span className="block truncate text-[11px] leading-tight opacity-60">
+                                {isFullscreen ? 'On' : 'Off'}
+                              </span>
+                            </span>
+                          </button>
+                        </div>
+                        <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              openApp('settings', 'wallpaper');
+                              setOpenMenu(null);
+                            }}
+                            className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 dark:bg-white/15">
+                              <ImageIcon size={14} />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[12px] font-semibold leading-tight">
+                                Wallpaper
+                              </span>
+                              <span className="block truncate text-[11px] leading-tight opacity-60">
+                                {activeWallpaper.label}
+                              </span>
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
+                      <div className="mb-1.5 text-[12px] font-semibold">
+                        Display
+                      </div>
+                      <div className="relative h-6 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                        <div
+                          className="absolute inset-y-0 left-0 bg-white dark:bg-neutral-200"
+                          style={{
+                            width: `${((brightness - 0.35) / 0.65) * 100}%`,
+                          }}
+                        />
+                        <Sun
+                          size={13}
+                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                        />
+                        <input
+                          type="range"
+                          min={0.35}
+                          max={1}
+                          step={0.01}
+                          value={brightness}
+                          onChange={(event) =>
+                            setBrightness(Number(event.target.value))
+                          }
+                          aria-label="Display brightness"
+                          className="absolute inset-0 w-full cursor-default opacity-0"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="flex gap-2 px-2.5">
+                <span className="hidden sm:inline">{formattedDate}</span>
+                <span>{formattedTime}</span>
+              </div>
+            </div>
+          </nav>
         </header>
 
-        {windows.map((item, index) => {
-          const active = item.id === currentRouteApp;
-          const label = apps.find((app) => app.id === item.id)?.label ?? appName;
-          return <section key={item.id} ref={active ? windowRef : undefined} onPointerDown={(event) => { if (!(event.target as HTMLElement).closest('button')) focusWindow(item.id); }} style={{ zIndex: active ? windows.length + 2 : index + 1, display: item.minimized ? 'none' : 'flex', translate: item.maximized && active ? '0 0' : `calc(-50% + ${item.position.x}px) calc(-50% + ${item.position.y}px)` }} className={`os-window fixed flex-col overflow-hidden border shadow-[0_28px_100px_rgba(0,0,0,.48)] backdrop-blur-2xl ${closingWindowId === item.id ? 'os-window--closing' : ''} ${item.maximized && active ? 'os-window--maximized inset-x-0 bottom-0 top-7 rounded-none' : 'left-1/2 top-1/2 h-[65vh] w-[75vw] max-w-[1200px] rounded-[14px] max-sm:left-3 max-sm:right-3 max-sm:top-[max(76px,15svh)] max-sm:bottom-[max(112px,18svh)] max-sm:h-auto max-sm:w-auto max-sm:max-w-none'} `}>
-          <div role="group" tabIndex={0} aria-label={`Move ${label} window`} aria-description="Drag with a mouse, or focus this bar and use the arrow keys to move the window." title="Drag to move; use arrow keys while focused" onPointerDown={(event) => { if (!(event.target as HTMLElement).closest('button') && active) startWindowDrag(event); }} onPointerMove={moveWindowDrag} onPointerUp={stopWindowDrag} onPointerCancel={stopWindowDrag} onKeyDown={handleWindowDragKey} className={`os-window-titlebar flex h-11 shrink-0 items-center justify-between border-b px-3 ${maximized ? '' : 'cursor-grab active:cursor-grabbing'} sm:px-4`}>
-            <div className="flex items-center gap-2.5"><button aria-label="Close window" onClick={() => closeRouteWindow(item.id)} className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-inner" /><button aria-label="Minimize window" onClick={() => minimizeWindow(item.id)} className="h-3 w-3 rounded-full bg-[#febc2e] shadow-inner" /><button aria-label={item.maximized ? 'Restore window' : 'Maximize window'} onClick={() => { setWindows((current) => current.map((window) => window.id === item.id ? { ...window, maximized: !window.maximized } : window)); focusWindow(item.id); }} className="h-3 w-3 rounded-full bg-[#28c840] shadow-inner" /></div>
-            <span className="text-xs font-medium text-white/75">{label}</span><span className="w-[54px]" />
-          </div>
-          <div className="os-window-content flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">{renderWindow ? renderWindow(item.path) : children}</div>
-        </section>;
-        })}
-        {mode === 'desktop' && <section className="relative z-0 min-h-0 flex-1">{children}</section>}
+        {/* Spotlight Modal (⌘K) */}
+        <AnimatePresence>
+          {spotlightOpen && (
+            <motion.div
+              className="absolute inset-0 z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget)
+                  setSpotlightOpen(false);
+              }}
+            >
+              <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
+                <motion.div
+                  initial={{ scale: 0.97 }}
+                  animate={{ scale: 1 }}
+                  className="overflow-hidden rounded-[28px] bg-[#f4f2f5]/85 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/80 dark:text-white"
+                >
+                  <div className="flex h-14 items-center gap-3 px-4">
+                    <Search size={20} className="opacity-50" />
+                    <input
+                      autoFocus
+                      value={spotlightQuery}
+                      onChange={(event) => {
+                        setSpotlightQuery(event.target.value);
+                        setSpotlightIndex(0);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') setSpotlightOpen(false);
+                        if (
+                          event.key === 'Enter' &&
+                          spotlightResults[spotlightIndex]
+                        ) {
+                          spotlightResults[spotlightIndex].action();
+                          setSpotlightOpen(false);
+                        }
+                        if (
+                          event.key === 'ArrowDown' ||
+                          event.key === 'ArrowUp'
+                        ) {
+                          event.preventDefault();
+                          const dir = event.key === 'ArrowDown' ? 1 : -1;
+                          setSpotlightIndex((curr) =>
+                            Math.min(
+                              Math.max(curr + dir, 0),
+                              Math.max(0, spotlightResults.length - 1),
+                            ),
+                          );
+                        }
+                      }}
+                      placeholder="Spotlight Search"
+                      className="flex-grow bg-transparent text-[20px] outline-none placeholder:text-neutral-400"
+                    />
+                  </div>
+                  {spotlightQuery.trim() && (
+                    <div className="max-h-80 overflow-y-auto border-t border-black/10 p-2 dark:border-white/10">
+                      {spotlightResults.length === 0 ? (
+                        <div className="py-6 text-center text-[14px] text-neutral-400">
+                          No Results
+                        </div>
+                      ) : (
+                        spotlightResults.map((result, idx) => (
+                          <React.Fragment key={result.id}>
+                            {result.category !==
+                              spotlightResults[idx - 1]?.category && (
+                              <div className="px-2 pb-1 pt-2 text-[11px] font-semibold text-neutral-400">
+                                {result.category}
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onMouseMove={() => setSpotlightIndex(idx)}
+                              onClick={() => {
+                                result.action();
+                                setSpotlightOpen(false);
+                              }}
+                              className={cn(
+                                'flex w-full cursor-default items-center gap-3 rounded-[10px] px-2 py-1.5 text-left',
+                                idx === spotlightIndex &&
+                                  'bg-[#0a84ff] text-white',
+                              )}
+                            >
+                              <img
+                                src={result.icon}
+                                alt=""
+                                className="h-7 w-7 shrink-0 object-contain"
+                              />
+                              <div className="min-w-0">
+                                <div className="truncate text-[14px]">
+                                  {result.title}
+                                </div>
+                                <div
+                                  className={cn(
+                                    'truncate text-[12px]',
+                                    idx === spotlightIndex
+                                      ? 'text-white/75'
+                                      : 'text-neutral-400',
+                                  )}
+                                >
+                                  {result.subtitle}
+                                </div>
+                              </div>
+                            </button>
+                          </React.Fragment>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <MacOSDock
-          items={apps.map((app) => ({ ...app, selected: currentRouteApp === app.id || utilityWindow === app.id }))}
-          launcherOpen={launcherOpen}
-          onLauncher={() => { setLauncherOpen((open) => !open); setUtilityWindow(null); }}
-          onOpen={(id) => { const app = apps.find((item) => item.id === id); if (app) openApp(app); }}
-          renderIcon={(sprite, className) => <AppIcon index={sprite} className={className} />}
+        {/* Brightness Overlay */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-50 bg-black"
+          style={{ opacity: (1 - brightness) * 0.75 }}
         />
 
-        {launcherOpen && <>
-          <button aria-label="Close launcher" onClick={() => setLauncherOpen(false)} className="fixed inset-0 z-30 cursor-default bg-black/45 backdrop-blur-sm" />
-          <section aria-label="App launcher" className="os-launcher fixed left-1/2 top-1/2 z-40 flex max-h-[calc(100svh-2rem)] w-[min(670px,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[18px] border p-4 shadow-2xl backdrop-blur-2xl sm:p-5">
-            <label className="flex h-11 shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3"><Search size={16} className="text-white/45" /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search apps and tools" className="w-full bg-transparent text-sm outline-none placeholder:text-white/35" /><kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/40">ESC</kbd></label>
-            <div className="min-h-0 flex-1 overflow-y-auto pt-4">{appGroups.map((group) => {
-              const groupApps = filteredApps.filter((app) => app.group === group);
-              if (!groupApps.length && !(group === 'TOOLS' && 'github'.includes(query.toLowerCase()))) return null;
-              return <div key={group} className="mb-4"><p className="mb-2 px-1 text-[10px] font-medium tracking-[.18em] text-white/40">{group}</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{groupApps.map((app) => <button key={app.id} onClick={() => openApp(app)} className="flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-lg border border-transparent p-3 text-xs text-white/75 hover:border-white/10 hover:bg-white/[.06]"><span className="grid h-12 w-12 place-items-center rounded-lg border border-white/10 bg-[#252622]"><AppIcon index={app.sprite} className="h-10 w-10" /></span>{app.label}</button>)}{group === 'TOOLS' && 'github'.includes(query.toLowerCase()) && <a href={profile.github} target="_blank" rel="noreferrer" onClick={() => setLauncherOpen(false)} className="flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-lg p-3 text-xs text-white/75 hover:bg-white/[.06]"><span className="grid h-12 w-12 place-items-center rounded-lg border border-white/10 bg-[#252622] text-zinc-200"><Github size={21} /></span>GitHub</a>}</div></div>;
-            })}</div>
-            <div className="flex shrink-0 items-center justify-between border-t border-white/[.08] pt-3 text-[10px] text-white/40"><span>GHUFRON OS</span><span>Ctrl/⌘ K to search</span></div>
-          </section>
-        </>}
-
-        <Dialog open={utilityWindow !== null} onOpenChange={(open) => { if (!open) setUtilityWindow(null); }}>
-          {utilityWindow && <DialogContent overlayClassName="bg-transparent motion-reduce:animate-none" className="os-utility-window w-[calc(100%-1rem)] max-w-xl gap-0 overflow-hidden rounded-[14px] border p-0 shadow-[0_30px_100px_rgba(0,0,0,.65)] motion-reduce:animate-none motion-reduce:transition-none">
-            <DialogDescription className="sr-only">{utilityWindow === 'notes' ? 'Edit your personal note.' : utilityWindow === 'settings' ? 'View Ghufron OS system information.' : 'Contact Ghufron by email.'}</DialogDescription>
-            <header className="os-window-titlebar flex h-11 items-center justify-between border-b px-4"><div className="flex items-center gap-2"><button aria-label="Close window" onClick={() => setUtilityWindow(null)} className="h-3 w-3 rounded-full bg-[#ff5f57]" /><button aria-label="Minimize window" onClick={() => setUtilityWindow(null)} className="h-3 w-3 rounded-full bg-[#febc2e]" /><span className="h-3 w-3 rounded-full bg-[#28c840]" /></div><DialogTitle className="text-xs font-medium text-[var(--os-text-primary)]">{apps.find((app) => app.id === utilityWindow)?.label}</DialogTitle><button aria-label="Close window" onClick={() => setUtilityWindow(null)} className="text-white/50 hover:text-white"><X size={16} /></button></header>
-            <div className="max-h-[72svh] overflow-y-auto p-6">
-              {utilityWindow === 'notes' && <div className="mx-auto max-w-lg rounded-lg bg-[#efe3ce] p-5 text-[#241f19]"><div className="flex items-center justify-between"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-black/50">Semarang · systems + interfaces</p><StickyNote size={16} /></div><textarea aria-label="Personal note" value={note} onChange={(event) => setNote(event.target.value)} className="mt-4 min-h-48 w-full resize-none bg-transparent font-serif text-lg leading-7 outline-none" /></div>}
-              {utilityWindow === 'settings' && <><p className="text-[10px] uppercase tracking-[.18em] text-[#e49a65]">System</p><h2 className="mt-2 text-2xl font-semibold">Ghufron OS</h2><p className="mt-3 text-sm leading-6 text-white/65">Engineer’s workstation · Built in Semarang, Indonesia.</p><p className="mt-4 flex items-center gap-2 text-xs text-white/45"><Code2 size={14} /> Systems, interfaces, and practical software.</p></>}
-              {utilityWindow === 'contact' && <><p className="text-[10px] uppercase tracking-[.18em] text-[#e49a65]">Contact</p><h2 className="mt-2 text-2xl font-semibold">Have a useful thing to build?</h2><p className="mt-3 text-sm leading-6 text-white/65">I’m {profile.availability.toLowerCase()}. Send a note with a little about the product and the problem it should solve.</p><a href={`mailto:${profile.email}`} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#d97736] px-4 py-2.5 text-sm font-medium text-[#191512] hover:bg-[#e7945a]">Email {profile.email} <Mail size={14} /></a></>}
+        {/* Optional Lock / Sleep Screens triggered only via Apple menu */}
+        {power === 'locked' && (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setPower('on')}
+            onKeyDown={() => setPower('on')}
+            className="absolute inset-0 z-[60] flex cursor-default flex-col items-center justify-between py-[10vh] text-white"
+            style={{ background: activeWallpaper.background }}
+          >
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-xl" />
+            <div className="relative text-center [text-shadow:0_2px_12px_rgba(0,0,0,0.3)]">
+              <div className="text-[20px] font-semibold opacity-90">
+                {now.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  timeZone: 'Asia/Jakarta',
+                })}
+              </div>
+              <div className="text-[88px] font-bold leading-none tracking-tight">
+                {formattedTime.replace(/\s?[AP]M/i, '')}
+              </div>
             </div>
-          </DialogContent>}
-        </Dialog>
+            <div className="relative flex flex-col items-center gap-2">
+              <Avatar className="h-16 w-16 text-[24px] ring-2 ring-white/30" />
+              <div className="font-semibold">{profile.name}</div>
+              <div className="text-[12px] opacity-75">
+                Click or press any key to unlock
+              </div>
+            </div>
+          </div>
+        )}
+        {power === 'sleeping' && (
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Wake display"
+            onClick={() => setPower('locked')}
+            onKeyDown={() => setPower('locked')}
+            className="absolute inset-0 z-[60] bg-black"
+          />
+        )}
+
         <style>{`
-          .gh-os{--os-wallpaper-navy:#071C33;--os-wallpaper-cobalt:#0B64B6;--os-wallpaper-bright-blue:#1789E8;--os-panel:#17191D;--os-raised:#202329;--os-border:#424853;--os-text-primary:#F5F7FA;--os-text-secondary:#B7C0CB;--os-accent-solid:#176FC0;--os-accent-hover:#2385D9;--os-accent-soft:#123A5C;--os-accent-link:#56A8ED;--os-accent-text:#041426;color:var(--os-text-primary)}
-          .gh-os-wallpaper{background:url('/ghufron-os-wallpaper.svg') center/cover no-repeat}
-          .os-menubar{position:relative;background:rgba(9,22,36,.58);border-color:rgba(210,225,242,.13);box-shadow:inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(24px) saturate(1.35)}
-          .os-window{max-width:min(100vw,1200px);background:var(--os-raised);border-color:var(--os-border)}.os-window--maximized{max-width:none}.os-utility-window{--os-panel:#17191D;--os-raised:#202329;--os-border:#424853;--os-text-primary:#F5F7FA;max-width:min(100vw,36rem);background:var(--os-raised);border-color:var(--os-border)}
-          .os-window-titlebar{background:var(--os-panel);border-color:var(--os-border)}
-          .os-window-content{overflow-x:hidden;background:var(--os-panel)}
-          .os-launcher{position:fixed;background:rgba(23,25,29,.86);border-color:rgba(183,192,203,.24);box-shadow:0 24px 80px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.09);backdrop-filter:blur(28px)}
-          .os-launcher-trigger,.os-dock-idle{background:var(--os-raised);border-color:var(--os-border)}.os-launcher-trigger[aria-expanded="true"]{background:var(--os-accent-soft);border-color:var(--os-accent-solid)}
-          .os-selected{background:var(--os-accent-soft);border-color:var(--os-accent-solid)}
-          .os-menubar::before,.gh-mac-dock::before,.os-launcher::before{content:"";position:absolute;z-index:1;top:0;left:12px;right:12px;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)}
-          .os-control:focus-visible,.os-lockscreen:focus-visible,.dock-app:focus-visible{outline:2px solid var(--os-accent-hover);outline-offset:3px}
-          .gh-os [class*="text-[#e3945c]"],.gh-os [class*="text-[#e7a06d]"],.gh-os [class*="text-[#e7b184]"],.gh-os [class*="text-[#edc39f]"],.gh-os [class*="text-[#d9a477]"],.gh-os [class*="text-[#c78b5b]"],.gh-os [class*="text-[#e58a4c]"],.gh-os [class*="text-[#f0b184]"],.gh-os [class*="text-[#e58b4d]"],.gh-os [class*="text-[#f4a36c]"],.gh-os [class*="text-[#eaa06f]"]{color:var(--os-accent-link)!important}
-          .gh-os [class*="text-[#aaa39a]"],.gh-os [class*="text-[#c5beb4]"]{color:var(--os-text-secondary)!important}
-          .gh-os [class*="text-[#f0ece6]"],.gh-os [class*="text-[#f2eee8]"]{color:var(--os-text-primary)!important}
-          .gh-os [class~="text-white/40"],.gh-os [class~="text-white/45"],.gh-os [class~="text-white/50"],.gh-os [class~="text-white/55"],.gh-os [class~="text-white/60"],.gh-os [class~="text-white/65"],.gh-os [class~="text-white/70"],.gh-os [class~="text-white/75"]{color:var(--os-text-secondary)!important}
-          .gh-os .os-lockscreen [class*="text-white/"]{color:var(--os-text-primary)!important}.gh-os .os-weather [class*="text-white/"]{color:var(--os-text-primary)!important}
-          .gh-os [class~="bg-[#171716]"],.gh-os [class~="bg-[#171716]/95"]{background-color:var(--os-panel)!important}
-          .gh-os [class~="bg-[#1d1c1a]"],.gh-os [class~="bg-[#211c18]"],.gh-os [class~="bg-[#211d19]"],.gh-os [class~="bg-[#22211f]"],.gh-os [class~="bg-[#252522]"]{background-color:var(--os-raised)!important}
-          .gh-os [class*="from-[#252522]"]{background-image:linear-gradient(135deg,var(--os-panel),var(--os-raised) 60%,var(--os-accent-soft))!important}
-          .gh-os [class*="bg-[#c78b5b]"],.gh-os [class*="bg-[#d97736]"],.gh-os [class*="bg-[#e58a4c]"],.gh-os [class*="bg-[#e58b4d]"]{background-color:color-mix(in srgb,var(--os-accent-solid) 12%,transparent)!important}
-          .gh-os [class~="bg-[#d97736]"]{background-color:var(--os-accent-solid)!important;color:#fff!important}
-          .gh-os [class~="hover:bg-[#e58a4c]"]:hover,.gh-os [class~="hover:bg-[#e58b4d]"]:hover,.gh-os [class~="hover:bg-[#e7945a]"]:hover,.gh-os [class~="hover:bg-[#2385D9]"]:hover{background-color:var(--os-accent-hover)!important;color:var(--os-accent-text)!important}
-          .gh-os [class*="hover:bg-[var(--os-accent-hover)]"]:hover{color:var(--os-accent-text)!important}
-          .gh-os [class*="border-[#d97736]"],.gh-os [class*="border-[#c78b5b]"]{border-color:color-mix(in srgb,var(--os-accent-solid) 38%,transparent)!important}
-          .gh-app-icon{display:grid;height:42px;width:42px;place-items:center;border-radius:11px;background:linear-gradient(145deg,#253a50,#142436);color:#b8dcff;box-shadow:inset 0 1px rgba(255,255,255,.24),0 3px 8px rgba(0,0,0,.22)}
-          .gh-app-icon svg{height:21px;width:21px;stroke-width:1.8}
-          .gh-app-icon-1{background:linear-gradient(145deg,#4587c3,#22517f);color:#e5f3ff}.gh-app-icon-2{background:linear-gradient(145deg,#b9d0dd,#708da3);color:#18344a}.gh-app-icon-3{background:linear-gradient(145deg,#e5e9ee,#9eacbd);color:#36526e}.gh-app-icon-4{background:linear-gradient(145deg,#d4b78b,#95734e);color:#fff5df}.gh-app-icon-5{background:linear-gradient(145deg,#e8ce88,#ac873e);color:#493714}.gh-app-icon-6{background:linear-gradient(145deg,#81bfca,#367f8d);color:#f0ffff}.gh-app-icon-7{background:linear-gradient(145deg,#a8b6c9,#65758a);color:#f5f8ff}
-          .gh-mac-dock{position:fixed;max-width:calc(100vw - 16px);background:linear-gradient(180deg,rgba(40,48,58,.88),rgba(18,24,32,.82));border-color:rgba(220,232,245,.28);box-shadow:0 18px 48px rgba(0,0,0,.5),inset 0 1px rgba(255,255,255,.22);backdrop-filter:blur(28px) saturate(1.35)}.dock-mobile-toggle{display:none}
-          .dock-app{position:relative;z-index:0;height:46px;width:46px;flex:0 0 46px;border-radius:13px;--dock-press:1;transition:transform .16s cubic-bezier(.2,.8,.2,1),border-color .16s,background .16s;transform:translateY(var(--dock-lift,0px)) scale(calc(var(--dock-scale,1) * var(--dock-press,1)));transform-origin:bottom center}.dock-app:active{--dock-press:.96}.dock-app:hover,.dock-app:focus-visible{z-index:2}
-          .dock-app[data-label]::after{content:attr(data-label);position:absolute;left:50%;bottom:calc(100% + 12px);transform:translate(-50%,4px);border:1px solid rgba(255,255,255,.14);border-radius:7px;background:rgba(12,18,25,.94);padding:5px 8px;color:#f5f7fa;font:500 11px/1.2 system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s,transform .12s;box-shadow:0 5px 16px #0006}
-          .dock-app:hover[data-label]::after,.dock-app:focus-visible[data-label]::after{opacity:1;transform:translate(-50%,0)}
-          .dock-app[aria-current="page"]::before{content:"";position:absolute;bottom:-6px;left:50%;height:4px;width:4px;border-radius:50%;background:#f4f8ff;box-shadow:0 0 7px #89c8ff;transform:translateX(-50%)}
-          .dock-icon{transform:none}
-          .dock-bounce{animation:dock-bounce .28s ease-out}@keyframes dock-bounce{0%,100%{transform:translateX(var(--dock-shift,0px)) translateY(var(--dock-lift,0px)) scale(calc(var(--dock-scale,1) * var(--dock-press,1)))}45%{transform:translateX(var(--dock-shift,0px)) translateY(calc(var(--dock-lift,0px) - 5px)) scale(calc(var(--dock-scale,1) * var(--dock-press,1)))}}
-          .os-window{animation:gh-window-in .25s cubic-bezier(.22,1,.36,1) both}.os-window--closing{animation:gh-window-out .15s cubic-bezier(.22,1,.36,1) both}
-          @keyframes gh-window-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}@keyframes gh-window-out{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.96)}}
-          @media(hover:hover) and (pointer:fine){.dock-app:hover{--dock-lift:-2px}}
-          @media(max-width:640px){.gh-mac-dock{bottom:calc(env(safe-area-inset-bottom,0px) + 12px);flex-direction:column-reverse;gap:8px;border:0;background:transparent;padding:0;box-shadow:none;backdrop-filter:none}.gh-mac-dock::before{display:none}.dock-mobile-toggle{display:flex;border-color:rgba(220,232,245,.28);background:linear-gradient(180deg,rgba(40,48,58,.94),rgba(18,24,32,.92));box-shadow:0 8px 24px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.2);backdrop-filter:blur(24px) saturate(1.35)}.gh-mac-dock:not(.dock-mobile-open) .dock-items{display:none}.gh-mac-dock.dock-mobile-open .dock-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-width:calc(100vw - 24px);padding:8px;border:1px solid rgba(220,232,245,.28);border-radius:18px;background:linear-gradient(180deg,rgba(40,48,58,.96),rgba(18,24,32,.94));box-shadow:0 12px 32px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.2);backdrop-filter:blur(24px) saturate(1.35)}.dock-items>span{display:none}.dock-app{height:38px;width:38px;flex-basis:38px;border-radius:10px;--dock-scale:1!important;--dock-shift:0px!important}.gh-app-icon{height:34px;width:34px;border-radius:9px}.os-window{bottom:max(176px,24svh)!important}}
-          @media(max-width:360px){.gh-mac-dock{gap:1px;padding:5px}.dock-app{width:32px;height:34px;flex-basis:32px}.gh-app-icon{height:29px;width:29px}}
-          @media(min-width:641px) and (max-width:1023px){.os-window--maximized{bottom:calc(clamp(16px,2.5vh,24px) + 76px)!important}}
-          @media(max-width:639px){.os-window{translate:0 0!important}}
-          @media(prefers-reduced-motion:reduce){.dock-app,.dock-app::after,.dock-icon,.os-window{transition:none;animation:none}.dock-app:hover,.dock-app:active{transform:none}}
+          html:has(.gh-os),body:has(.gh-os){height:100%;overflow:hidden;overscroll-behavior:none}
+          .inactive-window ::selection{background:rgba(128,128,128,0.3)}
         `}</style>
       </main>
     </OsShellContext.Provider>

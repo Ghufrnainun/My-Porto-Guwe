@@ -1,165 +1,521 @@
-import { useMemo, useState } from 'react';
-import { ArrowUpRight, BriefcaseBusiness, Code2, Folder, FolderOpen, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-import { featuredProjects } from '@/data/featuredProjects';
-import { sideProjects } from '@/data/sideProjects';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  ExternalLink,
+  Folder,
+  Github,
+  Globe,
+  Laptop,
+  LayoutGrid,
+  List,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Sidebar,
+  type SidebarSection,
+  Toolbar,
+  ToolbarButton,
+  ToolbarGroup,
+} from '@/components/os/OsWindowChrome';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { featuredProjects, type PortfolioProject } from '@/data/featuredProjects';
+import { profile } from '@/data/profile';
 
-type ProjectFilter = 'all' | 'featured' | 'side';
+type ViewMode = 'grid' | 'list';
 
-const filterLabels: Record<ProjectFilter, string> = {
-  all: 'All Projects',
-  featured: 'Case Studies',
-  side: 'Side Projects',
+interface FolderMeta {
+  id: string;
+  label: string;
+  filter: (project: PortfolioProject) => boolean;
+}
+
+const FOLDERS: Record<string, FolderMeta> = {
+  recents: {
+    id: 'recents',
+    label: 'Recents',
+    filter: (p) => Number(p.year) >= 2026,
+  },
+  all: {
+    id: 'all',
+    label: 'All Projects',
+    filter: () => true,
+  },
+  public: {
+    id: 'public',
+    label: 'Open Source',
+    filter: (p) => p.visibility === 'public',
+  },
+  live: {
+    id: 'live',
+    label: 'Live Deployments',
+    filter: (p) => Boolean(p.demo),
+  },
+  ghufron: {
+    id: 'ghufron',
+    label: 'ghufron',
+    filter: () => true,
+  },
+  'tag-typescript': {
+    id: 'tag-typescript',
+    label: 'TypeScript',
+    filter: (p) => p.technologies.some((t) => t.toLowerCase().includes('typescript')),
+  },
+  'tag-react': {
+    id: 'tag-react',
+    label: 'React & Next.js',
+    filter: (p) =>
+      p.technologies.some((t) => {
+        const lower = t.toLowerCase();
+        return lower.includes('react') || lower.includes('next');
+      }),
+  },
+  'tag-cloudflare': {
+    id: 'tag-cloudflare',
+    label: 'Cloudflare',
+    filter: (p) => p.technologies.some((t) => t.toLowerCase().includes('cloudflare')),
+  },
+  'tag-laravel': {
+    id: 'tag-laravel',
+    label: 'Laravel & PHP',
+    filter: (p) =>
+      p.technologies.some((t) => {
+        const lower = t.toLowerCase();
+        return lower.includes('laravel') || lower.includes('php');
+      }),
+  },
+  'tag-tailwind': {
+    id: 'tag-tailwind',
+    label: 'Tailwind CSS',
+    filter: (p) => p.technologies.some((t) => t.toLowerCase().includes('tailwind')),
+  },
 };
 
-const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--os-accent-hover)]';
+const SIDEBAR_SECTIONS: SidebarSection[] = [
+  {
+    title: 'Favorites',
+    items: [
+      { id: 'recents', label: 'Recents', icon: <Clock className="h-4 w-4 text-[#0a84ff]" /> },
+      { id: 'all', label: 'All Projects', icon: <Folder className="h-4 w-4 text-[#0a84ff]" /> },
+      { id: 'live', label: 'Live Deployments', icon: <Globe className="h-4 w-4 text-[#0a84ff]" /> },
+      { id: 'public', label: 'Open Source', icon: <Sparkles className="h-4 w-4 text-[#0a84ff]" /> },
+    ],
+  },
+  {
+    title: 'Locations',
+    items: [
+      { id: 'ghufron', label: 'ghufron', icon: <Laptop className="h-4 w-4 text-black/55 dark:text-white/60" /> },
+    ],
+  },
+  {
+    title: 'Tags',
+    items: [
+      { id: 'tag-typescript', label: 'TypeScript', dot: 'bg-[#0a84ff]' },
+      { id: 'tag-react', label: 'React & Next.js', dot: 'bg-[#30d158]' },
+      { id: 'tag-cloudflare', label: 'Cloudflare', dot: 'bg-[#ff9f0a]' },
+      { id: 'tag-laravel', label: 'Laravel & PHP', dot: 'bg-[#ff453a]' },
+      { id: 'tag-tailwind', label: 'Tailwind CSS', dot: 'bg-[#64d2ff]' },
+    ],
+  },
+];
 
 export default function Projects() {
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<ProjectFilter>('all');
-
   usePageMeta({
-    title: 'Projects | Ghufron Ainun Najib — Full-Stack Developer',
-    description:
-      'Selected case studies and side projects by Ghufron Ainun Najib across web, mobile, cloud, computer vision, and IoT.',
+    title: `Projects — ${profile.name}`,
+    description: `Browse web applications, APIs, and engineering case studies built by ${profile.name}.`,
     canonicalPath: '/projects',
-    jsonLd: [
-      {
-        '@type': 'CollectionPage',
-        name: 'Projects — Ghufron Ainun Najib',
-        url: 'https://ghufronainun.tech/projects',
-        description: 'Portfolio of software engineering projects by Ghufron Ainun Najib',
-      },
-      {
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: `Projects — ${profile.name}`,
+      mainEntity: {
         '@type': 'ItemList',
-        name: 'Featured Projects',
         itemListElement: featuredProjects.map((project, index) => ({
           '@type': 'ListItem',
           position: index + 1,
           name: project.title,
-          url: `https://ghufronainun.tech/projects/${project.slug}`,
+          url: `${profile.website}/projects/${project.slug}`,
         })),
       },
-    ],
+    },
   });
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const visibleFeatured = useMemo(
-    () => filter === 'side' ? [] : featuredProjects.filter((project) =>
-      [project.title, project.summary, project.year, project.role, ...project.technologies]
-        .join(' ').toLowerCase().includes(normalizedQuery),
-    ),
-    [filter, normalizedQuery],
+  const navigate = useNavigate();
+
+  const [history, setHistory] = useState<string[]>(['all']);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const activeFolderId = history[historyIndex] ?? 'all';
+  const activeFolder = FOLDERS[activeFolderId] ?? FOLDERS.all;
+
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(
+    featuredProjects[0]?.slug ?? null,
   );
-  const visibleSide = useMemo(
-    () => filter === 'featured' ? [] : sideProjects.filter((project) =>
-      [project.title, project.category, project.description, project.year, ...project.technologies]
-        .join(' ').toLowerCase().includes(normalizedQuery),
-    ),
-    [filter, normalizedQuery],
+
+  const filteredProjects = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return featuredProjects.filter((project) => {
+      if (!activeFolder.filter(project)) return false;
+      if (!q) return true;
+      return (
+        project.title.toLowerCase().includes(q) ||
+        project.summary.toLowerCase().includes(q) ||
+        project.role.toLowerCase().includes(q) ||
+        project.technologies.some((tech) => tech.toLowerCase().includes(q))
+      );
+    });
+  }, [activeFolder, searchQuery]);
+
+  // Keep selected item synchronized if filter excludes previous selection
+  useEffect(() => {
+    if (filteredProjects.length === 0) {
+      setSelectedSlug(null);
+      return;
+    }
+    if (!selectedSlug || !filteredProjects.some((p) => p.slug === selectedSlug)) {
+      setSelectedSlug(filteredProjects[0].slug);
+    }
+  }, [filteredProjects, selectedSlug]);
+
+  const selectedProject = useMemo(
+    () => filteredProjects.find((p) => p.slug === selectedSlug) ?? null,
+    [filteredProjects, selectedSlug],
   );
-  const resultCount = visibleFeatured.length + visibleSide.length;
+
+  const selectFolder = (folderId: string) => {
+    if (folderId === activeFolderId) return;
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), folderId]);
+    setHistoryIndex((prev) => prev + 1);
+  };
+
+  const canGoBack = historyIndex > 0;
+  const canGoForward = historyIndex < history.length - 1;
+
+  const openProject = (slug: string) => {
+    navigate(`/projects/${slug}`);
+  };
+
+  const handleItemClick = (project: PortfolioProject) => {
+    setSelectedSlug(project.slug);
+    if (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches) {
+      openProject(project.slug);
+    }
+  };
 
   return (
-    <main className="[.os-window--maximized_&]:min-h-[calc(100vh-73px)] flex min-h-0 w-full min-w-0 flex-1 flex-col bg-[var(--os-panel)] text-[var(--os-text-primary)]">
-      <header className="border-b border-[var(--os-border)] bg-[var(--os-raised)]/80 px-3 py-3 backdrop-blur-xl sm:px-5">
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <div className="flex shrink-0 items-center gap-2" aria-hidden="true">
-            <span className="grid size-8 place-items-center rounded-lg bg-[var(--os-accent-soft)] text-[var(--os-accent-link)]"><FolderOpen className="size-[17px]" /></span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-[9px] uppercase tracking-[0.17em] text-[var(--os-text-secondary)]">Ghufron OS <span className="px-1 text-[var(--os-border)]">/</span> Finder</p>
-            <h1 className="truncate text-lg font-semibold leading-tight sm:text-xl">{filterLabels[filter]}</h1>
-          </div>
-          <label className="flex h-9 w-full items-center gap-2 rounded-lg border border-[var(--os-border)] bg-black/15 px-2.5 text-[var(--os-text-secondary)] transition-colors focus-within:border-[var(--os-accent-solid)] sm:w-56">
-            <Search aria-hidden="true" className="size-3.5 shrink-0" />
-            <span className="sr-only">Search projects and technologies</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search projects"
-              className="min-w-0 flex-1 bg-transparent text-xs text-[var(--os-text-primary)] outline-none placeholder:text-[var(--os-text-secondary)]"
-            />
-          </label>
-        </div>
-      </header>
+    <div className="flex h-full min-h-0">
+      <Sidebar
+        sections={SIDEBAR_SECTIONS}
+        selectedId={activeFolderId}
+        onSelect={selectFolder}
+      />
 
-      <div className="grid w-full min-h-0 flex-1 md:grid-cols-[176px_minmax(0,1fr)]">
-        <aside className="border-b border-[var(--os-border)] bg-white/[0.025] p-3 backdrop-blur-md md:border-b-0 md:border-r md:p-4" aria-label="Project folders">
-          <p className="hidden px-2 pb-2 font-mono text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--os-text-secondary)] md:block">Favorites</p>
-          <nav aria-label="Filter projects" className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-col">
-            {(Object.keys(filterLabels) as ProjectFilter[]).map((value) => {
-              const Icon = value === 'all' ? Folder : value === 'featured' ? BriefcaseBusiness : Code2;
-              const count = value === 'all' ? featuredProjects.length + sideProjects.length : value === 'featured' ? featuredProjects.length : sideProjects.length;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setFilter(value)}
-                  aria-pressed={filter === value}
-                  className={`flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2.5 text-left text-xs transition-colors ${focusRing} ${filter === value ? 'bg-[var(--os-accent-soft)] font-medium text-[var(--os-accent-link)]' : 'text-[var(--os-text-secondary)] hover:bg-white/[0.06] hover:text-[var(--os-text-primary)]'}`}
-                >
-                  <Icon aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="flex-1">{filterLabels[value]}</span>
-                  <span className="font-mono text-[10px] opacity-75">{count}</span>
-                </button>
-              );
-            })}
-          </nav>
-          <div className="mt-5 hidden border-t border-[var(--os-border)] pt-4 md:block">
-            <p className="px-2 font-mono text-[9px] font-medium uppercase tracking-[0.16em] text-[var(--os-text-secondary)]">On this Mac</p>
-            <p className="mt-2 flex items-center gap-2 px-2 text-xs text-[var(--os-text-secondary)]"><FolderOpen aria-hidden="true" className="size-4 text-[var(--os-accent-link)]" />Portfolio</p>
-          </div>
-        </aside>
-
-        <section className="flex min-w-0 flex-col" aria-label="Project directory">
-          <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--os-border)] px-4 py-2.5 sm:px-5">
-            <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--os-text-secondary)]">
-              <FolderOpen aria-hidden="true" className="size-4 shrink-0 text-[var(--os-accent-link)]" />
-              <span className="truncate">Portfolio</span><span aria-hidden="true">›</span><span className="truncate text-[var(--os-text-primary)]">{filterLabels[filter]}</span>
+      <div className="flex min-w-0 flex-1 flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+        <Toolbar
+          leading={
+            <div className="flex min-w-0 items-center gap-2.5">
+              <ToolbarGroup>
+                <ToolbarButton
+                  title="Back"
+                  disabled={!canGoBack}
+                  onClick={() => canGoBack && setHistoryIndex((i) => i - 1)}
+                  icon={<ChevronLeft className="h-4 w-4" />}
+                />
+                <ToolbarButton
+                  title="Forward"
+                  disabled={!canGoForward}
+                  onClick={() => canGoForward && setHistoryIndex((i) => i + 1)}
+                  icon={<ChevronRight className="h-4 w-4" />}
+                />
+              </ToolbarGroup>
+              <span className="truncate text-[14px] font-semibold">
+                {activeFolder.label}
+              </span>
             </div>
-            <span className="shrink-0 font-mono text-[10px] text-[var(--os-text-secondary)]" aria-live="polite">{resultCount} items</span>
+          }
+          trailing={
+            <div className="flex items-center gap-2">
+              {searchOpen ? (
+                <div className="flex h-9 items-center gap-1.5 rounded-full bg-black/[0.06] px-3 dark:bg-white/[0.08]">
+                  <Search className="h-3.5 w-3.5 text-black/45 dark:text-white/45" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search projects..."
+                    autoFocus
+                    className="w-28 bg-transparent text-[12.5px] outline-none placeholder:text-black/40 sm:w-40 dark:placeholder:text-white/35"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchOpen(false);
+                    }}
+                    className="text-black/45 hover:text-black dark:text-white/45 dark:hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <ToolbarGroup>
+                  <ToolbarButton
+                    title="Search projects"
+                    onClick={() => setSearchOpen(true)}
+                    icon={<Search className="h-4 w-4" />}
+                  />
+                </ToolbarGroup>
+              )}
+
+              <ToolbarGroup>
+                <ToolbarButton
+                  title="Icon view"
+                  isActive={viewMode === 'grid'}
+                  onClick={() => setViewMode('grid')}
+                  icon={<LayoutGrid className="h-4 w-4" />}
+                />
+                <ToolbarButton
+                  title="List view"
+                  isActive={viewMode === 'list'}
+                  onClick={() => setViewMode('list')}
+                  icon={<List className="h-4 w-4" />}
+                />
+              </ToolbarGroup>
+            </div>
+          }
+        />
+
+        <main className="flex min-h-0 flex-1">
+          {/* File / Project items browser */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {filteredProjects.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-[13px] text-black/45 dark:text-white/45">
+                <Folder className="h-10 w-10 opacity-35" />
+                <p>No projects match this filter.</p>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-[#0a84ff] hover:underline"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {filteredProjects.map((project) => {
+                  const isSelected = project.slug === selectedSlug;
+                  return (
+                    <button
+                      key={project.slug}
+                      type="button"
+                      onClick={() => handleItemClick(project)}
+                      onDoubleClick={() => openProject(project.slug)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          openProject(project.slug);
+                        }
+                      }}
+                      className="group flex flex-col items-center gap-1.5 rounded-xl p-2 text-center focus:outline-none"
+                    >
+                      <div
+                        className={[
+                          'flex h-20 w-20 items-center justify-center rounded-xl transition-colors',
+                          isSelected
+                            ? 'bg-black/[0.08] ring-1 ring-black/10 dark:bg-white/[0.12] dark:ring-white/15'
+                            : 'group-hover:bg-black/[0.04] dark:group-hover:bg-white/[0.05]',
+                        ].join(' ')}
+                      >
+                        <img
+                          src="/macos-icons/folder.png"
+                          alt=""
+                          draggable={false}
+                          className="h-16 w-16 object-contain drop-shadow-sm"
+                        />
+                      </div>
+                      <span
+                        className={[
+                          'line-clamp-2 max-w-[130px] rounded-[5px] px-1.5 py-0.5 text-[12px] font-medium leading-snug',
+                          isSelected
+                            ? 'bg-[#0a5bc2] text-white'
+                            : 'text-black/85 dark:text-white/90',
+                        ].join(' ')}
+                      >
+                        {project.title}
+                      </span>
+                      <span className="text-[11px] text-black/40 dark:text-white/40">
+                        {project.year} · {project.visibility === 'public' ? 'Public' : 'Case Study'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                <div className="grid grid-cols-[1fr_110px_70px] gap-2 border-b border-black/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-black/45 dark:border-white/[0.06] dark:text-white/40">
+                  <span>Name</span>
+                  <span>Kind</span>
+                  <span className="text-right">Year</span>
+                </div>
+                {filteredProjects.map((project, index) => {
+                  const isSelected = project.slug === selectedSlug;
+                  return (
+                    <button
+                      key={project.slug}
+                      type="button"
+                      onClick={() => handleItemClick(project)}
+                      onDoubleClick={() => openProject(project.slug)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          openProject(project.slug);
+                        }
+                      }}
+                      className={[
+                        'grid w-full grid-cols-[1fr_110px_70px] items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors',
+                        isSelected
+                          ? 'bg-[#0a5bc2] text-white'
+                          : index % 2 === 1
+                            ? 'bg-black/[0.02] hover:bg-black/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.06]'
+                            : 'hover:bg-black/[0.05] dark:hover:bg-white/[0.06]',
+                      ].join(' ')}
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <img
+                          src="/macos-icons/folder.png"
+                          alt=""
+                          className="h-5 w-5 shrink-0 object-contain"
+                        />
+                        <span className="truncate font-medium">{project.title}</span>
+                      </span>
+                      <span
+                        className={[
+                          'truncate text-[12px]',
+                          isSelected ? 'text-white/85' : 'text-black/50 dark:text-white/50',
+                        ].join(' ')}
+                      >
+                        {project.visibility === 'public' ? 'Open Source' : 'Client / App'}
+                      </span>
+                      <span
+                        className={[
+                          'text-right text-[12px]',
+                          isSelected ? 'text-white/85' : 'text-black/50 dark:text-white/50',
+                        ].join(' ')}
+                      >
+                        {project.year}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {resultCount === 0 ? (
-            <div className="px-5 py-14 text-center">
-              <Folder aria-hidden="true" className="mx-auto size-8 text-[var(--os-text-secondary)]" />
-              <p className="mt-3 text-sm text-[var(--os-text-secondary)]">No projects match “{query}”.</p>
-              <button type="button" onClick={() => { setQuery(''); setFilter('all'); }} className={`mt-3 min-h-9 rounded-lg px-3 text-xs text-[var(--os-accent-link)] hover:bg-white/[0.06] ${focusRing}`}>Clear search and filters</button>
-            </div>
-          ) : (
-            <div className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-4 p-3 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-5 sm:p-5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {visibleFeatured.map((project) => (
-                <article key={project.slug} className="group flex min-w-0 flex-col items-center rounded-xl p-2 text-center transition-colors hover:bg-[var(--os-accent-soft)]/35 sm:p-3">
-                  <Link to={`/projects/${project.slug}`} aria-label={`Open ${project.title} case study`} className={`flex w-full min-w-0 flex-col items-center rounded-lg ${focusRing}`}>
-                    <Folder aria-hidden="true" className="size-[68px] text-[var(--os-accent-link)] drop-shadow-[0_4px_8px_rgba(0,0,0,.2)] transition-transform group-hover:-translate-y-0.5 sm:size-[76px]" fill="currentColor" strokeWidth={1.25} />
-                    <h2 className="mt-2 min-h-10 w-full break-words text-[11px] font-medium leading-5 text-[var(--os-text-primary)] group-hover:text-[var(--os-accent-link)] sm:text-xs">{project.title}</h2>
-                  </Link>
-                  <p className="mt-1 text-[10px] text-[var(--os-text-secondary)]">{project.year} <span className="px-0.5 text-[var(--os-border)]">·</span> Case study</p>
-                </article>
-              ))}
-              {visibleSide.map((project) => (
-                <article key={project.title} className="group flex min-w-0 flex-col items-center rounded-xl p-2 text-center transition-colors hover:bg-[var(--os-accent-soft)]/35 sm:p-3">
-                  <Folder aria-hidden="true" className="size-[68px] text-[var(--os-accent-link)] drop-shadow-[0_4px_8px_rgba(0,0,0,.2)] transition-transform group-hover:-translate-y-0.5 sm:size-[76px]" fill="currentColor" strokeWidth={1.25} />
-                  <h2 className="mt-2 min-h-10 w-full break-words text-[11px] font-medium leading-5 text-[var(--os-text-primary)] sm:text-xs">{project.title}</h2>
-                  <p className="mt-1 text-[10px] text-[var(--os-text-secondary)]">{project.year} <span className="px-0.5 text-[var(--os-border)]">·</span> Side project</p>
-                  <div className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-1">
-                    <a href={project.github} target="_blank" rel="noopener noreferrer" className={`text-[10px] text-[var(--os-accent-link)] hover:underline ${focusRing}`}>Source <ArrowUpRight aria-hidden="true" className="inline size-3" /></a>
-                    {project.demo && <a href={project.demo} target="_blank" rel="noopener noreferrer" className={`text-[10px] text-[var(--os-accent-link)] hover:underline ${focusRing}`}>Demo <ArrowUpRight aria-hidden="true" className="inline size-3" /></a>}
+          {/* Right Preview Inspector */}
+          <aside className="hidden w-64 shrink-0 flex-col justify-between overflow-y-auto border-l border-black/5 bg-[#f7f7f8]/75 p-4 lg:flex dark:border-white/[0.06] dark:bg-white/[0.02]">
+            {selectedProject ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center border-b border-black/5 pb-4 text-center dark:border-white/[0.07]">
+                  {selectedProject.image ? (
+                    <div className="h-28 w-full overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/10 dark:bg-white/5 dark:ring-white/10">
+                      <img
+                        src={selectedProject.image}
+                        alt={selectedProject.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src="/macos-icons/folder.png"
+                      alt=""
+                      className="h-20 w-20 object-contain"
+                    />
+                  )}
+                  <h2 className="mt-3 text-[14px] font-semibold leading-snug text-black/90 dark:text-white">
+                    {selectedProject.title}
+                  </h2>
+                  <p className="mt-0.5 text-[11.5px] text-black/50 dark:text-white/50">
+                    {selectedProject.role} · {selectedProject.year}
+                  </p>
+                </div>
+
+                <p className="text-[12px] leading-relaxed text-black/70 dark:text-white/70">
+                  {selectedProject.summary}
+                </p>
+
+                <div>
+                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/40">
+                    Stack
                   </div>
-                </article>
-              ))}
-            </div>
-          )}
+                  <div className="flex flex-wrap gap-1">
+                    {selectedProject.technologies.slice(0, 6).map((tech) => (
+                      <span
+                        key={tech}
+                        className="rounded-md bg-black/[0.06] px-1.5 py-0.5 text-[11px] text-black/75 dark:bg-white/[0.08] dark:text-white/80"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
 
-          <footer className="mt-auto flex items-center justify-between gap-3 border-t border-[var(--os-border)] px-4 py-2.5 text-[10px] text-[var(--os-text-secondary)] sm:px-5">
-            <span>{resultCount} items</span><span className="font-mono">Portfolio · {filterLabels[filter]}</span>
-          </footer>
-        </section>
+                <div className="space-y-1.5 pt-2">
+                  <Link
+                    to={`/projects/${selectedProject.slug}`}
+                    className="flex w-full items-center justify-center rounded-lg bg-[#0a84ff] px-3 py-1.5 text-[12.5px] font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                  >
+                    Open Case Study
+                  </Link>
+                  <div className="flex gap-1.5">
+                    {selectedProject.demo && (
+                      <a
+                        href={selectedProject.demo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-[12px] font-medium text-black/80 hover:bg-black/10 dark:bg-white/[0.08] dark:text-white/85 dark:hover:bg-white/15"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Live</span>
+                      </a>
+                    )}
+                    {selectedProject.repository && (
+                      <a
+                        href={selectedProject.repository}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-[12px] font-medium text-black/80 hover:bg-black/10 dark:bg-white/[0.08] dark:text-white/85 dark:hover:bg-white/15"
+                      >
+                        <Github className="h-3.5 w-3.5" />
+                        <span>Repo</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-center text-[12px] text-black/45 dark:text-white/45">
+                Select a project folder to inspect its details.
+              </div>
+            )}
+          </aside>
+        </main>
+
+        <footer className="flex h-6 shrink-0 items-center justify-between border-t border-black/5 px-3 text-[11px] text-black/45 dark:border-white/[0.06] dark:text-white/40">
+          <span>
+            {filteredProjects.length} {filteredProjects.length === 1 ? 'item' : 'items'}
+          </span>
+          <span className="hidden sm:inline">Double-click a folder to open case study</span>
+        </footer>
       </div>
-    </main>
+    </div>
   );
 }
