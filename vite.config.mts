@@ -17,5 +17,23 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('@radix-ui')) return 'vendor-radix';
+          if (id.includes('@tanstack')) return 'vendor-query';
+          if (id.includes('lucide-react')) return 'vendor-icons';
+          if (
+            /node_modules[/\\](react|react-dom|scheduler|react-router|react-router-dom)[/\\]/.test(
+              id,
+            )
+          ) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
   },
 }));

@@ -1,5 +1,3 @@
-import { Toaster } from '@/components/ui/toaster';
-import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
@@ -9,17 +7,26 @@ import Index from './pages/Index';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ScrollToTop from '@/components/ScrollToTop';
-import { Header } from '@/components/Header';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { InteractiveBackground } from '@/components/InteractiveBackground';
 import { useDelight } from '@/hooks/useDelight';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import React, { lazy, Suspense, useEffect } from 'react';
-import { CinematicFooter } from '@/components/ui/motion-footer';
+import React, { Suspense, useEffect } from 'react';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { AppPreloader } from '@/components/AppPreloader';
 import { OsShell } from '@/components/os/OsShell';
 import { OsNotificationProvider } from '@/components/os/OsNotificationContext';
+
+const Header = lazyWithRetry(() => import('@/components/Header').then((m) => ({ default: m.Header })), 'Header');
+const InteractiveBackground = lazyWithRetry(
+  () => import('@/components/InteractiveBackground').then((m) => ({ default: m.InteractiveBackground })),
+  'InteractiveBackground',
+);
+const CinematicFooter = lazyWithRetry(
+  () => import('@/components/ui/motion-footer').then((m) => ({ default: m.CinematicFooter })),
+  'CinematicFooter',
+);
+const Toaster = lazyWithRetry(() => import('@/components/ui/toaster').then((m) => ({ default: m.Toaster })), 'Toaster');
+const Sonner = lazyWithRetry(() => import('@/components/ui/sonner').then((m) => ({ default: m.Toaster })), 'Sonner');
 
 const About = lazyWithRetry(() => import('./pages/About'), 'About');
 const Projects = lazyWithRetry(() => import('./pages/Projects'), 'Projects');
@@ -60,10 +67,10 @@ const AnimatedAppContent = () => {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={routeLocation.pathname}
-          initial={{ opacity: 0 }}
+          initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          exit={shouldReduceMotion ? undefined : { opacity: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.15, ease: [0.22, 1, 0.36, 1] }}
           className={isOsRoute ? 'h-full w-full' : 'w-full'}
         >
           <Suspense fallback={isOsRoute ? <div role="status" aria-live="polite" className="mx-auto mt-8 w-fit rounded-[10px] border border-white/10 bg-[#17191D] px-4 py-3 text-sm text-[#B7C0CB]">Opening {appName}…</div> : null}>
@@ -86,12 +93,16 @@ const AnimatedAppContent = () => {
               <Route path="/blog/:id" element={<BlogPost />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/resume" element={<Resume />} />
-              <Route path="/test-animate" element={<TestAnimate />} />
-              <Route path="/preview-preloader-boot" element={<div className="min-h-screen"><AppPreloader forceShow={true}><div className="pt-32 text-center text-xl font-mono text-foreground">Boot complete!</div></AppPreloader></div>} />
-              <Route path="/preview-hero/a" element={<HeroPreview variant="a" label="Variant A — Prism Angle" />} />
-              <Route path="/preview-hero/b" element={<HeroPreview variant="b" label="Variant B — Topology Bolt" />} />
-              <Route path="/preview-hero/c" element={<HeroPreview variant="c" label="Variant C — Eclipse Horizon" />} />
-              <Route path="/preview-hero/d" element={<HeroPreview variant="d" label="Variant D — Compass Orbit" />} />
+              {import.meta.env.DEV && (
+                <>
+                  <Route path="/test-animate" element={<TestAnimate />} />
+                  <Route path="/preview-preloader-boot" element={<div className="min-h-screen"><AppPreloader forceShow={true}><div className="pt-32 text-center text-xl font-mono text-foreground">Boot complete!</div></AppPreloader></div>} />
+                  <Route path="/preview-hero/a" element={<HeroPreview variant="a" label="Variant A — Prism Angle" />} />
+                  <Route path="/preview-hero/b" element={<HeroPreview variant="b" label="Variant B — Topology Bolt" />} />
+                  <Route path="/preview-hero/c" element={<HeroPreview variant="c" label="Variant C — Eclipse Horizon" />} />
+                  <Route path="/preview-hero/d" element={<HeroPreview variant="d" label="Variant D — Compass Orbit" />} />
+                </>
+              )}
               {/* Protected Admin Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
@@ -112,16 +123,33 @@ const AnimatedAppContent = () => {
   const routeContent = renderRouteContent(location);
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-background font-sans selection:bg-white/20">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-background font-sans selection:bg-white/20">
       <ScrollToTop />
-      {!isOsRoute && <><InteractiveBackground /><div className="noise-overlay" /></>}
-      {isOsRoute ? <OsShell appName={appName} mode="desktop" lockScreen={path === '/'} renderWindow={renderWindow}>{renderRouteContent(desktopLocation)}</OsShell> : <>
-        <main className="relative z-10 min-h-screen w-full border-b border-border bg-transparent pb-20 shadow-md">
-          <Header />
-          {routeContent}
-        </main>
-        <CinematicFooter />
-      </>}
+      {!isOsRoute && (
+        <Suspense fallback={null}>
+          <Toaster />
+          <Sonner />
+          <InteractiveBackground />
+          <div className="noise-overlay" />
+        </Suspense>
+      )}
+      {isOsRoute ? (
+        <OsShell appName={appName} mode="desktop" lockScreen={false} renderWindow={renderWindow}>
+          {renderRouteContent(desktopLocation)}
+        </OsShell>
+      ) : (
+        <>
+          <main className="relative z-10 min-h-screen w-full border-b border-border bg-transparent pb-20 shadow-md">
+            <Suspense fallback={null}>
+              <Header />
+            </Suspense>
+            {routeContent}
+          </main>
+          <Suspense fallback={null}>
+            <CinematicFooter />
+          </Suspense>
+        </>
+      )}
     </div>
   );
 };
@@ -136,8 +164,6 @@ const App = () => {
         <AuthProvider>
           <TooltipProvider>
             <OsNotificationProvider>
-              <Toaster />
-              <Sonner />
               <BrowserRouter
                 future={{
                   v7_startTransition: true,

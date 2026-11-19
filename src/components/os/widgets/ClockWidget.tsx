@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ClockWidgetProps {
-  now: Date;
+  now?: Date;
   availability: string;
   size: { width: number; height: number };
 }
@@ -42,12 +42,17 @@ function getWibParts(date: Date) {
   };
 }
 
-function isClockDaytime(now: Date): boolean {
-  return getWibParts(now).isDaytime;
-}
-
-export function ClockWidget({ now, availability, size }: ClockWidgetProps) {
+export function ClockWidget({ now: externalNow, availability, size }: ClockWidgetProps) {
   const [preferDigital, setPreferDigital] = useState(false);
+  const [internalNow, setInternalNow] = useState(() => new Date());
+
+  useEffect(() => {
+    if (externalNow) return;
+    const timer = window.setInterval(() => setInternalNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, [externalNow]);
+
+  const now = externalNow ?? internalNow;
 
   const { hour, minute, second, isDaytime, timeHm, secondsStr, dateLabel } =
     getWibParts(now);
@@ -280,7 +285,7 @@ export function ClockWidget({ now, availability, size }: ClockWidgetProps) {
           onClick={() => setPreferDigital(false)}
           title="Click for analog clock face"
           aria-label={`Semarang time ${timeHm}:${secondsStr} WIB. Click for analog clock.`}
-          className="relative z-10 flex h-full w-full flex-col justify-between p-3.5 text-left transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]"
+          className="relative z-10 flex h-full w-full flex-col justify-between p-3.5 text-left transition-transform duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-semibold tracking-[-0.01em]">
@@ -339,7 +344,7 @@ export function ClockWidget({ now, availability, size }: ClockWidgetProps) {
           onClick={() => setPreferDigital(true)}
           title={`Semarang ${timeHm}:${secondsStr} WIB — Click for digital readout`}
           aria-label={`Semarang analog clock showing ${timeHm} WIB. Click for digital readout.`}
-          className="relative z-10 flex h-full w-full items-center justify-center p-2.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]"
+          className="relative z-10 flex h-full w-full items-center justify-center p-2.5 transition-transform duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]"
         >
           {renderAnalogDial()}
         </button>

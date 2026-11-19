@@ -1,4 +1,6 @@
 import React, {
+  Suspense,
+  lazy,
   useCallback,
   useEffect,
   useMemo,
@@ -26,11 +28,11 @@ import {
   X,
   Image as ImageIcon,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { profile } from '@/data/profile';
 import { featuredProjects } from '@/data/featuredProjects';
 import {
+  OsMusicPlaybackContext,
   OsShellContext,
   WALLPAPERS,
   WindowFocusContext,
@@ -43,13 +45,9 @@ import {
   type WallpaperId,
 } from '@/components/os/OsShellContext';
 import {
-  MailApp,
-  NotesApp,
-  SafariApp,
-  SystemSettingsApp,
-  TerminalApp,
-} from '@/components/os/OsBuiltInApps';
-import { MacOSDock, type MacOSDockItem } from '@/components/ui/mac-os-dock';
+  GlassDock3D,
+  type GlassDock3DItem,
+} from '@/components/ui/glass-dock-3d';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
 import { OsNotificationBannerContainer } from '@/components/os/OsNotificationBanner';
 import { OsNotificationCenter } from '@/components/os/OsNotificationCenter';
@@ -62,6 +60,85 @@ import {
   playTrashEmptySound,
   playCameraShutterSound,
 } from '@/lib/soundEffects';
+
+const SafariApp = lazy(() =>
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.SafariApp })),
+);
+const SystemSettingsApp = lazy(() =>
+  import('@/components/os/OsBuiltInApps').then((m) => ({
+    default: m.SystemSettingsApp,
+  })),
+);
+const NotesApp = lazy(() =>
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.NotesApp })),
+);
+const TerminalApp = lazy(() =>
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.TerminalApp })),
+);
+const MailApp = lazy(() =>
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.MailApp })),
+);
+
+const MenuBarClock: React.FC<{ language: OsLanguage }> = React.memo(({ language }) => {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const formattedDate = now
+    .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'Asia/Jakarta',
+    })
+    .replace(',', '');
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+  });
+
+  return (
+    <>
+      <span className="hidden sm:inline">{formattedDate}</span>
+      <span className="tabular-nums">{formattedTime}</span>
+    </>
+  );
+});
+
+const LockScreenClock: React.FC = React.memo(() => {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+  });
+
+  return (
+    <div className="relative text-center [text-shadow:0_2px_18px_rgba(0,0,0,0.28)]">
+      <div className="text-[18px] font-medium tracking-tight text-white/90 sm:text-[20px]">
+        {now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          timeZone: 'Asia/Jakarta',
+        })}
+      </div>
+      <div className="mt-1 text-[84px] font-bold leading-none tracking-tight text-white tabular-nums sm:text-[104px]">
+        {formattedTime.replace(/\s?[AP]M/i, '')}
+      </div>
+    </div>
+  );
+});
 
 type OsShellProps = {
   appName: string;
@@ -301,7 +378,7 @@ export function OsShell({
   } = useOsNotification();
 
   const [isTakingScreenshot, setIsTakingScreenshot] = useState(false);
-  const [now, setNow] = useState(() => new Date());
+  const [isInteractingWindow, setIsInteractingWindow] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [launcherQuery, setLauncherQuery] = useState('');
   const [spotlightOpen, setSpotlightOpen] = useState(false);
@@ -368,6 +445,8 @@ export function OsShell({
     ];
   });
   const [focusedId, setFocusedId] = useState<OsAppId | null>(currentRouteApp);
+  const windowsRef = useRef(windows);
+  windowsRef.current = windows;
 
   const menubarRef = useRef<HTMLElement>(null);
   const zCounter = useRef(12);
@@ -475,12 +554,13 @@ export function OsShell({
     void playTrack(prev);
   }, [activeTrack, playTrack]);
 
-  const shuffleTrack = useCallback(() => {
+  const shuffleTrack = useCallback((): ListeningTrack => {
     const otherTracks = RECENT_TRACKS.filter((t) => t.id !== activeTrack.id);
     const randomNext =
       otherTracks[Math.floor(Math.random() * otherTracks.length)] ??
       RECENT_TRACKS[0];
     void playTrack(randomNext);
+    return randomNext;
   }, [activeTrack, playTrack]);
 
   const seekTrack = useCallback((sec: number) => {
@@ -591,11 +671,25 @@ export function OsShell({
     return () => window.clearInterval(timer);
   }, [autoRotateWallpaper, cycleWallpaper]);
 
-  // Clock ticker
+  // Unlock / wake display on any key press when locked or sleeping
   useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+    if (power === 'on') return;
+    const onWakeOrUnlock = (event: globalThis.KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (power === 'sleeping') {
+        setPower('locked');
+        return;
+      }
+      try {
+        window.sessionStorage.setItem('ganos_unlocked', 'true');
+      } catch {
+        /* ignore */
+      }
+      setPower('on');
+    };
+    window.addEventListener('keydown', onWakeOrUnlock);
+    return () => window.removeEventListener('keydown', onWakeOrUnlock);
+  }, [power]);
 
   // Browser fullscreen listener
   useEffect(() => {
@@ -691,13 +785,13 @@ export function OsShell({
         ),
       );
       const spec = APP_SPECS[id];
-      const existing = windows.find((w) => w.id === id);
+      const existing = windowsRef.current.find((w) => w.id === id);
       const targetPath = existing?.path ?? spec.path;
       if (targetPath && targetPath !== routePath) {
         navigate(targetPath);
       }
     },
-    [navigate, routePath, windows],
+    [navigate, routePath],
   );
 
   const openApp = useCallback(
@@ -717,7 +811,7 @@ export function OsShell({
         setSafariPayload(payload);
       }
 
-      const alreadyOpen = windows.some((w) => w.id === id);
+      const alreadyOpen = windowsRef.current.some((w) => w.id === id);
       if (!alreadyOpen) {
         setLaunchingId(id);
         window.setTimeout(
@@ -766,10 +860,10 @@ export function OsShell({
       }
       playWindowOpenSound();
     },
-    [clearAppBadge, navigate, routePath, windows],
+    [clearAppBadge, navigate, routePath],
   );
 
-  // Welcome to GanOS notification on boot / unlock
+  // Single calm welcome notification on first session visit
   useEffect(() => {
     if (power !== 'on') return;
 
@@ -782,8 +876,8 @@ export function OsShell({
           appName: 'GanOS System',
           appIcon: '/macos-icons/settings.png',
           title: 'Welcome to GanOS',
-          body: 'Choose your language / Pilih bahasa workspace:',
-          durationMs: 14000,
+          body: 'Press ⌘K for Spotlight, or pick your workspace language:',
+          durationMs: 11000,
           secondaryActionLabel: '🇬🇧 English',
           onSecondaryAction: () => {
             setLanguage('en');
@@ -792,9 +886,10 @@ export function OsShell({
               appName: 'GanOS System',
               appIcon: '/macos-icons/settings.png',
               title: '🇬🇧 English Selected',
-              body: "Press ⌘K for Spotlight search or explore the dock to get started.",
+              body: 'Press ⌘K for Spotlight search or explore the dock to get started.',
               actionLabel: 'Explore Projects',
               onAction: () => openApp('projects'),
+              silent: true,
             });
           },
           actionLabel: '🇮🇩 Bahasa Indonesia',
@@ -808,126 +903,16 @@ export function OsShell({
               body: 'Gunakan ⌘K untuk Spotlight Search atau klik dock untuk mulai menjelajahi portofolio.',
               actionLabel: 'Jelajahi Proyek',
               onAction: () => openApp('projects'),
+              silent: true,
             });
           },
         });
         window.sessionStorage.setItem('ganos_welcome_shown', 'true');
-      }, 2200);
+      }, 1600);
 
       return () => window.clearTimeout(timer);
     }
   }, [power, pushNotification, openApp, setLanguage]);
-
-  // Proactive inquiry notification from Ghufron after 24s if Mail hasn't been opened yet
-  useEffect(() => {
-    if (power !== 'on') return;
-
-    const hasShownInquiry = window.sessionStorage.getItem('ganos_inquiry_shown');
-    if (!hasShownInquiry) {
-      const timer = window.setTimeout(() => {
-        if (appBadges.mail) {
-          const isId = language === 'id';
-          pushNotification({
-            appId: 'mail',
-            appName: 'Mail',
-            appIcon: '/macos-icons/mail.png',
-            title: 'Ghufron Ainun Najib',
-            body: isId
-              ? 'Lagi cari frontend/fullstack engineer buat tim atau project kamu? Yuk ngobrol santai!'
-              : 'Looking for a skilled frontend engineer? Let’s connect and talk about your project.',
-            actionLabel: isId ? 'Buka Mail' : 'Open Mail',
-            onAction: () => {
-              clearAppBadge('mail');
-              openApp('mail');
-            },
-          });
-        }
-        window.sessionStorage.setItem('ganos_inquiry_shown', 'true');
-      }, 24000);
-
-      return () => window.clearTimeout(timer);
-    }
-  }, [power, appBadges.mail, pushNotification, openApp, clearAppBadge, language]);
-
-  // Ambient event: Battery / Power connected notification after 16s
-  useEffect(() => {
-    if (power !== 'on') return;
-
-    const hasShown = window.sessionStorage.getItem('ganos_battery_shown');
-    if (!hasShown) {
-      const timer = window.setTimeout(() => {
-        const isId = language === 'id';
-        pushNotification({
-          appId: 'settings',
-          appName: 'GanOS System',
-          appIcon: '/macos-icons/settings.png',
-          title: isId ? 'Adaptor Daya Terhubung' : 'Power Adapter Connected',
-          body: isId
-            ? 'Baterai terisi 100%. Sumber daya: Adaptor Daya AC.'
-            : 'Battery is at 100%. Power source: Power Adapter.',
-          actionLabel: isId ? 'Kesehatan Baterai' : 'Battery Status',
-          onAction: () => openApp('settings', 'displays'),
-        });
-        window.sessionStorage.setItem('ganos_battery_shown', 'true');
-      }, 16000);
-
-      return () => window.clearTimeout(timer);
-    }
-  }, [power, language, pushNotification, openApp]);
-
-  // Ambient event: GitHub live commit ping after 38s
-  useEffect(() => {
-    if (power !== 'on') return;
-
-    const hasShown = window.sessionStorage.getItem('ganos_github_shown');
-    if (!hasShown) {
-      const timer = window.setTimeout(() => {
-        const isId = language === 'id';
-        pushNotification({
-          appId: 'safari',
-          appName: 'GitHub',
-          appIcon: '/macos-icons/safari.png',
-          title: 'ghufrnainun pushed 2 commits',
-          body: isId
-            ? 'Ghufrnainun/My-Porto-Guwe · "feat: GanOS Notification Center & sound suite"'
-            : 'Ghufrnainun/My-Porto-Guwe · "feat: GanOS Notification Center & sound suite"',
-          actionLabel: isId ? 'Lihat di GitHub' : 'View on GitHub',
-          onAction: () => {
-            window.open(profile.github, '_blank', 'noreferrer');
-          },
-        });
-        window.sessionStorage.setItem('ganos_github_shown', 'true');
-      }, 38000);
-
-      return () => window.clearTimeout(timer);
-    }
-  }, [power, language, pushNotification]);
-
-  // Ambient event: Weather forecast alert after 68s
-  useEffect(() => {
-    if (power !== 'on') return;
-
-    const hasShown = window.sessionStorage.getItem('ganos_weather_shown');
-    if (!hasShown) {
-      const timer = window.setTimeout(() => {
-        const isId = language === 'id';
-        pushNotification({
-          appId: 'safari',
-          appName: 'Weather',
-          appIcon: '/macos-icons/safari.png',
-          title: isId ? 'Semarang · 31°C Cerah Berawan' : 'Semarang · 31°C Partly Cloudy',
-          body: isId
-            ? 'Kelembapan 68%, angin sepoi 12 km/jam. Cuaca mantap untuk ngoding aplikasi web!'
-            : 'Humidity 68%, winds at 12 km/h. Great day for crafting performant web apps.',
-          actionLabel: isId ? 'Lihat Cuaca' : 'Check Forecast',
-          onAction: () => openApp('about'),
-        });
-        window.sessionStorage.setItem('ganos_weather_shown', 'true');
-      }, 68000);
-
-      return () => window.clearTimeout(timer);
-    }
-  }, [power, language, pushNotification, openApp]);
 
   // Real-time network online/offline notifications
   useEffect(() => {
@@ -1142,7 +1127,7 @@ export function OsShell({
         pushNotification({
           appId: 'photos',
           appName: 'Screen Capture',
-          appIcon: '/macos-icons/photos.png',
+          appIcon: '/macos-icons/preview.png',
           title: `Screen Shot ${timeStr}.png`,
           body: isId
             ? 'Tersimpan di Desktop GanOS'
@@ -1217,6 +1202,12 @@ export function OsShell({
       origX: win.frame.x,
       origY: win.frame.y,
     };
+    setIsInteractingWindow(true);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
     const onMove = (moveEvent: PointerEvent) => {
       const drag = dragRef.current;
       if (!drag) return;
@@ -1324,11 +1315,16 @@ export function OsShell({
       setSnapTarget(null);
       snapTargetRef.current = null;
       dragRef.current = null;
+      setIsInteractingWindow(false);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('blur', onUp);
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onUp);
   };
 
   const startWindowResize = (
@@ -1341,6 +1337,12 @@ export function OsShell({
     event.preventDefault();
     event.stopPropagation();
     if (focusedId !== id) focusWindow(id);
+    setIsInteractingWindow(true);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
 
     const origFrame = { ...win.frame };
     const startX = event.clientX;
@@ -1393,11 +1395,16 @@ export function OsShell({
     };
 
     const onUp = () => {
+      setIsInteractingWindow(false);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('blur', onUp);
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onUp);
   };
 
   const toggleBrowserFullscreen = () => {
@@ -1593,7 +1600,7 @@ export function OsShell({
     },
   ];
 
-  // Dock groups matching R0shish 1:1
+  // GanOS Dock groups on 3D Frosted Glass Shelf (original icons & item set for OS-wide cohesion)
   const dockOrder: OsAppId[] = [
     'projects',
     'safari',
@@ -1605,10 +1612,9 @@ export function OsShell({
     'settings',
   ];
 
-  const makeDockItem = (id: OsAppId): MacOSDockItem => {
+  const makeDockItem = (id: OsAppId): GlassDock3DItem => {
     const spec = APP_SPECS[id];
-    const isRunning =
-      id === 'projects' || windows.some((w) => w.id === id);
+    const isRunning = id === 'projects' || windows.some((w) => w.id === id);
     return {
       key: id,
       title: spec.name,
@@ -1623,7 +1629,18 @@ export function OsShell({
     };
   };
 
-  const minimizedItems: MacOSDockItem[] = windows
+  const appsLauncherDockItem: GlassDock3DItem = {
+    key: 'apps',
+    title: 'Apps',
+    iconSrc: '/macos-icons/apps.png',
+    isRunning: launcherOpen,
+    onClick: () => {
+      setOpenMenu(null);
+      setLauncherOpen((v) => !v);
+    },
+  };
+
+  const minimizedItems: GlassDock3DItem[] = windows
     .filter((w) => w.isMinimized)
     .map((w) => ({
       key: `minimized-${w.id}`,
@@ -1633,18 +1650,10 @@ export function OsShell({
       onClick: () => focusWindow(w.id),
     }));
 
-  const dockGroups: MacOSDockItem[][] = [
+  const dockGroups: GlassDock3DItem[][] = [
     [
       makeDockItem('projects'),
-      {
-        key: 'apps',
-        title: 'Apps',
-        iconSrc: '/macos-icons/apps.png',
-        onClick: () => {
-          setOpenMenu(null);
-          setLauncherOpen((v) => !v);
-        },
-      },
+      appsLauncherDockItem,
       makeDockItem('safari'),
       makeDockItem('about'),
       makeDockItem('blog'),
@@ -1675,13 +1684,30 @@ export function OsShell({
         iconSrc: '/macos-icons/trash.png',
         onClick: () => {
           playTrashEmptySound();
-          toast.success('Trash Emptied', {
-            description: 'Recycle bin is clean and quiet.',
+          pushNotification({
+            appId: 'finder',
+            appName: 'Finder',
+            appIcon: '/macos-icons/trash.png',
+            title: language === 'id' ? 'Sampah Dikosongkan' : 'Trash Emptied',
+            body:
+              language === 'id'
+                ? 'Tempat sampah sudah bersih.'
+                : 'Recycle bin is clean and quiet.',
+            durationMs: 3200,
+            silent: true,
           });
         },
       },
     ],
   ].filter((group) => group.length > 0);
+
+  const mobileDockItems: GlassDock3DItem[] = [
+    makeDockItem('projects'),
+    makeDockItem('safari'),
+    makeDockItem('about'),
+    makeDockItem('mail'),
+    appsLauncherDockItem,
+  ];
 
   // Spotlight search items
   const spotlightResults = useMemo(() => {
@@ -1750,67 +1776,93 @@ export function OsShell({
     );
   }, [openApp, setWidgetGalleryOpen, spotlightQuery]);
 
-  const formattedDate = now
-    .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'Asia/Jakarta',
-    })
-    .replace(',', '');
-  const formattedTime = now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Jakarta',
-  });
+  const musicPlaybackValue = useMemo(
+    () => ({
+      trackPlaybackSec,
+      trackDurationSec,
+    }),
+    [trackPlaybackSec, trackDurationSec],
+  );
 
-  const shellContextValue = {
-    note,
-    setNote,
-    activePath: routePath,
-    wallpaperId,
-    wallpaperLabel: activeWallpaper.label,
-    setWallpaperId,
-    cycleWallpaper,
-    autoRotateWallpaper,
-    setAutoRotateWallpaper,
-    appearance,
-    setAppearance,
-    systemFont,
-    setSystemFont,
-    language,
-    setLanguage,
-    isDark,
-    brightness,
-    setBrightness,
-    openApp,
-    settingsPane,
-    setSettingsPane,
-    power,
-    setPower,
-    widgetGalleryOpen,
-    setWidgetGalleryOpen,
-    isFocused: true,
-    activeTrack,
-    setActiveTrack,
-    isPlayingTrack,
-    setIsPlayingTrack,
-    trackPlaybackSec,
-    setTrackPlaybackSec,
-    trackDurationSec,
-    volume,
-    isMuted,
-    setVolume,
-    toggleMute,
-    seekTrack,
-    isLooping,
-    toggleLoop,
-    togglePlayTrack,
-    nextTrack,
-    prevTrack,
-    shuffleTrack,
-    audioRef,
-  };
+  const shellContextValue = useMemo(
+    () => ({
+      note,
+      setNote,
+      activePath: routePath,
+      wallpaperId,
+      wallpaperLabel: activeWallpaper.label,
+      setWallpaperId,
+      cycleWallpaper,
+      autoRotateWallpaper,
+      setAutoRotateWallpaper,
+      appearance,
+      setAppearance,
+      systemFont,
+      setSystemFont,
+      language,
+      setLanguage,
+      isDark,
+      brightness,
+      setBrightness,
+      openApp,
+      settingsPane,
+      setSettingsPane,
+      power,
+      setPower,
+      widgetGalleryOpen,
+      setWidgetGalleryOpen,
+      isFocused: true,
+      activeTrack,
+      setActiveTrack,
+      isPlayingTrack,
+      setIsPlayingTrack,
+      volume,
+      isMuted,
+      setVolume,
+      toggleMute,
+      seekTrack,
+      isLooping,
+      toggleLoop,
+      togglePlayTrack,
+      nextTrack,
+      prevTrack,
+      shuffleTrack,
+      audioRef,
+    }),
+    [
+      note,
+      routePath,
+      wallpaperId,
+      activeWallpaper.label,
+      cycleWallpaper,
+      autoRotateWallpaper,
+      appearance,
+      setAppearance,
+      systemFont,
+      setSystemFont,
+      language,
+      setLanguage,
+      isDark,
+      brightness,
+      openApp,
+      settingsPane,
+      power,
+      widgetGalleryOpen,
+      activeTrack,
+      isPlayingTrack,
+      volume,
+      isMuted,
+      setVolume,
+      toggleMute,
+      seekTrack,
+      isLooping,
+      toggleLoop,
+      togglePlayTrack,
+      nextTrack,
+      prevTrack,
+      shuffleTrack,
+    ],
+  );
 
   const launcherItems = useMemo(
     () => [
@@ -1857,6 +1909,7 @@ export function OsShell({
 
   return (
     <OsShellContext.Provider value={shellContextValue}>
+      <OsMusicPlaybackContext.Provider value={musicPlaybackValue}>
       <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
         {/* Wallpaper */}
         <div aria-hidden="true" className="absolute inset-0 bg-black">
@@ -1890,9 +1943,9 @@ export function OsShell({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
+              transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
               className={cn(
-                'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-150',
+                'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[left,top,width,height,opacity] duration-150',
                 snapTarget === 'left' &&
                   'left-2 top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
                 snapTarget === 'right' &&
@@ -1932,9 +1985,18 @@ export function OsShell({
                 role="dialog"
                 aria-label={spec.title}
                 style={style}
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={reduceMotion ? undefined : { opacity: 0, scale: 0.95 }}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={
+                  reduceMotion
+                    ? { opacity: 0, transition: { duration: 0.1 } }
+                    : {
+                        opacity: 0,
+                        scale: 0.95,
+                        y: 16,
+                        transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] },
+                      }
+                }
                 transition={{ type: 'spring', stiffness: 440, damping: 36 }}
                 onPointerDownCapture={() => {
                   if (focusedId !== win.id) focusWindow(win.id);
@@ -1956,7 +2018,7 @@ export function OsShell({
               >
                 <div
                   className={cn(
-                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/75 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-3xl backdrop-saturate-150 dark:bg-[#3a3039]/70 dark:text-white/90',
+                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/80 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-xl backdrop-saturate-150 dark:bg-[#3a3039]/75 dark:text-white/90',
                     'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
                     !win.isMaximized && 'rounded-[26px]',
                     isFocused
@@ -1965,14 +2027,14 @@ export function OsShell({
                     win.isMaximized && 'rounded-none shadow-none ring-0',
                   )}
                 >
-                  {/* Traffic light controls matching R0shish */}
+                  {/* Traffic light controls with extended non-overlapping hit areas */}
                   <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
                     <button
                       type="button"
                       aria-label="Close"
                       onClick={() => closeWindow(win.id)}
                       className={cn(
-                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
                         isFocused
                           ? 'bg-[#ff5f57]'
                           : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20',
@@ -1981,7 +2043,7 @@ export function OsShell({
                       <X
                         size={8}
                         strokeWidth={3}
-                        className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                        className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
                       />
                     </button>
                     <button
@@ -1989,7 +2051,7 @@ export function OsShell({
                       aria-label="Minimize"
                       onClick={() => minimizeWindow(win.id)}
                       className={cn(
-                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
                         isFocused
                           ? 'bg-[#febc2e]'
                           : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20',
@@ -1998,7 +2060,7 @@ export function OsShell({
                       <Minus
                         size={8}
                         strokeWidth={3}
-                        className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                        className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
                       />
                     </button>
                     <button
@@ -2006,7 +2068,7 @@ export function OsShell({
                       aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
                       onClick={() => toggleMaximize(win.id)}
                       className={cn(
-                        'flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-75 active:scale-[0.85] enabled:active:brightness-75',
+                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
                         isFocused
                           ? 'bg-[#28c840]'
                           : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20',
@@ -2015,33 +2077,46 @@ export function OsShell({
                       <Plus
                         size={8}
                         strokeWidth={3}
-                        className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100"
+                        className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
                       />
                     </button>
                   </div>
 
-                  {/* Window body */}
-                  <div className="relative min-h-0 flex-grow">
+                  {/* Window body (shielded from iframe pointer capture while dragging/resizing) */}
+                  <div
+                    className={cn(
+                      'relative min-h-0 flex-grow',
+                      isInteractingWindow && 'pointer-events-none',
+                    )}
+                  >
                     <WindowFocusContext.Provider value={isFocused}>
-                      {win.id === 'settings' ? (
-                        <SystemSettingsApp />
-                      ) : win.id === 'safari' ? (
-                        <SafariApp initialUrl={safariPayload} />
-                      ) : win.id === 'notes' ? (
-                        <NotesApp initialId={notesPayload} />
-                      ) : win.id === 'terminal' ? (
-                        <TerminalApp onClose={() => closeWindow('terminal')} />
-                      ) : win.id === 'mail' ? (
-                        <MailApp />
-                      ) : win.path && renderWindow ? (
-                        <div className="h-full w-full overflow-hidden">
-                          {renderWindow(win.path)}
-                        </div>
-                      ) : (
-                        <div className="h-full w-full overflow-hidden">
-                          {children}
-                        </div>
-                      )}
+                      <Suspense
+                        fallback={
+                          <div className="flex h-full w-full items-center justify-center text-[12px] text-black/45 dark:text-white/45">
+                            Opening {spec.name}…
+                          </div>
+                        }
+                      >
+                        {win.id === 'settings' ? (
+                          <SystemSettingsApp />
+                        ) : win.id === 'safari' ? (
+                          <SafariApp initialUrl={safariPayload} />
+                        ) : win.id === 'notes' ? (
+                          <NotesApp initialId={notesPayload} />
+                        ) : win.id === 'terminal' ? (
+                          <TerminalApp onClose={() => closeWindow('terminal')} />
+                        ) : win.id === 'mail' ? (
+                          <MailApp />
+                        ) : win.path && renderWindow ? (
+                          <div className="h-full w-full overflow-hidden">
+                            {renderWindow(win.path)}
+                          </div>
+                        ) : (
+                          <div className="h-full w-full overflow-hidden">
+                            {children}
+                          </div>
+                        )}
+                      </Suspense>
                     </WindowFocusContext.Provider>
                   </div>
 
@@ -2063,10 +2138,12 @@ export function OsShell({
           })}
         </AnimatePresence>
 
-        {/* Dock */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-2 z-[26] flex justify-center [&>*]:pointer-events-auto">
-          <MacOSDock
+        {/* 3D Frosted Glass Dock */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-1.5 z-[26] flex justify-center [&>*]:pointer-events-auto">
+          <GlassDock3D
             groups={dockGroups}
+            mobileItems={mobileDockItems}
+            activeKey={launcherOpen ? 'apps' : focusedId}
             isHidden={Boolean(maximizedWindow) && !dockRevealed}
             onRevealChange={setDockRevealed}
           />
@@ -2177,45 +2254,53 @@ export function OsShell({
                     }
                     onMouseEnter={() => openMenu && setOpenMenu(menu.id)}
                     className={cn(
-                      'flex h-6 cursor-default items-center rounded-full px-2.5',
+                      'flex h-6 cursor-default items-center rounded-full px-2.5 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
                       menu.id === 'apple' && 'px-3',
                       openMenu === menu.id && 'bg-white/20',
                     )}
                   >
                     {menu.label}
                   </button>
-                  {openMenu === menu.id && (
-                    <div
-                      role="menu"
-                      className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/90 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/90 dark:text-white"
-                    >
-                      {menu.entries.map((entry, idx) =>
-                        entry === 'separator' ? (
-                          <div
-                            key={idx}
-                            role="separator"
-                            className="mx-2.5 my-[5px] h-px bg-black/10 dark:bg-white/10"
-                          />
-                        ) : (
-                          <button
-                            key={entry.label}
-                            type="button"
-                            disabled={entry.disabled}
-                            onClick={() => {
-                              setOpenMenu(null);
-                              entry.onClick?.();
-                            }}
-                            className="flex h-[24px] w-full cursor-default items-center rounded-[7px] pl-1.5 pr-5 text-left hover:bg-[#0a84ff] hover:text-white disabled:opacity-30"
-                          >
-                            <span className="w-4 shrink-0">
-                              {entry.checked && <Check size={11} />}
-                            </span>
-                            {entry.label}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {openMenu === menu.id && (
+                      <motion.div
+                        role="menu"
+                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -2 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: -2, transition: { duration: 0.09 } }}
+                        transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+                        style={{ transformOrigin: 'top left' }}
+                        className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/90 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/90 dark:text-white"
+                      >
+                        {menu.entries.map((entry, idx) =>
+                          entry === 'separator' ? (
+                            <div
+                              key={idx}
+                              role="separator"
+                              className="mx-2.5 my-[5px] h-px bg-black/10 dark:bg-white/10"
+                            />
+                          ) : (
+                            <button
+                              key={entry.label}
+                              type="button"
+                              role="menuitem"
+                              disabled={entry.disabled}
+                              onClick={() => {
+                                setOpenMenu(null);
+                                entry.onClick?.();
+                              }}
+                              className="flex h-[24px] w-full cursor-default items-center rounded-[7px] pl-1.5 pr-5 text-left transition-colors duration-75 hover:bg-[#0a84ff] hover:text-white focus-visible:bg-[#0a84ff] focus-visible:text-white focus-visible:outline-none disabled:opacity-30"
+                            >
+                              <span className="w-4 shrink-0">
+                                {entry.checked && <Check size={11} />}
+                              </span>
+                              {entry.label}
+                            </button>
+                          ),
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ))}
             </div>
@@ -2266,17 +2351,19 @@ export function OsShell({
                   <SlidersHorizontal size={14} />
                 </button>
 
+                <AnimatePresence>
                 {openMenu === 'control-center' && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.16, ease: [0.2, 0.9, 0.3, 1] }}
+                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -3, transition: { duration: 0.12, ease: [0.22, 1, 0.36, 1] } }}
+                    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
                     style={{ transformOrigin: 'top right' }}
-                    className="absolute right-0 top-full z-50 mt-1 w-80 max-w-[calc(100vw-1rem)] space-y-2.5 rounded-[24px] bg-[#f4f2f5]/80 p-3 font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/75 dark:text-white"
+                    className="absolute right-0 top-full z-50 mt-1 w-80 max-w-[calc(100vw-1rem)] space-y-2.5 rounded-[24px] bg-[#f4f2f5]/85 p-3 font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/80 dark:text-white"
                   >
                     <div className="grid grid-cols-2 gap-2.5">
-                      <div className="flex flex-col rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                        <div className="flex items-center gap-2 rounded-xl p-1.5 text-left">
+                      <div className="flex flex-col rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <div className="flex items-center gap-2 rounded-[9px] p-1.5 text-left">
                           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
                             <Wifi size={14} />
                           </span>
@@ -2294,7 +2381,7 @@ export function OsShell({
                           onClick={() =>
                             setAppearance(isDark ? 'light' : 'dark')
                           }
-                          className="flex cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                          className="flex cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                         >
                           <span
                             className={cn(
@@ -2318,11 +2405,11 @@ export function OsShell({
                       </div>
 
                       <div className="flex flex-col gap-2.5">
-                        <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
                           <button
                             type="button"
                             onClick={toggleBrowserFullscreen}
-                            className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                            className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                           >
                             <span
                               className={cn(
@@ -2348,14 +2435,14 @@ export function OsShell({
                             </span>
                           </button>
                         </div>
-                        <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                        <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
                           <button
                             type="button"
                             onClick={() => {
                               openApp('settings', 'wallpaper');
                               setOpenMenu(null);
                             }}
-                            className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                            className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                           >
                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 dark:bg-white/15">
                               <ImageIcon size={14} />
@@ -2373,7 +2460,7 @@ export function OsShell({
                       </div>
                     </div>
 
-                    <div className="rounded-[18px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                    <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
                       <button
                         type="button"
                         onClick={() => {
@@ -2382,7 +2469,7 @@ export function OsShell({
                           setFocusedId(null);
                           setWidgetGalleryOpen((v) => !v);
                         }}
-                        className="flex w-full cursor-default items-center justify-between rounded-xl px-2 py-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                       >
                         <span className="text-[12px] font-semibold">
                           Desktop Widgets
@@ -2393,7 +2480,7 @@ export function OsShell({
                       </button>
                     </div>
 
-                    <div className="rounded-[18px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
+                    <div className="rounded-[12px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
                       <div className="mb-1.5 text-[12px] font-semibold">
                         Display
                       </div>
@@ -2425,11 +2512,11 @@ export function OsShell({
 
                     {/* Focus Mode & Sound Effects */}
                     <div className="grid grid-cols-2 gap-2.5">
-                      <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                      <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
                         <button
                           type="button"
                           onClick={() => setIsFocusMode((v) => !v)}
-                          className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                          className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                         >
                           <span
                             className={cn(
@@ -2458,11 +2545,11 @@ export function OsShell({
                         </button>
                       </div>
 
-                      <div className="flex flex-grow rounded-[18px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                      <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
                         <button
                           type="button"
                           onClick={() => setSoundEnabled((v) => !v)}
-                          className="flex w-full cursor-default items-center gap-2 rounded-xl p-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                          className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                         >
                           <span
                             className={cn(
@@ -2497,7 +2584,7 @@ export function OsShell({
                     </div>
 
                     {/* Language Switcher Tile */}
-                    <div className="rounded-[18px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                    <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
                       <button
                         type="button"
                         onClick={() => {
@@ -2518,7 +2605,7 @@ export function OsShell({
                             silent: true,
                           });
                         }}
-                        className="flex w-full cursor-default items-center justify-between rounded-xl px-2 py-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
                       >
                         <div className="flex items-center gap-2">
                           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
@@ -2544,6 +2631,7 @@ export function OsShell({
                     </div>
                   </motion.div>
                 )}
+                </AnimatePresence>
               </div>
 
               {isFocusMode && (
@@ -2565,12 +2653,11 @@ export function OsShell({
                   setIsCenterOpen((v) => !v);
                 }}
                 className={cn(
-                  'flex h-6 cursor-default items-center gap-1.5 rounded-full px-2.5 transition-colors hover:bg-white/15',
+                  'flex h-6 cursor-default items-center gap-1.5 rounded-full px-2.5 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
                   isCenterOpen && 'bg-white/20',
                 )}
               >
-                <span className="hidden sm:inline">{formattedDate}</span>
-                <span>{formattedTime}</span>
+                <MenuBarClock language={language} />
                 {unreadCount > 0 && !isCenterOpen && (
                   <span
                     aria-label={`${unreadCount} unread notifications`}
@@ -2582,7 +2669,7 @@ export function OsShell({
           </nav>
         </header>
 
-        {/* Spotlight Modal (⌘K) */}
+        {/* Spotlight Modal (⌘K) — Instant keyboard response (Raycast/Emil principle) */}
         <AnimatePresence>
           {spotlightOpen && (
             <motion.div
@@ -2590,18 +2677,14 @@ export function OsShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
+              transition={{ duration: 0.06 }}
               onMouseDown={(event) => {
                 if (event.target === event.currentTarget)
                   setSpotlightOpen(false);
               }}
             >
               <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
-                <motion.div
-                  initial={{ scale: 0.97 }}
-                  animate={{ scale: 1 }}
-                  className="overflow-hidden rounded-[28px] bg-[#f4f2f5]/85 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/80 dark:text-white"
-                >
+                <div className="overflow-hidden rounded-[26px] bg-[#f4f2f5]/90 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/85 dark:text-white">
                   <div className="flex h-14 items-center gap-3 px-4">
                     <Search size={20} className="opacity-50" />
                     <input
@@ -2692,7 +2775,7 @@ export function OsShell({
                       )}
                     </div>
                   )}
-                </motion.div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -2737,20 +2820,8 @@ export function OsShell({
             >
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
 
-              {/* Top Date & Time (matching macOS Lock Screen reference) */}
-              <div className="relative text-center [text-shadow:0_2px_18px_rgba(0,0,0,0.28)]">
-                <div className="text-[18px] font-medium tracking-tight text-white/90 sm:text-[20px]">
-                  {now.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    timeZone: 'Asia/Jakarta',
-                  })}
-                </div>
-                <div className="mt-1 text-[84px] font-bold leading-none tracking-tight text-white sm:text-[104px]">
-                  {formattedTime.replace(/\s?[AP]M/i, '')}
-                </div>
-              </div>
+              {/* Top Date & Time (isolated clock ticker with tabular numerals) */}
+              <LockScreenClock />
 
               {/* Bottom Brand Logo Avatar & Unlock Prompt */}
               <div className="relative flex flex-col items-center gap-2.5">
@@ -2809,15 +2880,17 @@ export function OsShell({
         {/* Global background audio element for Music / Dynamic Island */}
         <audio
           ref={audioRef}
-          preload="auto"
+          preload="none"
           className="hidden"
           onPlay={() => setIsPlayingTrack(true)}
           onPause={() => setIsPlayingTrack(false)}
           onTimeUpdate={(e) => {
-            setTrackPlaybackSec(Math.floor(e.currentTarget.currentTime));
+            const nextSec = Math.floor(e.currentTarget.currentTime);
+            setTrackPlaybackSec((prev) => (prev === nextSec ? prev : nextSec));
             const dur = e.currentTarget.duration;
             if (dur && !isNaN(dur) && dur > 0) {
-              setTrackDurationSec(Math.floor(dur));
+              const nextDur = Math.floor(dur);
+              setTrackDurationSec((prev) => (prev === nextDur ? prev : nextDur));
             }
           }}
           onLoadedMetadata={(e) => {
@@ -2850,6 +2923,7 @@ export function OsShell({
           .inactive-window ::selection{background:rgba(128,128,128,0.3)}
         `}</style>
       </main>
+      </OsMusicPlaybackContext.Provider>
     </OsShellContext.Provider>
   );
 }

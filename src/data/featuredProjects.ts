@@ -44,8 +44,8 @@ export const featuredProjects: PortfolioProject[] = [
     ],
     technologies: ['Next.js 16', 'React 19', 'TypeScript', 'Convex', 'Cloudflare R2', 'Tailwind CSS', 'Framer Motion'],
     color: '#059669',
-    image: '/pbundip.png',
-    gallery: ['/pbundip.png'],
+    image: '/pbundip.webp',
+    gallery: ['/pbundip.webp'],
     demo: 'https://pbundip.web.id/',
   },
   {

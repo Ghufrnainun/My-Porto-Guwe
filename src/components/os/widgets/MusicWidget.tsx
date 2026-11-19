@@ -11,6 +11,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useOsMusicPlayback } from '@/components/os/OsShellContext';
 import type { ListeningTrack } from '@/data/recentTracks';
 
 interface MusicWidgetProps {
@@ -21,8 +22,8 @@ interface MusicWidgetProps {
   onChangeViewMode: (mode: 'grid' | 'player') => void;
   ytEmbedTrack: ListeningTrack | null;
   onSetYtEmbedTrack: (track: ListeningTrack | null) => void;
-  playbackSec: number;
-  durationSec: number;
+  playbackSec?: number;
+  durationSec?: number;
   volume: number;
   isMuted: boolean;
   onSetVolume: (vol: number) => void;
@@ -69,12 +70,16 @@ export function MusicWidget({
   onOpenSafari,
   size,
 }: MusicWidgetProps) {
+  const livePlayback = useOsMusicPlayback();
+  const resolvedPlaybackSec = playbackSec ?? livePlayback.trackPlaybackSec;
+  const resolvedDurationSec = durationSec ?? livePlayback.trackDurationSec;
+
   const isCompact = size.width < 350 || size.height < 182;
   const isWide = size.width >= 380;
-  const effectiveDuration = durationSec || 30;
-  const progressPct = Math.min(
-    100,
-    Math.max(0, (playbackSec / effectiveDuration) * 100)
+  const effectiveDuration = resolvedDurationSec || 30;
+  const progressRatio = Math.min(
+    1,
+    Math.max(0, resolvedPlaybackSec / effectiveDuration)
   );
 
   const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -168,9 +173,9 @@ export function MusicWidget({
                 aria-label="Playing"
                 className="flex h-3 items-end gap-[2px]"
               >
-                <span className="h-2.5 w-[2px] animate-pulse rounded-full bg-white/90" />
-                <span className="h-3 w-[2px] animate-pulse rounded-full bg-white/90 delay-75" />
-                <span className="h-1.5 w-[2px] animate-pulse rounded-full bg-white/90 delay-150" />
+                <span className="ganos-eq-bar h-2.5 w-[2px] rounded-full bg-white/90" />
+                <span className="ganos-eq-bar ganos-eq-bar-2 h-3 w-[2px] rounded-full bg-white/90" />
+                <span className="ganos-eq-bar ganos-eq-bar-3 h-2 w-[2px] rounded-full bg-white/90" />
               </span>
             )}
           </div>
@@ -298,7 +303,7 @@ export function MusicWidget({
                     onClick={onPrevTrack}
                     aria-label="Previous track"
                     title="Previous track"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.11] text-white/85 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.2] hover:text-white active:scale-90"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.11] text-white/85 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.2] hover:text-white active:scale-[0.96]"
                   >
                     <SkipBack className="h-3.5 w-3.5 fill-current" />
                   </button>
@@ -308,7 +313,7 @@ export function MusicWidget({
                     onClick={() => onTogglePlay(activeTrack)}
                     aria-label={isPlaying ? 'Pause' : 'Play'}
                     title={isPlaying ? 'Pause' : 'Play'}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111216] shadow-[0_4px_14px_rgba(0,0,0,0.3)] transition-[transform,opacity] duration-150 ease-out-spring hover:opacity-95 active:scale-[0.93]"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111216] shadow-[0_4px_14px_rgba(0,0,0,0.3)] transition-[transform,opacity] duration-150 ease-out-spring hover:opacity-95 active:scale-[0.96]"
                   >
                     {isPlaying ? (
                       <Pause className="h-4 w-4 fill-current" />
@@ -322,7 +327,7 @@ export function MusicWidget({
                     onClick={onNextTrack}
                     aria-label="Next track"
                     title="Next track"
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.11] text-white/85 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.2] hover:text-white active:scale-90"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.11] text-white/85 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.2] hover:text-white active:scale-[0.96]"
                   >
                     <SkipForward className="h-3.5 w-3.5 fill-current" />
                   </button>
@@ -336,7 +341,7 @@ export function MusicWidget({
                           onClick={onToggleMute}
                           aria-label={isMuted ? 'Unmute' : 'Mute'}
                           title={isMuted ? 'Unmute' : 'Mute'}
-                          className="flex h-6 w-6 items-center justify-center rounded-full text-white/65 transition-[color,background-color,transform] duration-150 hover:bg-white/[0.1] hover:text-white active:scale-90"
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-white/65 transition-[color,background-color,transform] duration-150 hover:bg-white/[0.1] hover:text-white active:scale-[0.96]"
                         >
                           <VolumeIcon className="h-3 w-3" />
                         </button>
@@ -358,7 +363,7 @@ export function MusicWidget({
                       onClick={onShuffle}
                       aria-label="Shuffle tracks"
                       title="Shuffle"
-                      className="flex h-6 w-6 items-center justify-center rounded-full text-white/65 transition-[color,background-color,transform] duration-150 hover:bg-white/[0.1] hover:text-white active:scale-90"
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-white/65 transition-[color,background-color,transform] duration-150 hover:bg-white/[0.1] hover:text-white active:scale-[0.96]"
                     >
                       <Shuffle className="h-3 w-3" />
                     </button>
@@ -369,7 +374,7 @@ export function MusicWidget({
                       aria-pressed={isLooping}
                       title={isLooping ? 'Repeat on' : 'Repeat off'}
                       className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full transition-[color,background-color,transform] duration-150 active:scale-90',
+                        'flex h-6 w-6 items-center justify-center rounded-full transition-[color,background-color,transform] duration-150 active:scale-[0.96]',
                         isLooping
                           ? 'bg-white/20 text-white'
                           : 'text-white/65 hover:bg-white/[0.1] hover:text-white'
@@ -382,26 +387,35 @@ export function MusicWidget({
               </div>
             </div>
 
-            {/* Interactive Scrubber */}
+            {/* Interactive GPU Scrubber */}
             <div>
               <div
                 onClick={handleScrub}
-                role="progressbar"
-                aria-valuenow={playbackSec}
+                role="slider"
+                aria-label="Track progress"
+                aria-valuenow={resolvedPlaybackSec}
                 aria-valuemin={0}
                 aria-valuemax={effectiveDuration}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowRight') {
+                    onSeek(Math.min(effectiveDuration, resolvedPlaybackSec + 5));
+                  } else if (e.key === 'ArrowLeft') {
+                    onSeek(Math.max(0, resolvedPlaybackSec - 5));
+                  }
+                }}
                 title="Click to seek"
-                className="group/scrubber relative flex h-3 w-full cursor-pointer items-center"
+                className="group/scrubber relative flex h-3 w-full cursor-pointer items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/60"
               >
                 <div className="relative h-[3.5px] w-full overflow-hidden rounded-full bg-white/20 transition-[height] duration-150 group-hover/scrubber:h-[5px]">
                   <div
-                    className="h-full rounded-full bg-white transition-[width] duration-150 ease-linear"
-                    style={{ width: `${progressPct}%` }}
+                    className="h-full w-full origin-left rounded-full bg-white transition-transform duration-150 ease-linear"
+                    style={{ transform: `scaleX(${progressRatio})` }}
                   />
                 </div>
               </div>
               <div className="mt-0.5 flex items-center justify-between text-[9.5px] font-medium text-white/55 tabular-nums">
-                <span>{formatSec(playbackSec)}</span>
+                <span>{formatSec(resolvedPlaybackSec)}</span>
                 <span>{formatSec(effectiveDuration)}</span>
               </div>
             </div>
@@ -444,11 +458,11 @@ export function MusicWidget({
                     {isTrackPlaying && (
                       <div
                         aria-hidden="true"
-                        className="absolute bottom-1.5 right-1.5 flex items-end gap-[1.5px] rounded-full bg-black/70 px-1.5 py-1 backdrop-blur-md"
+                        className="absolute bottom-1.5 right-1.5 flex h-4 items-end gap-[1.5px] rounded-full bg-black/70 px-1.5 py-1 backdrop-blur-md"
                       >
-                        <span className="h-2 w-[2px] animate-pulse rounded-full bg-white" />
-                        <span className="h-2.5 w-[2px] animate-pulse rounded-full bg-white delay-75" />
-                        <span className="h-1.5 w-[2px] animate-pulse rounded-full bg-white delay-150" />
+                        <span className="ganos-eq-bar h-2 w-[2px] rounded-full bg-white" />
+                        <span className="ganos-eq-bar ganos-eq-bar-2 h-2.5 w-[2px] rounded-full bg-white" />
+                        <span className="ganos-eq-bar ganos-eq-bar-3 h-1.5 w-[2px] rounded-full bg-white" />
                       </div>
                     )}
 

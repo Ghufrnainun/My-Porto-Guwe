@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { OsAppId } from '@/components/os/OsShellContext';
 
@@ -25,25 +24,24 @@ export const AppSwitcherHUD: React.FC<AppSwitcherHUDProps> = ({
   const currentApp = apps[selectedIndex] ?? apps[0];
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center select-none">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
-        className="flex flex-col items-center gap-3 rounded-[28px] border border-white/20 bg-[#1c1c1e]/85 px-6 py-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(255,255,255,0.15)] backdrop-blur-3xl"
-      >
-        <div className="flex items-center gap-3">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center select-none"
+    >
+      {/* Keyboard-initiated switcher opens instantaneously with zero animation lag */}
+      <div className="flex flex-col items-center gap-3 rounded-[28px] border border-white/20 bg-[#1c1c1e]/90 px-5 py-4 text-white shadow-[0_24px_60px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(255,255,255,0.15)] backdrop-blur-2xl">
+        <div className="flex items-center gap-2.5">
           {apps.map((app, idx) => {
             const isSelected = idx === selectedIndex;
             return (
               <div
                 key={app.id}
                 className={cn(
-                  'relative flex h-18 w-18 flex-col items-center justify-center rounded-[18px] p-2 transition-all duration-150',
+                  'relative flex h-[68px] w-[68px] flex-col items-center justify-center rounded-[14px] p-2 transition-[transform,opacity,background-color] duration-100 ease-out',
                   isSelected
-                    ? 'bg-white/20 ring-2 ring-white/60 scale-105 shadow-lg'
-                    : 'bg-white/5 opacity-70 hover:opacity-100',
+                    ? 'scale-105 bg-white/20 shadow-lg ring-2 ring-white/60'
+                    : 'bg-white/5 opacity-65',
                 )}
               >
                 <img
@@ -59,7 +57,7 @@ export const AppSwitcherHUD: React.FC<AppSwitcherHUDProps> = ({
         <div className="text-[13px] font-semibold tracking-tight text-white/90">
           {currentApp?.title}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

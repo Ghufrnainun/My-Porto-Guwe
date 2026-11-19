@@ -38,7 +38,7 @@ export function renderRoute(path: string) {
         <TooltipProvider>
           <OsNotificationProvider>
             <MemoryRouter initialEntries={[path]}>
-              <OsShell appName={appName} mode={routePath === '/' ? 'desktop' : 'window'} lockScreen={routePath === '/'}>
+              <OsShell appName={appName} mode={routePath === '/' ? 'desktop' : 'window'} lockScreen={false}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/about" element={<About />} />

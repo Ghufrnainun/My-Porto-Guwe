@@ -12,6 +12,7 @@ import type {
   OsNotification,
   PushNotificationInput,
 } from '@/types/os-notification';
+import { GANOS_VERSION } from '@/components/os/OsShellContext';
 import {
   isSoundEnabled,
   playNotificationChime,
@@ -77,8 +78,8 @@ const getInitialNotifications = (): OsNotification[] => [
     appId: 'settings',
     appName: 'GanOS System',
     appIcon: '/macos-icons/settings.png',
-    title: 'GanOS 2.4 (Sonoma Edition)',
-    body: 'System is up to date. Interactive desktop widgets, Spotlight (⌘K), and audio haptics are running smoothly.',
+    title: `GanOS ${GANOS_VERSION} (Sonoma Edition)`,
+    body: 'Interactive desktop widgets, Spotlight (⌘K), and Web Audio haptics are ready.',
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
     unread: false,
   },

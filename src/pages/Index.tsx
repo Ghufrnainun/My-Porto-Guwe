@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
-  ArrowUpRight,
   Check,
   Clock,
   CloudSun,
@@ -112,16 +112,6 @@ const WIDGET_RESIZE_HANDLES: { dir: WidgetResizeDir; className: string }[] = [
   { dir: 'sw', className: 'bottom-0 left-0 h-4 w-4 cursor-nesw-resize' },
   { dir: 'se', className: 'bottom-0 right-0 h-4 w-4 cursor-nwse-resize' },
 ];
-
-// 11 weeks = 77 days of contributions for compact widget activity matrix
-const RECENT_CONTRIBUTION_WEEKS = (() => {
-  const slice = githubFallbackContributions.slice(-77);
-  const weeks: { date: string; count: number; level: number }[][] = [];
-  for (let i = 0; i < slice.length; i += 7) {
-    weeks.push(slice.slice(i, i + 7));
-  }
-  return weeks;
-})();
 
 interface SonomaWidgetSpec {
   id: SonomaWidgetId;
@@ -345,8 +335,6 @@ export default function Index() {
     language,
     activeTrack,
     isPlayingTrack,
-    trackPlaybackSec,
-    trackDurationSec,
     volume,
     isMuted,
     setVolume,
@@ -359,6 +347,7 @@ export default function Index() {
     prevTrack,
     shuffleTrack,
   } = useOsNote();
+  const reduceMotion = useReducedMotion();
 
   const { pushNotification } = useOsNotification();
 
@@ -648,37 +637,41 @@ export default function Index() {
   );
 
   const handleShuffle = () => {
-    shuffleTrack();
+    const next = shuffleTrack();
     setTrackOffset((prev) => (prev + 1) % RECENT_TRACKS.length);
     pushNotification({
       appId: 'music',
       appName: 'Music',
       appIcon: '/macos-icons/safari.png',
       title: language === 'id' ? 'Shuffle Acak 🔀' : 'Shuffled Track 🔀',
-      body: `${activeTrack.title} — ${activeTrack.artist}`,
+      body: `${next.title} — ${next.artist}`,
+      durationMs: 3200,
     });
   };
 
-  const shuffleListening = handleShuffle;
-
+  // Refresh daytime surface tint at 1-minute cadence (ClockWidget owns its own 1Hz ticker when mounted)
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
 
+  // Debounced persistence so dragging/resizing widgets never blocks frames with sync localStorage writes
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        SONOMA_WIDGET_STORAGE_KEY,
-        JSON.stringify({
-          enabled: enabledWidgets,
-          positions: widgetPositions,
-          sizes: widgetSizes,
-        })
-      );
-    } catch {
-      /* ignore */
-    }
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          SONOMA_WIDGET_STORAGE_KEY,
+          JSON.stringify({
+            enabled: enabledWidgets,
+            positions: widgetPositions,
+            sizes: widgetSizes,
+          })
+        );
+      } catch {
+        /* ignore */
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [enabledWidgets, widgetPositions, widgetSizes]);
 
   const dragSessionRef = useRef<{
@@ -1288,6 +1281,103 @@ export default function Index() {
         />
       )}
 
+      {/* Mobile OS Home Screen (iOS/iPadOS widget stack above Mobile 3D Dock) */}
+      <div className="block h-full w-full overflow-y-auto px-3.5 pb-28 pt-3 sm:hidden">
+        <div className="mx-auto flex max-w-md flex-col gap-3">
+          {/* Developer Contact Poster */}
+          <div className="h-[156px] w-full overflow-hidden rounded-[22px] border border-white/[0.16] shadow-[0_18px_40px_-10px_rgba(0,0,0,0.48)]">
+            <ProfileWidget
+              name={profile.name}
+              semester={profile.semester}
+              gpa={education.gpa}
+              availability={profile.availability}
+              githubUrl={profile.github}
+              onOpenBio={() => openApp('about')}
+              size={{ width: 340, height: 156 }}
+            />
+          </div>
+
+          {/* 2-Column Live Widgets: Weather + GitHub */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className={cn(
+                'h-[178px] overflow-hidden rounded-[22px] border',
+                weatherGlassProfile.isLightSurface
+                  ? 'border-white/65 shadow-[0_16px_34px_-10px_rgba(15,23,42,0.22)]'
+                  : 'border-white/20 shadow-[0_18px_38px_-10px_rgba(0,0,0,0.48)]'
+              )}
+              style={{
+                backdropFilter: 'blur(24px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+              }}
+            >
+              <WeatherWidget
+                weather={liveWeather}
+                unit={weatherUnit}
+                onToggleUnit={() =>
+                  setWeatherUnit((prev) => (prev === 'C' ? 'F' : 'C'))
+                }
+                activeHourlyIdx={activeHourlyIdx}
+                onSelectHourly={setActiveHourlyIdx}
+                size={{ width: 174, height: 178 }}
+                wallpaperId={wallpaperId}
+                glassMode={weatherGlassMode}
+                onChangeGlassMode={setWeatherGlassMode}
+                isRefreshing={weatherRefreshing}
+                onRefresh={() => {
+                  void fetchWeather();
+                }}
+                widgetGalleryOpen={false}
+              />
+            </div>
+
+            <div className="h-[178px] overflow-hidden rounded-[22px] border border-white/[0.14] shadow-[0_18px_38px_-10px_rgba(0,0,0,0.5)]">
+              <GitHubWidget
+                username="Ghufrnainun"
+                profileUrl={profile.github}
+                range={ghRange}
+                onChangeRange={setGhRange}
+                stats={ghStats}
+                contributions={ghContributions}
+                size={{ width: 174, height: 178 }}
+              />
+            </div>
+          </div>
+
+          {/* Pinned Work Showcase */}
+          <div className="h-[188px] w-full overflow-hidden rounded-[22px] border border-black/[0.08] shadow-[0_18px_40px_-10px_rgba(15,23,42,0.26)]">
+            <PinnedWorkWidget
+              projects={featuredProjects}
+              onOpenAll={() => openApp('projects')}
+              onOpenProject={(slug) => openApp('projects', slug)}
+              size={{ width: 340, height: 188 }}
+            />
+          </div>
+
+          {/* Quick Shortcuts Row (CV, Blog, Terminal, Notes) */}
+          <div className="grid grid-cols-4 gap-2 pt-1">
+            {DESKTOP_ICONS.map((icon) => (
+              <button
+                key={`mobile-${icon.id}`}
+                type="button"
+                onClick={() => openIcon(icon)}
+                className="flex flex-col items-center gap-1 rounded-2xl bg-black/25 px-1.5 py-2.5 text-center backdrop-blur-md ring-1 ring-white/15 transition-transform duration-150 active:scale-[0.96]"
+              >
+                <img
+                  src={icon.icon}
+                  alt=""
+                  draggable={false}
+                  className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]"
+                />
+                <span className="max-w-full truncate text-[11px] font-medium text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.65)]">
+                  {icon.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* macOS Sonoma Floating Desktop Widgets — Distinct Native App Personalities */}
       <div className="hidden sm:block">
         {WIDGET_CATALOG.filter((spec) => enabledWidgets.includes(spec.id)).map(
@@ -1407,7 +1497,7 @@ export default function Index() {
                   title={`Remove ${spec.title} widget`}
                   aria-label={`Remove ${spec.title} widget`}
                   className={cn(
-                    'absolute left-2 top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full shadow-sm transition-[opacity,transform,background-color,color] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:scale-105 active:scale-95 hover:bg-[#ff453a] hover:text-white',
+                    'absolute left-2 top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full shadow-sm transition-[opacity,transform,background-color,color] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:scale-105 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] hover:bg-[#ff453a] hover:text-white',
                     isLightSurface && spec.id !== 'memo'
                       ? 'bg-white/80 text-slate-800 ring-1 ring-black/10 backdrop-blur-md'
                       : 'bg-black/60 text-white/90 ring-1 ring-white/25 backdrop-blur-md',
@@ -1447,8 +1537,6 @@ export default function Index() {
                       }
                       setYtEmbedTrack(track);
                     }}
-                    playbackSec={trackPlaybackSec}
-                    durationSec={trackDurationSec}
                     volume={volume}
                     isMuted={isMuted}
                     onSetVolume={setVolume}
@@ -1499,7 +1587,6 @@ export default function Index() {
                 {/* 3. SEMARANG CLOCK Widget (Horological Analog/Digital Watch Dial) */}
                 {spec.id === 'clock' && (
                   <ClockWidget
-                    now={now}
                     availability={profile.availability}
                     size={size}
                   />
@@ -1583,7 +1670,7 @@ export default function Index() {
               }
             }}
             aria-label={`Open ${icon.label}`}
-            className="group absolute z-20 flex w-[88px] flex-col items-center gap-1 rounded-[8px] p-1 text-center transition-transform duration-100 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:scale-[0.96]"
+            className="group absolute z-20 hidden w-[88px] flex-col items-center gap-1 rounded-[8px] p-1 text-center transition-transform duration-100 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:scale-[0.96] sm:flex"
           >
             <span
               className={[
@@ -1615,12 +1702,17 @@ export default function Index() {
       })}
 
       {/* macOS Sonoma Widget Gallery Sheet (Tactile Matte Dark Aesthetic matching Desktop Widgets) */}
+      <AnimatePresence>
       {widgetGalleryOpen && (
-        <div
+        <motion.div
           role="dialog"
           aria-label="Edit Desktop Widgets"
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 8, transition: { duration: 0.14, ease: [0.22, 1, 0.36, 1] } }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute inset-x-4 bottom-24 z-30 mx-auto max-w-2xl rounded-[28px] bg-[#121418] border border-white/[0.08] p-4 sm:p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.08)] select-none animate-in fade-in zoom-in-95 duration-150 ease-out"
+          className="absolute inset-x-4 bottom-24 z-30 mx-auto max-w-2xl rounded-[26px] bg-[#121418] border border-white/[0.08] p-4 text-white shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.08)] select-none"
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
@@ -1684,7 +1776,7 @@ export default function Index() {
                   type="button"
                   onClick={() => toggleWidget(spec.id)}
                   className={cn(
-                    'group/item flex items-center justify-between gap-3 rounded-2xl p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98]',
+                    'group/item flex items-center justify-between gap-3 rounded-[12px] p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.98]',
                     isAdded
                       ? 'bg-[#1b1f25] ring-1 ring-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:bg-[#222731] hover:ring-white/25'
                       : 'bg-[#15181e] ring-1 ring-white/[0.06] opacity-75 hover:opacity-100 hover:bg-[#1a1e26] hover:ring-white/15'
@@ -1747,7 +1839,7 @@ export default function Index() {
 
                   <span
                     className={cn(
-                      'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition-all shadow-sm',
+                      'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition-[background-color,color] duration-150 shadow-sm',
                       isAdded
                         ? 'bg-[#30d158]/15 text-[#30d158] ring-1 ring-[#30d158]/30 group-hover/item:bg-[#30d158]/25'
                         : 'bg-white/[0.06] text-white/50 ring-1 ring-white/10 group-hover/item:bg-white/[0.12] group-hover/item:text-white'
@@ -1769,16 +1861,22 @@ export default function Index() {
               );
             })}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* macOS Desktop Context Menu */}
+      <AnimatePresence>
       {contextMenu && (
-        <div
+        <motion.div
           role="menu"
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, transition: { duration: 0.09 } }}
+          transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
           onPointerDown={(e) => e.stopPropagation()}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          className="absolute z-30 w-[228px] rounded-[10px] bg-[#f6f6f6]/90 p-1.5 text-[13px] text-black/85 shadow-[0_12px_36px_rgba(0,0,0,0.32)] ring-1 ring-black/10 backdrop-blur-[40px] dark:bg-[#231d21]/90 dark:text-white/90 dark:ring-white/15"
+          style={{ left: contextMenu.x, top: contextMenu.y, transformOrigin: 'top left' }}
+          className="absolute z-30 w-[228px] rounded-[12px] bg-[#f6f6f6]/90 p-1.5 text-[13px] text-black/85 shadow-[0_12px_36px_rgba(0,0,0,0.32)] ring-1 ring-black/10 backdrop-blur-2xl dark:bg-[#231d21]/90 dark:text-white/90 dark:ring-white/15"
         >
           {targetIcon && (
             <>
@@ -1942,8 +2040,9 @@ export default function Index() {
           >
             <span>Clean Up Desktop</span>
           </button>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

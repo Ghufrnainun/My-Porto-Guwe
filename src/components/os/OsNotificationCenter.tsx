@@ -2,12 +2,15 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { BellOff, Moon, Sparkles, Trash2, X } from 'lucide-react';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
-import { OsShellContext, type OsAppId } from '@/components/os/OsShellContext';
+import {
+  GANOS_VERSION,
+  OsShellContext,
+  type OsAppId,
+} from '@/components/os/OsShellContext';
 import { executeNotificationAction } from '@/lib/notificationActions';
 import type {
   OsNotification,
   OsNotificationAppId,
-  PushNotificationInput,
 } from '@/types/os-notification';
 
 const formatNotificationTime = (date: Date): string => {
@@ -30,31 +33,24 @@ interface SampleAlert {
 }
 
 const createSampleNotifications = (
-  openApp?: (id: OsAppId, payload?: string) => void,
-  pushNotification?: (input: PushNotificationInput) => string
+  openApp?: (id: OsAppId, payload?: string) => void
 ): readonly SampleAlert[] => [
   {
-    appId: 'safari',
-    appName: 'GitHub',
-    appIcon: '/macos-icons/safari.png',
-    title: 'Pull Request #42 Approved',
-    body: 'ghufrnainun approved "feat(os): rich notification center with spring animations".',
-    actionLabel: 'View PR',
-    onAction: () => {
-      window.open(
-        'https://github.com/Ghufrnainun/My-Porto-Guwe/pulls',
-        '_blank',
-        'noopener,noreferrer'
-      );
-    },
+    appId: 'projects',
+    appName: 'Finder',
+    appIcon: '/macos-icons/finder.png',
+    title: 'Featured Projects Ready',
+    body: 'Explore SewainAja, PBUndip, and Cloudflare edge builds in Finder.',
+    actionLabel: 'Open Finder',
+    onAction: () => openApp?.('projects'),
   },
   {
     appId: 'mail',
     appName: 'Mail',
     appIcon: '/macos-icons/mail.png',
-    title: 'Tech Lead @ Studio',
-    body: 'Loved your interactive GanOS portfolio. Are you open for a frontend collaboration?',
-    actionLabel: 'Reply',
+    title: 'Open for Collaboration',
+    body: 'Reach out to Ghufron for full-stack, React, or Flutter work.',
+    actionLabel: 'Compose',
     onAction: () => {
       if (openApp) {
         openApp('mail');
@@ -64,69 +60,31 @@ const createSampleNotifications = (
     },
   },
   {
-    appId: 'settings',
-    appName: 'AirDrop',
-    appIcon: '/macos-icons/settings.png',
-    title: 'AirDrop from iPhone 16 Pro',
-    body: 'Would you like to receive "Design_System_v2_Specs.fig"?',
-    actionLabel: 'Accept',
-    secondaryActionLabel: 'Decline',
-    onAction: () => {
-      pushNotification?.({
-        appId: 'projects',
-        appName: 'Finder',
-        appIcon: '/macos-icons/folder.png',
-        title: 'Transfer Complete',
-        body: 'Design_System_v2_Specs.fig saved to Downloads folder.',
-        actionLabel: 'Show in Finder',
-        onAction: () => openApp?.('projects'),
-      });
-      openApp?.('projects');
-    },
-  },
-  {
-    appId: 'safari',
-    appName: 'Calendar',
-    appIcon: '/macos-icons/safari.png',
-    title: 'Team Sync in 15 mins',
-    body: 'Architecture Review: Next.js SSR vs Vite Static Deployment.',
-    actionLabel: 'Join Meet',
-    onAction: () => {
-      window.open('https://meet.google.com', '_blank', 'noopener,noreferrer');
-    },
-  },
-  {
     appId: 'terminal',
     appName: 'Terminal',
     appIcon: '/macos-icons/terminal.png',
-    title: 'Build Succeeded',
-    body: 'Production bundle generated in 1.28s with zero warnings.',
-    actionLabel: 'View Log',
-    onAction: () => {
-      openApp?.('terminal');
-    },
+    title: 'Interactive Shell Available',
+    body: 'Try commands like neofetch, projects, skills, or open cv.',
+    actionLabel: 'Open Terminal',
+    onAction: () => openApp?.('terminal'),
   },
   {
     appId: 'settings',
     appName: 'GanOS System',
     appIcon: '/macos-icons/settings.png',
-    title: 'Software Update Ready',
-    body: 'GanOS 15.2 includes performance enhancements and new dynamic widgets.',
-    actionLabel: 'Update Now',
-    onAction: () => {
-      openApp?.('settings', 'about');
-    },
+    title: `GanOS ${GANOS_VERSION}`,
+    body: 'Switch wallpapers, appearance, and system fonts in Settings.',
+    actionLabel: 'Open Settings',
+    onAction: () => openApp?.('settings', 'appearance'),
   },
   {
-    appId: 'photos',
-    appName: 'Photos',
-    appIcon: '/macos-icons/photos.png',
-    title: 'Memories: 1 Year Ago',
-    body: 'Look back at your first React open-source contribution milestone.',
-    actionLabel: 'View',
-    onAction: () => {
-      openApp?.('projects');
-    },
+    appId: 'resume',
+    appName: 'Preview',
+    appIcon: '/macos-icons/preview.png',
+    title: 'CV.pdf Ready to Export',
+    body: 'Inspect experience, education, and print-ready resume.',
+    actionLabel: 'Open CV',
+    onAction: () => openApp?.('resume'),
   },
 ];
 
@@ -143,8 +101,16 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
 }) => {
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className="group relative flex cursor-default flex-col overflow-hidden rounded-[18px] bg-white/60 p-3 text-left transition-all hover:bg-white/85 active:scale-[0.99] dark:bg-white/[0.07] dark:hover:bg-white/[0.12]"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className="group relative flex cursor-default flex-col overflow-hidden rounded-[12px] bg-white/60 p-3 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.98] dark:bg-white/[0.07] dark:hover:bg-white/[0.12]"
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-1.5">
@@ -159,7 +125,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
             {notification.appName}
           </span>
           <span className="text-[10px] opacity-40">·</span>
-          <span className="shrink-0 text-[10px] opacity-50">
+          <span className="shrink-0 text-[10px] opacity-50 tabular-nums">
             {formatNotificationTime(notification.timestamp)}
           </span>
         </div>
@@ -178,7 +144,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               e.stopPropagation();
               onRemove();
             }}
-            className="flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/20"
+            className="relative flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition-[opacity,background-color] duration-150 after:absolute after:-inset-2 hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] group-hover:opacity-100 [@media(hover:none)]:opacity-75 dark:hover:bg-white/20"
           >
             <X size={10} className="opacity-70" />
           </button>
@@ -204,7 +170,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               e.stopPropagation();
               onSelect();
             }}
-            className="rounded-full bg-[#0a84ff]/15 px-2.5 py-0.5 text-[10.5px] font-medium text-[#0a84ff] transition-all hover:bg-[#0a84ff] hover:text-white dark:bg-[#0a84ff]/25 dark:text-[#64b5f6] dark:hover:bg-[#0a84ff] dark:hover:text-white"
+            className="rounded-full bg-[#0a84ff]/15 px-2.5 py-0.5 text-[10.5px] font-medium text-[#0a84ff] transition-[background-color,color,transform] duration-150 ease-smooth-out hover:bg-[#0a84ff] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] dark:bg-[#0a84ff]/25 dark:text-[#64b5f6] dark:hover:bg-[#0a84ff] dark:hover:text-white"
           >
             {notification.actionLabel}
           </button>
@@ -267,11 +233,11 @@ export const OsNotificationCenter: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           exit={
             reduceMotion
-              ? { opacity: 0 }
+              ? { opacity: 0, transition: { duration: 0.1 } }
               : {
                   opacity: 0,
-                  x: 360,
-                  transition: { duration: 0.2, ease: 'easeIn' },
+                  x: 340,
+                  transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] },
                 }
           }
           transition={{
@@ -280,7 +246,7 @@ export const OsNotificationCenter: React.FC = () => {
             damping: 35,
             mass: 0.8,
           }}
-          className="fixed bottom-[88px] right-2 top-10 z-40 flex w-[340px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-[24px] bg-[#f4f2f5]/85 p-3.5 text-black shadow-[0_20px_60px_rgba(0,0,0,0.38),inset_0_0_0_0.5px_rgba(255,255,255,0.35)] backdrop-blur-2xl backdrop-saturate-150 select-none dark:bg-[#251f27]/85 dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.65),inset_0_0_0_0.5px_rgba(255,255,255,0.18)]"
+          className="fixed bottom-[88px] right-2 top-10 z-40 flex w-[340px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-[24px] bg-[#f4f2f5]/85 p-3 text-black shadow-[0_20px_60px_rgba(0,0,0,0.38),inset_0_0_0_0.5px_rgba(255,255,255,0.35)] backdrop-blur-2xl backdrop-saturate-150 select-none dark:bg-[#251f27]/85 dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.65),inset_0_0_0_0.5px_rgba(255,255,255,0.18)]"
           style={{ WebkitBackdropFilter: 'blur(30px) saturate(180%)' }}
         >
           {/* Header */}
@@ -298,34 +264,33 @@ export const OsNotificationCenter: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const sampleList = createSampleNotifications(
-                    openApp,
-                    pushNotification
-                  );
-                  const sample =
-                    sampleList[sampleIndexRef.current % sampleList.length];
-                  sampleIndexRef.current += 1;
-                  pushNotification({
-                    appId: sample.appId,
-                    appName: sample.appName,
-                    appIcon: sample.appIcon,
-                    title: sample.title,
-                    body: sample.body,
-                    actionLabel: sample.actionLabel,
-                    secondaryActionLabel: sample.secondaryActionLabel,
-                    onAction: sample.onAction,
-                    onSecondaryAction: sample.onSecondaryAction,
-                  });
-                }}
-                title="Send a sample notification (click multiple times to cycle apps)"
-                className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-[#0a84ff] transition-colors hover:bg-[#0a84ff]/10 dark:text-[#64b5f6]"
-              >
-                <Sparkles size={11} />
-                Test Alert
-              </button>
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sampleList = createSampleNotifications(openApp);
+                    const sample =
+                      sampleList[sampleIndexRef.current % sampleList.length];
+                    sampleIndexRef.current += 1;
+                    pushNotification({
+                      appId: sample.appId,
+                      appName: sample.appName,
+                      appIcon: sample.appIcon,
+                      title: sample.title,
+                      body: sample.body,
+                      actionLabel: sample.actionLabel,
+                      secondaryActionLabel: sample.secondaryActionLabel,
+                      onAction: sample.onAction,
+                      onSecondaryAction: sample.onSecondaryAction,
+                    });
+                  }}
+                  title="Send a sample notification (dev only)"
+                  className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-[#0a84ff] transition-colors hover:bg-[#0a84ff]/10 dark:text-[#64b5f6]"
+                >
+                  <Sparkles size={11} />
+                  Test Alert
+                </button>
+              )}
 
               {notifications.length > 0 && (
                 <button

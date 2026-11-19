@@ -114,14 +114,6 @@ const Resume = () => {
                 ))}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handlePrint}
-              aria-label="Print resume or save as PDF"
-              className="hidden shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-black/10 bg-[#f7f7f8] px-3 py-2 text-sm font-medium text-black/80 transition hover:border-[#0a84ff] hover:text-[#0a84ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff] sm:inline-flex dark:border-white/10 dark:bg-white/[0.06] dark:text-white/85 print:hidden"
-            >
-              <Printer size={15} /> Print / Save PDF
-            </button>
           </header>
 
           <div className="grid gap-8 pt-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,.8fr)]">

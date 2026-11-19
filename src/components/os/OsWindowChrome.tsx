@@ -102,7 +102,7 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-black/75 transition-all duration-100 ease-out enabled:active:scale-[0.94] enabled:active:bg-black/10 disabled:opacity-30 dark:text-white/85 dark:enabled:active:bg-white/15',
+      'flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-black/75 transition-[transform,background-color,color,opacity] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] enabled:active:scale-[0.96] enabled:active:bg-black/10 disabled:opacity-30 dark:text-white/85 dark:enabled:active:bg-white/15',
       isActive && 'bg-black/10 dark:bg-white/15',
       className
     )}
@@ -160,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               onClick={() => onSelect(item.id)}
               className={cn(
-                'flex h-8 w-full cursor-default items-center gap-2 rounded-lg px-2 text-left text-[13px] transition-all duration-100 ease-out active:scale-[0.98]',
+                'flex h-8 w-full cursor-default items-center gap-2 rounded-lg px-2 text-left text-[13px] transition-[transform,background-color,color] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.98]',
                 selectedId === item.id
                   ? 'bg-black/[0.08] font-medium dark:bg-white/10'
                   : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'

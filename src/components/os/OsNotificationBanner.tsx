@@ -36,8 +36,13 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={
         reduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, x: 60, scale: 0.94, transition: { duration: 0.2 } }
+          ? { opacity: 0, transition: { duration: 0.1 } }
+          : {
+              opacity: 0,
+              x: 40,
+              scale: 0.96,
+              transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] },
+            }
       }
       transition={{
         type: 'spring',
@@ -67,7 +72,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
           </span>
         </div>
 
-        {/* Close Button on Hover */}
+        {/* Close Button (visible on hover, keyboard focus, and touch devices) */}
         <button
           type="button"
           aria-label="Dismiss notification"
@@ -75,7 +80,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
             e.stopPropagation();
             onDismiss();
           }}
-          className="flex h-5 w-5 items-center justify-center rounded-full bg-black/5 opacity-0 transition-all hover:bg-black/15 group-hover:opacity-100 dark:bg-white/10 dark:hover:bg-white/25"
+          className="relative flex h-5 w-5 items-center justify-center rounded-full bg-black/5 opacity-0 transition-[opacity,background-color,transform] duration-150 ease-smooth-out after:absolute after:-inset-2 hover:bg-black/15 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] group-hover:opacity-100 [@media(hover:none)]:opacity-80 dark:bg-white/10 dark:hover:bg-white/25"
         >
           <X size={11} className="opacity-70" />
         </button>
@@ -102,7 +107,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
                 notification.onSecondaryAction?.();
                 onDismiss();
               }}
-              className="rounded-full bg-black/5 px-3 py-1 text-[11px] font-medium text-neutral-800 transition-all hover:bg-black/10 active:scale-95 dark:bg-white/10 dark:text-neutral-200 dark:hover:bg-white/20"
+              className="rounded-full bg-black/5 px-3 py-1 text-[11px] font-medium text-neutral-800 transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] dark:bg-white/10 dark:text-neutral-200 dark:hover:bg-white/20"
             >
               {notification.secondaryActionLabel}
             </button>
@@ -116,7 +121,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
                 executeNotificationAction(notification, openApp);
                 onDismiss();
               }}
-              className="rounded-full bg-[#0a84ff] px-3.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all hover:bg-[#0071e3] active:scale-95"
+              className="rounded-full bg-[#0a84ff] px-3.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-[#0071e3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:scale-[0.96]"
             >
               {notification.actionLabel}
             </button>
@@ -131,8 +136,6 @@ export const OsNotificationBannerContainer: React.FC = () => {
   const { activeBanners, dismissBanner, markAsRead } = useOsNotification();
   const shellContext = useContext(OsShellContext);
   const openApp = shellContext?.openApp;
-
-  if (activeBanners.length === 0) return null;
 
   return (
     <div

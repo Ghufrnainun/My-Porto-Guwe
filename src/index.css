@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -416,10 +414,34 @@
     transition-duration: 0ms !important;
     transition-delay: 0ms !important;
   }
-  .noise-overlay,
-  canvas {
+  .noise-overlay {
     display: none !important;
   }
+}
+
+@keyframes ganos-eq-bar {
+  0%,
+  100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.ganos-eq-bar {
+  transform-origin: bottom center;
+  animation: ganos-eq-bar 680ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ganos-eq-bar-2 {
+  animation-delay: 160ms;
+  animation-duration: 540ms;
+}
+
+.ganos-eq-bar-3 {
+  animation-delay: 320ms;
+  animation-duration: 760ms;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -636,6 +658,231 @@
 
 *::-webkit-scrollbar-thumb:hover {
   background-color: rgba(142, 142, 147, 0.72);
+}
+
+/* ============================================================
+   GanOS 3D Frosted Glass Dock (Adapted from Ghufrnainun/dock-3D)
+   Emil Design Eng + Hallmark Token Discipline
+   ============================================================ */
+:root {
+  --dock3d-slab-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(232, 238, 250, 0.3) 48%,
+    rgba(190, 202, 224, 0.34) 84%,
+    rgba(255, 255, 255, 0.56) 100%
+  );
+  --dock3d-slab-border: rgba(255, 255, 255, 0.58);
+  --dock3d-slab-shadow: 0 18px 34px -8px rgba(15, 20, 40, 0.34),
+    0 4px 12px rgba(15, 20, 40, 0.16),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.75),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55);
+  --dock3d-deck-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(240, 246, 255, 0.08) 55%,
+    rgba(255, 255, 255, 0.24) 100%
+  );
+  --dock3d-deck-border-top: rgba(255, 255, 255, 0.86);
+  --dock3d-deck-border-side: rgba(255, 255, 255, 0.66);
+  --dock3d-deck-border-bottom: rgba(255, 255, 255, 0.9);
+  --dock3d-tooltip-bg: rgba(18, 20, 32, 0.92);
+  --dock3d-tooltip-border: rgba(255, 255, 255, 0.16);
+  --dock3d-tooltip-text: rgba(255, 255, 255, 0.96);
+  --dock3d-dot-bg: rgba(255, 255, 255, 0.88);
+  --dock3d-dot-active: #ffffff;
+  --dock3d-dot-shadow: 0 0 6px rgba(255, 255, 255, 0.72),
+    0 1px 2px rgba(15, 20, 40, 0.28);
+}
+
+.dark {
+  --dock3d-slab-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(195, 208, 232, 0.16) 48%,
+    rgba(18, 22, 36, 0.42) 84%,
+    rgba(255, 255, 255, 0.28) 100%
+  );
+  --dock3d-slab-border: rgba(255, 255, 255, 0.34);
+  --dock3d-slab-shadow: 0 20px 38px -8px rgba(0, 0, 0, 0.56),
+    0 4px 14px rgba(0, 0, 0, 0.32),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.48),
+    inset 0 1px 1px rgba(255, 255, 255, 0.38);
+  --dock3d-deck-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(225, 235, 255, 0.05) 55%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  --dock3d-deck-border-top: rgba(255, 255, 255, 0.68);
+  --dock3d-deck-border-side: rgba(255, 255, 255, 0.44);
+  --dock3d-deck-border-bottom: rgba(255, 255, 255, 0.72);
+  --dock3d-tooltip-bg: rgba(15, 17, 26, 0.94);
+  --dock3d-tooltip-border: rgba(255, 255, 255, 0.18);
+  --dock3d-tooltip-text: rgba(255, 255, 255, 0.96);
+  --dock3d-dot-bg: rgba(255, 255, 255, 0.85);
+  --dock3d-dot-active: #ffffff;
+  --dock3d-dot-shadow: 0 0 8px rgba(255, 255, 255, 0.78),
+    0 1px 3px rgba(0, 0, 0, 0.42);
+}
+
+.dock-3d-slab {
+  background: var(--dock3d-slab-bg);
+  border: 1px solid var(--dock3d-slab-border);
+  box-shadow: var(--dock3d-slab-shadow);
+}
+
+.dock-3d-deck {
+  background: var(--dock3d-deck-bg);
+  border-top: 1.2px solid var(--dock3d-deck-border-top);
+  border-left: 1px solid var(--dock3d-deck-border-side);
+  border-right: 1px solid var(--dock3d-deck-border-side);
+  border-bottom: 1.4px solid var(--dock3d-deck-border-bottom);
+  box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.26);
+}
+
+.dock-3d-cap-left {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(240, 248, 255, 0.18) 32%,
+    rgba(255, 255, 255, 0.04) 70%,
+    transparent 100%
+  );
+}
+
+.dock-3d-cap-right {
+  background: linear-gradient(
+    270deg,
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(240, 248, 255, 0.18) 32%,
+    rgba(255, 255, 255, 0.04) 70%,
+    transparent 100%
+  );
+}
+
+.dock-3d-lip {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.82) 14%,
+    rgba(255, 255, 255, 0.94) 50%,
+    rgba(255, 255, 255, 0.82) 86%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+}
+
+.dock-3d-spotlight {
+  background: radial-gradient(
+    ellipse 55% 85% at 50% 45%,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(230, 242, 255, 0.16) 46%,
+    transparent 76%
+  );
+  will-change: transform, opacity;
+}
+
+.dock-3d-slot {
+  contain: layout style;
+}
+
+.dock-3d-visual {
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+.dock-3d-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 110ms var(--ease-out);
+}
+
+.dock-3d-btn:active {
+  transform: scale(0.96);
+}
+
+.dock-3d-dot {
+  background-color: var(--dock3d-dot-bg);
+  box-shadow: var(--dock3d-dot-shadow);
+}
+
+.dock-3d-dot-active {
+  background-color: var(--dock3d-dot-active);
+}
+
+/* Tooltips: 80ms intent delay on first hover, instant 0ms switch when dock is warm */
+.dock-3d-tooltip {
+  background: var(--dock3d-tooltip-bg);
+  border: 1px solid var(--dock3d-tooltip-border);
+  color: var(--dock3d-tooltip-text);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.36);
+  opacity: 0;
+  transform: translate3d(-50%, 5px, 0) scale(0.96);
+  transform-origin: center bottom;
+  transition: opacity 100ms var(--ease-out), transform 110ms var(--ease-out);
+}
+
+.dock-3d-tooltip-arrow {
+  background: var(--dock3d-tooltip-bg);
+  border-right: 1px solid var(--dock3d-tooltip-border);
+  border-bottom: 1px solid var(--dock3d-tooltip-border);
+}
+
+.dock-3d-item:has(.dock-3d-btn:focus-visible) .dock-3d-tooltip {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0) scale(1);
+  transition: opacity 60ms var(--ease-out) 0ms,
+    transform 60ms var(--ease-out) 0ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dock-3d-item:hover .dock-3d-tooltip {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scale(1);
+    transition: opacity 140ms var(--ease-out) 80ms,
+      transform 160ms var(--ease-out) 80ms;
+  }
+
+  .dock-3d-nav[data-dock-warm='true'] .dock-3d-item:hover .dock-3d-tooltip {
+    transition-delay: 0ms;
+    transition-duration: 60ms;
+  }
+}
+
+@keyframes dock-3d-launch {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  30% {
+    transform: translate3d(0, -15px, 0) scaleY(1.03);
+  }
+  58% {
+    transform: translate3d(0, 0, 0) scaleY(0.97);
+  }
+  78% {
+    transform: translate3d(0, -6px, 0) scaleY(1.01);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scaleY(1);
+  }
+}
+
+.dock-3d-launching {
+  animation: dock-3d-launch 420ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-3d-launching {
+    animation: none !important;
+  }
+  .dock-3d-visual {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+  .dock-3d-tooltip {
+    transform: translate3d(-50%, 0, 0) scale(1) !important;
+    transition: opacity 120ms ease !important;
+  }
 }
 
 

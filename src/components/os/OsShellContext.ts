@@ -173,6 +173,12 @@ export const WALLPAPERS: readonly WallpaperOption[] = [
 
 export type SystemFontId = 'inter' | 'geist' | 'jakarta';
 export type OsLanguage = 'en' | 'id';
+export const GANOS_VERSION = '2.4';
+
+export type MusicPlaybackContextValue = {
+  trackPlaybackSec: number;
+  trackDurationSec: number;
+};
 
 export type NoteContext = {
   note: string;
@@ -205,9 +211,6 @@ export type NoteContext = {
   setActiveTrack: (track: ListeningTrack) => void;
   isPlayingTrack: boolean;
   setIsPlayingTrack: Dispatch<SetStateAction<boolean>>;
-  trackPlaybackSec: number;
-  setTrackPlaybackSec: Dispatch<SetStateAction<number>>;
-  trackDurationSec: number;
   volume: number;
   isMuted: boolean;
   setVolume: (vol: number) => void;
@@ -218,11 +221,15 @@ export type NoteContext = {
   togglePlayTrack: (track?: ListeningTrack) => void;
   nextTrack: () => void;
   prevTrack: () => void;
-  shuffleTrack: () => void;
+  shuffleTrack: () => ListeningTrack;
   audioRef: RefObject<HTMLAudioElement | null>;
 };
 
 export const OsShellContext = createContext<NoteContext | null>(null);
+export const OsMusicPlaybackContext = createContext<MusicPlaybackContextValue>({
+  trackPlaybackSec: 0,
+  trackDurationSec: 30,
+});
 export const WindowFocusContext = createContext<boolean>(true);
 
 export const useOsNote = (): NoteContext => {
@@ -232,5 +239,8 @@ export const useOsNote = (): NoteContext => {
   }
   return ctx;
 };
+
+export const useOsMusicPlayback = (): MusicPlaybackContextValue =>
+  useContext(OsMusicPlaybackContext);
 
 export const useWindowFocus = (): boolean => useContext(WindowFocusContext);

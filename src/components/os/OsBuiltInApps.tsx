@@ -24,7 +24,6 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -36,18 +35,15 @@ import {
 } from '@/data/profile';
 import { featuredProjects } from '@/data/featuredProjects';
 import {
+  GANOS_VERSION,
   useOsNote,
   useWindowFocus,
   WALLPAPERS,
   type OsAppearance,
-  type OsAppId,
   type SettingsPaneId,
+  type SystemFontId,
 } from '@/components/os/OsShellContext';
-import {
-  isSoundEnabled,
-  setSoundEnabled,
-  playToggleSound,
-} from '@/lib/soundEffects';
+import { playToggleSound } from '@/lib/soundEffects';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
 import {
   Avatar,
@@ -186,6 +182,7 @@ function formatExternalUrl(url: string): string {
 export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   initialUrl = '/old',
 }) => {
+  const { pushNotification } = useOsNotification();
   const [tabs, setTabs] = useState<SafariTab[]>([
     {
       id: 'tab-1',
@@ -350,12 +347,15 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   const handleShare = () => {
     if (navigator.clipboard) {
       void navigator.clipboard.writeText(externalUrl);
-      toast.success('Link copied to clipboard', {
-        description: externalUrl,
-      });
-    } else {
-      toast('Link: ' + externalUrl);
     }
+    pushNotification({
+      appId: 'safari',
+      appName: 'Safari',
+      appIcon: '/macos-icons/safari.png',
+      title: 'Link Copied',
+      body: externalUrl,
+      durationMs: 3200,
+    });
   };
 
   const handleNewTab = (newUrl: string = 'safari:start') => {
@@ -499,7 +499,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
           </ToolbarGroup>
         }
         trailing={
-          <ToolbarGroup className="max-sm:hidden">
+          <ToolbarGroup>
             {/* Share / Copy URL Button */}
             <ToolbarButton
               title="Copy link to clipboard"
@@ -517,6 +517,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
               title="Show Tab Overview"
               isActive={showOverview}
               onClick={() => setShowOverview((v) => !v)}
+              className="max-sm:hidden"
               icon={<Copy size={13} />}
             />
           </ToolbarGroup>
@@ -535,8 +536,15 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                 setActiveTabId(tab.id);
                 setShowOverview(false);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveTabId(tab.id);
+                  setShowOverview(false);
+                }
+              }}
               className={cn(
-                'group flex h-[25px] max-w-[210px] flex-1 cursor-default items-center justify-between rounded-[7px] px-2.5 transition-all',
+                'group flex h-[25px] max-w-[210px] flex-1 cursor-default items-center justify-between rounded-[7px] px-2.5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
                 tab.id === activeTabId
                   ? 'bg-white font-medium text-black shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#2f272d] dark:text-white'
                   : 'text-black/60 hover:bg-black/5 dark:text-white/60 dark:hover:bg-white/5',
@@ -545,9 +553,10 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
               <span className="truncate">{tab.title}</span>
               <button
                 type="button"
+                aria-label={`Close ${tab.title} tab`}
                 onClick={(e) => handleCloseTab(tab.id, e)}
                 title="Close Tab"
-                className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/15"
+                className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-black/10 focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-80 dark:hover:bg-white/15"
               >
                 <X size={10} />
               </button>
@@ -670,8 +679,15 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                       setActiveTabId(tab.id);
                       setShowOverview(false);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveTabId(tab.id);
+                        setShowOverview(false);
+                      }
+                    }}
                     className={cn(
-                      'group relative flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-all hover:scale-[1.02]',
+                      'group relative flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-[transform,border-color,background-color] duration-150 ease-smooth-out hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
                       tab.id === activeTabId
                         ? 'border-[#0a84ff] bg-white ring-2 ring-[#0a84ff]/30 dark:bg-[#282025]'
                         : 'border-black/10 bg-white/60 dark:border-white/10 dark:bg-[#1a1518]/60',
@@ -721,7 +737,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                     key={bookmark.id}
                     type="button"
                     onClick={() => navigateTo(bookmark.url)}
-                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-center transition-all hover:-translate-y-0.5 hover:bg-black/[0.05] hover:shadow-md dark:border-white/5 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-center transition-[transform,background-color,box-shadow] duration-150 ease-smooth-out hover:-translate-y-0.5 hover:bg-black/[0.05] hover:shadow-md active:scale-[0.97] dark:border-white/5 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
                   >
                     <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5 group-hover:scale-105 dark:bg-[#2c232a] dark:ring-white/10">
                       {bookmark.category === 'tracks' ? (
@@ -804,10 +820,18 @@ const appearanceOptions: { id: OsAppearance; label: string; preview: string }[] 
   },
 ];
 
+const fontOptions: { id: SystemFontId; label: string; specimenClass: string }[] = [
+  { id: 'jakarta', label: 'Plus Jakarta', specimenClass: 'font-specimen-jakarta' },
+  { id: 'inter', label: 'Inter', specimenClass: 'font-specimen-inter' },
+  { id: 'geist', label: 'Geist', specimenClass: 'font-specimen-geist' },
+];
+
 export const SystemSettingsApp: React.FC = () => {
   const {
     appearance,
     setAppearance,
+    systemFont,
+    setSystemFont,
     wallpaperId,
     setWallpaperId,
     autoRotateWallpaper,
@@ -818,7 +842,7 @@ export const SystemSettingsApp: React.FC = () => {
     setSettingsPane,
   } = useOsNote();
 
-  const [soundActive, setSoundActive] = useState(() => isSoundEnabled());
+  const { soundEnabled: soundActive, setSoundEnabled } = useOsNotification();
 
   const currentPane =
     settingsPanes.find((p) => p.id === settingsPane) ?? settingsPanes[3];
@@ -926,6 +950,26 @@ export const SystemSettingsApp: React.FC = () => {
                     />
                   </button>
                 </SettingsRow>
+                <SettingsRow label="System font">
+                  <div className="flex flex-wrap justify-end gap-1.5 py-1">
+                    {fontOptions.map((font) => (
+                      <button
+                        key={font.id}
+                        type="button"
+                        onClick={() => setSystemFont(font.id)}
+                        className={cn(
+                          'rounded-lg px-2.5 py-1 text-[12px] transition-[background-color,color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96]',
+                          font.specimenClass,
+                          systemFont === font.id
+                            ? 'bg-[#0a84ff] font-semibold text-white shadow-sm'
+                            : 'bg-black/[0.06] text-black/75 hover:bg-black/10 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/15',
+                        )}
+                      >
+                        {font.label}
+                      </button>
+                    ))}
+                  </div>
+                </SettingsRow>
                 <SettingsRow label="Play UI sound effects (Web Audio)">
                   <button
                     type="button"
@@ -933,7 +977,6 @@ export const SystemSettingsApp: React.FC = () => {
                     aria-checked={soundActive}
                     onClick={() => {
                       const next = !soundActive;
-                      setSoundActive(next);
                       setSoundEnabled(next);
                       if (next) playToggleSound();
                     }}
@@ -1034,7 +1077,7 @@ export const SystemSettingsApp: React.FC = () => {
               <SettingsGroup>
                 <SettingsRow label="System">
                   <span className="text-black/50 dark:text-white/50">
-                    GanOS · Ghufron&apos;s Portfolio OS
+                    GanOS {GANOS_VERSION} · Ghufron&apos;s Portfolio OS
                   </span>
                 </SettingsRow>
                 <SettingsRow label="Built with">
@@ -1335,8 +1378,10 @@ interface TerminalEntry {
   output: React.ReactNode;
 }
 
+const SESSION_BOOT_TS = Date.now();
+
 export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { openApp } = useOsNote();
+  const { openApp, systemFont } = useOsNote();
   const { pushNotification } = useOsNotification();
   const [entries, setEntries] = useState<TerminalEntry[]>([]);
   const [input, setInput] = useState('');
@@ -1512,6 +1557,16 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       return `cat: ${file}: No such file or directory`;
     }
     if (name === 'neofetch') {
+      const elapsedSec = Math.max(1, Math.floor((Date.now() - SESSION_BOOT_TS) / 1000));
+      const upMins = Math.floor(elapsedSec / 60);
+      const upSecs = elapsedSec % 60;
+      const uptimeLabel = upMins > 0 ? `${upMins}m ${upSecs}s (this session)` : `${upSecs}s (this session)`;
+      const fontLabel =
+        systemFont === 'inter'
+          ? 'Inter'
+          : systemFont === 'geist'
+            ? 'Geist'
+            : 'Plus Jakarta Sans';
       return (
         <div className="my-1.5 flex flex-col gap-3 font-mono text-[11.5px] sm:flex-row sm:items-center sm:gap-6">
           <pre className="select-none leading-none text-amber-400">{`
@@ -1530,7 +1585,7 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
             <div className="text-white/30">---------------------------</div>
             <div>
-              <span className="font-semibold text-amber-400">OS:</span> GanOS 15.4 (Sonoma Edition)
+              <span className="font-semibold text-amber-400">OS:</span> GanOS {GANOS_VERSION} (Sonoma Edition)
             </div>
             <div>
               <span className="font-semibold text-amber-400">Host:</span> {profile.name} · Full-Stack Developer
@@ -1542,16 +1597,17 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <span className="font-semibold text-amber-400">Kernel:</span> React 18 / TypeScript / Vite
             </div>
             <div>
-              <span className="font-semibold text-amber-400">Uptime:</span> 7 hours, 24 mins
+              <span className="font-semibold text-amber-400">Uptime:</span> {uptimeLabel}
             </div>
             <div>
-              <span className="font-semibold text-amber-400">Shell:</span> zsh 5.9 (x86_64-apple-darwin23.0)
+              <span className="font-semibold text-amber-400">Shell:</span> ganos-zsh (browser sandbox)
             </div>
             <div>
-              <span className="font-semibold text-amber-400">Font:</span> Plus Jakarta Sans (Open Source)
+              <span className="font-semibold text-amber-400">Font:</span> {fontLabel}
             </div>
             <div>
-              <span className="font-semibold text-amber-400">CPU:</span> Apple M3 Max (16-core)
+              <span className="font-semibold text-amber-400">Viewport:</span>{' '}
+              {typeof window !== 'undefined' ? `${window.innerWidth}×${window.innerHeight}` : '1440×900'}
             </div>
             <div className="flex gap-1 pt-1.5">
               <span className="inline-block h-2 w-3.5 rounded-[2px] bg-black ring-1 ring-white/20" />

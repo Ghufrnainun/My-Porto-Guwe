@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ExternalLink,
   FastForward,
@@ -10,25 +10,29 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useOsNote } from '@/components/os/OsShellContext';
+import {
+  useOsMusicPlayback,
+  useOsNote,
+} from '@/components/os/OsShellContext';
 import { playClickSound } from '@/lib/soundEffects';
 
 export const DynamicIsland: React.FC = () => {
   const {
     activeTrack,
     isPlayingTrack,
-    trackPlaybackSec,
-    trackDurationSec,
     togglePlayTrack,
     nextTrack,
     prevTrack,
+    seekTrack,
     openApp,
   } = useOsNote();
+  const { trackPlaybackSec, trackDurationSec } = useOsMusicPlayback();
+  const reduceMotion = useReducedMotion();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close expanded card on outside click
+  // Close expanded card on outside click or Escape
   useEffect(() => {
     if (!isExpanded) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -39,8 +43,15 @@ export const DynamicIsland: React.FC = () => {
         setIsExpanded(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsExpanded(false);
+    };
     window.addEventListener('mousedown', handleClickOutside);
-    return () => window.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isExpanded]);
 
   const formatSec = (sec: number) => {
@@ -49,24 +60,35 @@ export const DynamicIsland: React.FC = () => {
     return `${mins}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const progressPercent = Math.min(
-    100,
-    (trackPlaybackSec / (trackDurationSec || 30)) * 100
+  const effectiveDuration = trackDurationSec || 30;
+  const progressRatio = Math.min(
+    1,
+    Math.max(0, trackPlaybackSec / effectiveDuration)
   );
+
+  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    seekTrack(ratio * effectiveDuration);
+  };
 
   return (
     <div
       ref={containerRef}
-      className="pointer-events-auto absolute left-1/2 top-1.5 z-50 -translate-x-1/2 select-none"
+      className="pointer-events-auto absolute left-1/2 top-1 z-50 hidden -translate-x-1/2 select-none md:block"
     >
       <motion.div
-        layout
-        transition={{
-          type: 'spring',
-          stiffness: 420,
-          damping: 32,
-          mass: 0.8,
-        }}
+        layout={!reduceMotion}
+        transition={
+          reduceMotion
+            ? { duration: 0.01 }
+            : {
+                type: 'spring',
+                stiffness: 440,
+                damping: 34,
+                mass: 0.78,
+              }
+        }
         onClick={() => {
           if (!isExpanded) {
             playClickSound();
@@ -74,32 +96,37 @@ export const DynamicIsland: React.FC = () => {
           }
         }}
         className={cn(
-          'relative flex cursor-pointer overflow-hidden border border-white/20 bg-black/90 text-white shadow-[0_16px_40px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(255,255,255,0.15)] backdrop-blur-3xl transition-colors duration-200 hover:border-white/30',
+          'relative flex cursor-pointer overflow-hidden border border-white/20 bg-black/90 text-white shadow-[0_16px_40px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(255,255,255,0.15)] backdrop-blur-2xl transition-colors duration-150 hover:border-white/30',
           isExpanded
-            ? 'h-[148px] w-[350px] rounded-[28px] p-3.5 max-sm:w-[calc(100vw-24px)]'
+            ? 'h-[148px] w-[350px] rounded-[28px] p-3.5'
             : isPlayingTrack
-              ? 'h-[28px] w-[220px] items-center justify-between rounded-full px-2.5 hover:scale-[1.02]'
-              : 'h-[26px] w-[136px] items-center justify-between rounded-full px-3 hover:scale-[1.02]',
+              ? 'h-[26px] w-[216px] items-center justify-between rounded-full px-2.5'
+              : 'h-[24px] w-[132px] items-center justify-between rounded-full px-3',
         )}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {isExpanded ? (
             /* EXPANDED DYNAMIC ISLAND */
             <motion.div
               key="expanded"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.16 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
               className="flex h-full w-full flex-col justify-between"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header row */}
               <div className="flex items-center justify-between text-[11px] text-white/50">
                 <div className="flex items-center gap-1.5">
-                  <span className="flex h-2 w-2 rounded-full bg-[#30d158] animate-pulse" />
+                  <span
+                    className={cn(
+                      'flex h-2 w-2 rounded-full bg-[#30d158]',
+                      isPlayingTrack && 'animate-pulse',
+                    )}
+                  />
                   <span className="font-semibold tracking-wider uppercase text-white/70">
-                    Now Playing
+                    {isPlayingTrack ? 'Now Playing' : 'Paused'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -113,7 +140,7 @@ export const DynamicIsland: React.FC = () => {
                       setIsExpanded(false);
                     }}
                     title="Open track video in Safari"
-                    className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/80 hover:bg-white/20"
+                    className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/80 transition-[background-color,transform] duration-150 hover:bg-white/20 active:scale-[0.96]"
                   >
                     <span>Safari</span>
                     <ExternalLink size={10} />
@@ -122,7 +149,7 @@ export const DynamicIsland: React.FC = () => {
                     type="button"
                     onClick={() => setIsExpanded(false)}
                     aria-label="Collapse Dynamic Island"
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 active:scale-90"
+                    className="relative flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-white/70 transition-[background-color,transform] duration-150 after:absolute after:-inset-1.5 hover:bg-white/20 active:scale-[0.96]"
                   >
                     <X size={12} />
                   </button>
@@ -147,19 +174,38 @@ export const DynamicIsland: React.FC = () => {
                     {activeTrack.artist}
                   </div>
 
-                  {/* Scrubber track */}
-                  <div className="mt-2 flex items-center gap-2 text-[10px] text-white/40">
+                  {/* Interactive GPU Scrubber track */}
+                  <div className="mt-2 flex items-center gap-2 text-[10px] text-white/45">
                     <span className="w-6 tabular-nums">
                       {formatSec(trackPlaybackSec)}
                     </span>
-                    <div className="relative h-1 flex-grow overflow-hidden rounded-full bg-white/20">
-                      <div
-                        className="h-full rounded-full bg-white transition-all duration-300"
-                        style={{ width: `${progressPercent}%` }}
-                      />
+                    <div
+                      onClick={handleScrub}
+                      role="slider"
+                      aria-label="Track progress"
+                      aria-valuemin={0}
+                      aria-valuemax={effectiveDuration}
+                      aria-valuenow={trackPlaybackSec}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowRight') {
+                          seekTrack(Math.min(effectiveDuration, trackPlaybackSec + 5));
+                        } else if (e.key === 'ArrowLeft') {
+                          seekTrack(Math.max(0, trackPlaybackSec - 5));
+                        }
+                      }}
+                      title="Click to seek"
+                      className="group/di-scrub relative flex h-3 flex-grow cursor-pointer items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/60"
+                    >
+                      <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/20">
+                        <div
+                          className="h-full w-full origin-left rounded-full bg-white transition-transform duration-150 ease-linear"
+                          style={{ transform: `scaleX(${progressRatio})` }}
+                        />
+                      </div>
                     </div>
                     <span className="tabular-nums">
-                      {formatSec(trackDurationSec || 30)}
+                      {formatSec(effectiveDuration)}
                     </span>
                   </div>
                 </div>
@@ -175,7 +221,7 @@ export const DynamicIsland: React.FC = () => {
                   }}
                   title="Previous Track"
                   aria-label="Previous Track"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 transition-transform hover:text-white active:scale-90"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 transition-[color,transform] duration-150 hover:text-white active:scale-[0.96]"
                 >
                   <Rewind size={15} fill="currentColor" />
                 </button>
@@ -188,7 +234,7 @@ export const DynamicIsland: React.FC = () => {
                   }}
                   title={isPlayingTrack ? 'Pause' : 'Play'}
                   aria-label={isPlayingTrack ? 'Pause' : 'Play'}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-md transition-transform hover:scale-105 active:scale-95"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-md transition-transform duration-150 hover:scale-105 active:scale-[0.96]"
                 >
                   {isPlayingTrack ? (
                     <Pause size={14} fill="currentColor" />
@@ -205,7 +251,7 @@ export const DynamicIsland: React.FC = () => {
                   }}
                   title="Next Track"
                   aria-label="Next Track"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 transition-transform hover:text-white active:scale-90"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 transition-[color,transform] duration-150 hover:text-white active:scale-[0.96]"
                 >
                   <FastForward size={15} fill="currentColor" />
                 </button>
@@ -218,7 +264,7 @@ export const DynamicIsland: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
+              transition={{ duration: 0.12 }}
               className="flex w-full items-center justify-between gap-2 text-[11px]"
             >
               <div className="flex items-center gap-1.5 min-w-0">
@@ -232,11 +278,11 @@ export const DynamicIsland: React.FC = () => {
                 </span>
               </div>
 
-              {/* Live equalizer animation bars */}
-              <div className="flex items-end gap-[1.5px] shrink-0 pl-1">
-                <span className="h-2 w-[2px] rounded-full bg-[#30d158] animate-pulse" />
-                <span className="h-3.5 w-[2px] rounded-full bg-[#30d158] animate-pulse delay-75" />
-                <span className="h-1.5 w-[2px] rounded-full bg-[#30d158] animate-pulse delay-150" />
+              {/* Live GPU equalizer bars */}
+              <div className="flex h-3 items-end gap-[1.5px] shrink-0 pl-1" aria-hidden="true">
+                <span className="ganos-eq-bar h-2.5 w-[2px] rounded-full bg-[#30d158]" />
+                <span className="ganos-eq-bar ganos-eq-bar-2 h-3 w-[2px] rounded-full bg-[#30d158]" />
+                <span className="ganos-eq-bar ganos-eq-bar-3 h-2 w-[2px] rounded-full bg-[#30d158]" />
               </div>
             </motion.div>
           ) : (
@@ -246,7 +292,7 @@ export const DynamicIsland: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
+              transition={{ duration: 0.12 }}
               className="flex w-full items-center justify-between text-[11px] text-white/75"
             >
               <div className="flex items-center gap-1.5">
