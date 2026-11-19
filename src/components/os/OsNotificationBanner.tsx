@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
+import { OsShellContext } from '@/components/os/OsShellContext';
+import { executeNotificationAction } from '@/lib/notificationActions';
 import type { OsNotification } from '@/types/os-notification';
 
 interface OsNotificationBannerItemProps {
@@ -16,6 +18,8 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
   onSelect,
 }) => {
   const reduceMotion = useReducedMotion();
+  const shellContext = useContext(OsShellContext);
+  const openApp = shellContext?.openApp;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent triggering if clicked directly on an action button or close button
@@ -27,9 +31,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
     <motion.div
       layout
       initial={
-        reduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, x: 60, scale: 0.94 }
+        reduceMotion ? { opacity: 0 } : { opacity: 0, x: 60, scale: 0.94 }
       }
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={
@@ -111,7 +113,7 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                notification.onAction?.();
+                executeNotificationAction(notification, openApp);
                 onDismiss();
               }}
               className="rounded-full bg-[#0a84ff] px-3.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all hover:bg-[#0071e3] active:scale-95"
@@ -127,6 +129,8 @@ const OsNotificationBannerItem: React.FC<OsNotificationBannerItemProps> = ({
 
 export const OsNotificationBannerContainer: React.FC = () => {
   const { activeBanners, dismissBanner, markAsRead } = useOsNotification();
+  const shellContext = useContext(OsShellContext);
+  const openApp = shellContext?.openApp;
 
   if (activeBanners.length === 0) return null;
 
@@ -143,7 +147,7 @@ export const OsNotificationBannerContainer: React.FC = () => {
             onDismiss={() => dismissBanner(notification.id)}
             onSelect={() => {
               markAsRead(notification.id);
-              notification.onAction?.();
+              executeNotificationAction(notification, openApp);
               dismissBanner(notification.id);
             }}
           />

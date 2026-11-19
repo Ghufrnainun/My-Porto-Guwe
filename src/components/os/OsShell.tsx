@@ -60,6 +60,7 @@ import {
   playWindowOpenSound,
   playWindowCloseSound,
   playTrashEmptySound,
+  playCameraShutterSound,
 } from '@/lib/soundEffects';
 
 type OsShellProps = {
@@ -299,6 +300,7 @@ export function OsShell({
     clearAppBadge,
   } = useOsNotification();
 
+  const [isTakingScreenshot, setIsTakingScreenshot] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [launcherQuery, setLauncherQuery] = useState('');
@@ -377,9 +379,22 @@ export function OsShell({
     origY: number;
   } | null>(null);
 
-  const [activeTrack, setActiveTrack] = useState<ListeningTrack>(RECENT_TRACKS[0]);
+  const [activeTrack, setActiveTrack] = useState<ListeningTrack>(
+    () => RECENT_TRACKS[Math.floor(Math.random() * RECENT_TRACKS.length)] ?? RECENT_TRACKS[0]
+  );
   const [isPlayingTrack, setIsPlayingTrack] = useState(false);
   const [trackPlaybackSec, setTrackPlaybackSec] = useState(0);
+  const [trackDurationSec, setTrackDurationSec] = useState(30);
+  const [volume, setVolumeState] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('ganos_music_volume');
+      return saved !== null ? Math.max(0, Math.min(1, parseFloat(saved))) : 0.8;
+    } catch {
+      return 0.8;
+    }
+  });
+  const [isMuted, setIsMuted] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [snapTarget, setSnapTarget] = useState<'left' | 'right' | 'top' | null>(null);
@@ -388,52 +403,68 @@ export function OsShell({
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [switcherIndex, setSwitcherIndex] = useState(0);
 
+  const playTrack = useCallback(
+    async (track: ListeningTrack) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      setActiveTrack(track);
+      setTrackPlaybackSec(0);
+
+      const isSameSrc =
+        audio.src &&
+        (audio.src === track.streamUrl ||
+          audio.currentSrc === track.streamUrl ||
+          audio.src.endsWith(track.streamUrl.split('/').pop() || ''));
+
+      if (!isSameSrc) {
+        audio.src = track.streamUrl;
+      }
+      audio.currentTime = 0;
+      audio.volume = isMuted ? 0 : volume;
+
+      try {
+        await audio.play();
+        setIsPlayingTrack(true);
+      } catch (err) {
+        console.warn('Playback error or blocked by autoplay:', err);
+        setIsPlayingTrack(false);
+      }
+    },
+    [isMuted, volume]
+  );
+
   const togglePlayTrack = useCallback(
     (track?: ListeningTrack) => {
       const audio = audioRef.current;
+      if (!audio) return;
+
       if (track && track.id !== activeTrack.id) {
-        setActiveTrack(track);
-        setTrackPlaybackSec(0);
-        setIsPlayingTrack(true);
-        if (audio) {
-          audio.src = track.streamUrl || '';
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-        }
+        void playTrack(track);
         return;
       }
 
-      setIsPlayingTrack((prev) => {
-        const next = !prev;
-        if (audio) {
-          if (next) {
-            if (!audio.src && activeTrack.streamUrl) {
-              audio.src = activeTrack.streamUrl;
-            }
-            audio.play().catch(() => {});
-          } else {
-            audio.pause();
-          }
+      if (isPlayingTrack) {
+        audio.pause();
+        setIsPlayingTrack(false);
+      } else {
+        if (!audio.src || !audio.src.includes(activeTrack.id)) {
+          audio.src = activeTrack.streamUrl;
         }
-        return next;
-      });
+        audio.volume = isMuted ? 0 : volume;
+        audio.play().catch(() => {
+          setIsPlayingTrack(false);
+        });
+        setIsPlayingTrack(true);
+      }
     },
-    [activeTrack],
+    [activeTrack, isPlayingTrack, isMuted, volume, playTrack]
   );
 
   const nextTrack = useCallback(() => {
     const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
     const next = RECENT_TRACKS[(currentIndex + 1) % RECENT_TRACKS.length];
-    setActiveTrack(next);
-    setTrackPlaybackSec(0);
-    setIsPlayingTrack(true);
-    const audio = audioRef.current;
-    if (audio) {
-      audio.src = next.streamUrl || '';
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
-  }, [activeTrack]);
+    void playTrack(next);
+  }, [activeTrack, playTrack]);
 
   const prevTrack = useCallback(() => {
     const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
@@ -441,24 +472,58 @@ export function OsShell({
       RECENT_TRACKS[
         (currentIndex - 1 + RECENT_TRACKS.length) % RECENT_TRACKS.length
       ];
-    setActiveTrack(prev);
-    setTrackPlaybackSec(0);
-    setIsPlayingTrack(true);
-    const audio = audioRef.current;
-    if (audio) {
-      audio.src = prev.streamUrl || '';
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
-  }, [activeTrack]);
+    void playTrack(prev);
+  }, [activeTrack, playTrack]);
 
-  useEffect(() => {
-    if (!isPlayingTrack) return;
-    const timer = window.setInterval(() => {
-      setTrackPlaybackSec((sec) => (sec >= 30 ? 0 : sec + 1));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [isPlayingTrack]);
+  const shuffleTrack = useCallback(() => {
+    const otherTracks = RECENT_TRACKS.filter((t) => t.id !== activeTrack.id);
+    const randomNext =
+      otherTracks[Math.floor(Math.random() * otherTracks.length)] ??
+      RECENT_TRACKS[0];
+    void playTrack(randomNext);
+  }, [activeTrack, playTrack]);
+
+  const seekTrack = useCallback((sec: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = sec;
+    setTrackPlaybackSec(Math.floor(sec));
+  }, []);
+
+  const setVolume = useCallback(
+    (newVol: number) => {
+      const clamped = Math.max(0, Math.min(1, newVol));
+      setVolumeState(clamped);
+      if (isMuted && clamped > 0) {
+        setIsMuted(false);
+      }
+      const audio = audioRef.current;
+      if (audio) {
+        audio.volume = clamped;
+      }
+      try {
+        localStorage.setItem('ganos_music_volume', String(clamped));
+      } catch {
+        /* ignore */
+      }
+    },
+    [isMuted]
+  );
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      const audio = audioRef.current;
+      if (audio) {
+        audio.volume = next ? 0 : volume;
+      }
+      return next;
+    });
+  }, [volume]);
+
+  const toggleLoop = useCallback(() => {
+    setIsLooping((prev) => !prev);
+  }, []);
 
   const isDark =
     appearance === 'auto'
@@ -784,6 +849,120 @@ export function OsShell({
     }
   }, [power, appBadges.mail, pushNotification, openApp, clearAppBadge, language]);
 
+  // Ambient event: Battery / Power connected notification after 16s
+  useEffect(() => {
+    if (power !== 'on') return;
+
+    const hasShown = window.sessionStorage.getItem('ganos_battery_shown');
+    if (!hasShown) {
+      const timer = window.setTimeout(() => {
+        const isId = language === 'id';
+        pushNotification({
+          appId: 'settings',
+          appName: 'GanOS System',
+          appIcon: '/macos-icons/settings.png',
+          title: isId ? 'Adaptor Daya Terhubung' : 'Power Adapter Connected',
+          body: isId
+            ? 'Baterai terisi 100%. Sumber daya: Adaptor Daya AC.'
+            : 'Battery is at 100%. Power source: Power Adapter.',
+          actionLabel: isId ? 'Kesehatan Baterai' : 'Battery Status',
+          onAction: () => openApp('settings', 'displays'),
+        });
+        window.sessionStorage.setItem('ganos_battery_shown', 'true');
+      }, 16000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [power, language, pushNotification, openApp]);
+
+  // Ambient event: GitHub live commit ping after 38s
+  useEffect(() => {
+    if (power !== 'on') return;
+
+    const hasShown = window.sessionStorage.getItem('ganos_github_shown');
+    if (!hasShown) {
+      const timer = window.setTimeout(() => {
+        const isId = language === 'id';
+        pushNotification({
+          appId: 'safari',
+          appName: 'GitHub',
+          appIcon: '/macos-icons/safari.png',
+          title: 'ghufrnainun pushed 2 commits',
+          body: isId
+            ? 'Ghufrnainun/My-Porto-Guwe · "feat: GanOS Notification Center & sound suite"'
+            : 'Ghufrnainun/My-Porto-Guwe · "feat: GanOS Notification Center & sound suite"',
+          actionLabel: isId ? 'Lihat di GitHub' : 'View on GitHub',
+          onAction: () => {
+            window.open(profile.github, '_blank', 'noreferrer');
+          },
+        });
+        window.sessionStorage.setItem('ganos_github_shown', 'true');
+      }, 38000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [power, language, pushNotification]);
+
+  // Ambient event: Weather forecast alert after 68s
+  useEffect(() => {
+    if (power !== 'on') return;
+
+    const hasShown = window.sessionStorage.getItem('ganos_weather_shown');
+    if (!hasShown) {
+      const timer = window.setTimeout(() => {
+        const isId = language === 'id';
+        pushNotification({
+          appId: 'safari',
+          appName: 'Weather',
+          appIcon: '/macos-icons/safari.png',
+          title: isId ? 'Semarang · 31°C Cerah Berawan' : 'Semarang · 31°C Partly Cloudy',
+          body: isId
+            ? 'Kelembapan 68%, angin sepoi 12 km/jam. Cuaca mantap untuk ngoding aplikasi web!'
+            : 'Humidity 68%, winds at 12 km/h. Great day for crafting performant web apps.',
+          actionLabel: isId ? 'Lihat Cuaca' : 'Check Forecast',
+          onAction: () => openApp('about'),
+        });
+        window.sessionStorage.setItem('ganos_weather_shown', 'true');
+      }, 68000);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [power, language, pushNotification, openApp]);
+
+  // Real-time network online/offline notifications
+  useEffect(() => {
+    const handleOnline = () => {
+      const isId = language === 'id';
+      pushNotification({
+        appId: 'settings',
+        appName: 'Wi-Fi',
+        appIcon: '/macos-icons/settings.png',
+        title: isId ? 'Wi-Fi Terhubung' : 'Wi-Fi Connected',
+        body: isId
+          ? 'Koneksi internet kembali aktif.'
+          : 'Internet connection has been restored.',
+      });
+    };
+    const handleOffline = () => {
+      const isId = language === 'id';
+      pushNotification({
+        appId: 'settings',
+        appName: 'Wi-Fi',
+        appIcon: '/macos-icons/settings.png',
+        title: isId ? 'Wi-Fi Terputus' : 'Wi-Fi Disconnected',
+        body: isId
+          ? 'GanOS sedang berjalan dalam mode cache offline.'
+          : 'GanOS is running in offline cache mode.',
+      });
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [language, pushNotification]);
+
   const closeWindow = useCallback(
     (id: OsAppId) => {
       playWindowCloseSound();
@@ -938,6 +1117,48 @@ export function OsShell({
         }
         return;
       }
+
+      // 6. Screenshot shortcut: Cmd+Shift+3, Cmd+Shift+4, Ctrl+Shift+3, Ctrl+Shift+4, or PrintScreen
+      if (
+        (isCmdOrCtrl &&
+          event.shiftKey &&
+          (event.key === '3' ||
+            event.key === '4' ||
+            event.code === 'Digit3' ||
+            event.code === 'Digit4')) ||
+        event.key === 'PrintScreen'
+      ) {
+        event.preventDefault();
+        setIsTakingScreenshot(true);
+        playCameraShutterSound();
+        window.setTimeout(() => setIsTakingScreenshot(false), 220);
+
+        const timeStr = new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
+        const isId = language === 'id';
+        pushNotification({
+          appId: 'photos',
+          appName: 'Screen Capture',
+          appIcon: '/macos-icons/photos.png',
+          title: `Screen Shot ${timeStr}.png`,
+          body: isId
+            ? 'Tersimpan di Desktop GanOS'
+            : 'Screenshot saved to GanOS Desktop',
+          actionLabel: isId ? 'Buka Finder' : 'Open in Finder',
+          onAction: () => openApp('projects'),
+        });
+        return;
+      }
+
+      // 7. Toggle Notification Center: Cmd+Shift+N / Ctrl+Shift+N
+      if (isCmdOrCtrl && event.shiftKey && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        setIsCenterOpen((prev) => !prev);
+        return;
+      }
     };
 
     const onKeyUp = (event: globalThis.KeyboardEvent) => {
@@ -970,6 +1191,9 @@ export function OsShell({
     isSwitcherOpen,
     switcherApps,
     switcherIndex,
+    language,
+    pushNotification,
+    setIsCenterOpen,
   ]);
 
   const startWindowDrag = (
@@ -1573,9 +1797,18 @@ export function OsShell({
     setIsPlayingTrack,
     trackPlaybackSec,
     setTrackPlaybackSec,
+    trackDurationSec,
+    volume,
+    isMuted,
+    setVolume,
+    toggleMute,
+    seekTrack,
+    isLooping,
+    toggleLoop,
     togglePlayTrack,
     nextTrack,
     prevTrack,
+    shuffleTrack,
     audioRef,
   };
 
@@ -2549,6 +2782,19 @@ export function OsShell({
           />
         )}
 
+        {/* Camera Shutter Flash Effect */}
+        <AnimatePresence>
+          {isTakingScreenshot && (
+            <motion.div
+              initial={{ opacity: 0.85 }}
+              animate={{ opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="pointer-events-none fixed inset-0 z-[100] bg-white"
+            />
+          )}
+        </AnimatePresence>
+
         {/* GanOS Notification System */}
         <OsNotificationBannerContainer />
         <OsNotificationCenter />
@@ -2561,7 +2807,43 @@ export function OsShell({
         />
 
         {/* Global background audio element for Music / Dynamic Island */}
-        <audio ref={audioRef} preload="auto" className="hidden" />
+        <audio
+          ref={audioRef}
+          preload="auto"
+          className="hidden"
+          onPlay={() => setIsPlayingTrack(true)}
+          onPause={() => setIsPlayingTrack(false)}
+          onTimeUpdate={(e) => {
+            setTrackPlaybackSec(Math.floor(e.currentTarget.currentTime));
+            const dur = e.currentTarget.duration;
+            if (dur && !isNaN(dur) && dur > 0) {
+              setTrackDurationSec(Math.floor(dur));
+            }
+          }}
+          onLoadedMetadata={(e) => {
+            const dur = e.currentTarget.duration;
+            if (dur && !isNaN(dur) && dur > 0) {
+              setTrackDurationSec(Math.floor(dur));
+            }
+          }}
+          onEnded={() => {
+            setTrackPlaybackSec(0);
+            if (isLooping) {
+              const audio = audioRef.current;
+              if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(() => {});
+              }
+            } else {
+              nextTrack();
+            }
+          }}
+          onError={(e) => {
+            console.warn('Audio playback error:', e);
+            setIsPlayingTrack(false);
+            setTrackPlaybackSec(0);
+          }}
+        />
 
         <style>{`
           html:has(.gh-os),body:has(.gh-os){height:100%;overflow:hidden;overscroll-behavior:none}

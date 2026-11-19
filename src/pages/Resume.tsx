@@ -1,5 +1,6 @@
 import { ArrowUpRight, ExternalLink, Printer } from 'lucide-react';
 import { Toolbar } from '@/components/os/OsWindowChrome';
+import { useOsNotification } from '@/components/os/OsNotificationContext';
 import { featuredProjects } from '@/data/featuredProjects';
 import {
   certifications,
@@ -14,6 +15,19 @@ const sectionTitle =
   'border-b border-black/10 pb-2 font-mono text-[11px] font-semibold uppercase tracking-[.16em] text-[#0a84ff] dark:border-white/10';
 
 const Resume = () => {
+  const { pushNotification } = useOsNotification();
+
+  const handlePrint = () => {
+    pushNotification({
+      appId: 'resume',
+      appName: 'Preview',
+      appIcon: '/macos-icons/pdf.png',
+      title: 'CV.pdf',
+      body: 'Preparing document for print / PDF export dialog.',
+    });
+    window.print();
+  };
+
   usePageMeta({
     title: 'Resume | Ghufron Ainun Najib — Software Developer',
     description:
@@ -44,7 +58,7 @@ const Resume = () => {
         trailing={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={handlePrint}
             aria-label="Print resume or save as PDF"
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[#0a84ff] px-3 text-[12.5px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff]"
           >
@@ -102,7 +116,7 @@ const Resume = () => {
             </div>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               aria-label="Print resume or save as PDF"
               className="hidden shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-black/10 bg-[#f7f7f8] px-3 py-2 text-sm font-medium text-black/80 transition hover:border-[#0a84ff] hover:text-[#0a84ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff] sm:inline-flex dark:border-white/10 dark:bg-white/[0.06] dark:text-white/85 print:hidden"
             >

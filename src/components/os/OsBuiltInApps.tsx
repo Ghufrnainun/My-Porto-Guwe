@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Compass,
   Copy,
   ExternalLink,
   Globe,
@@ -80,15 +81,15 @@ const SAFARI_BOOKMARKS = [
     category: 'tracks',
   },
   {
-    id: 'yt-attitude',
-    label: 'ATTITUDE — aespa',
-    url: 'https://www.youtube.com/embed/4xDzrJKXOOY?autoplay=1',
+    id: 'yt-supernova',
+    label: 'Supernova — aespa',
+    url: 'https://www.youtube.com/embed/phuiiNCxRMg?autoplay=1',
     category: 'tracks',
   },
   {
-    id: 'yt-flowers',
-    label: 'Flowers — aespa',
-    url: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1',
+    id: 'yt-whiplash',
+    label: 'Whiplash — aespa',
+    url: 'https://www.youtube.com/embed/jWQx2f-CErU?autoplay=1',
     category: 'tracks',
   },
   {
@@ -207,14 +208,21 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
     [tabs, activeTabId],
   );
 
-  // Sync when initialUrl prop updates from external desktop actions (e.g. music widget)
+  const activeTabIdRef = useRef(activeTabId);
+  activeTabIdRef.current = activeTabId;
+  const prevInitialUrlRef = useRef(initialUrl);
+  const tabSeqRef = useRef(2);
+
+  // Sync only when initialUrl prop actually updates from external desktop actions (e.g. music widget)
   useEffect(() => {
-    if (!initialUrl) return;
+    if (!initialUrl || initialUrl === prevInitialUrlRef.current) return;
+    prevInitialUrlRef.current = initialUrl;
+    const targetTabId = activeTabIdRef.current;
     setTabs((prev) => {
-      const current = prev.find((t) => t.id === activeTabId);
+      const current = prev.find((t) => t.id === targetTabId);
       if (current && current.url === initialUrl) return prev;
       return prev.map((t) => {
-        if (t.id !== activeTabId) return t;
+        if (t.id !== targetTabId) return t;
         const nextHist = [...t.history.slice(0, t.historyIndex + 1), initialUrl];
         return {
           ...t,
@@ -225,7 +233,8 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
         };
       });
     });
-  }, [initialUrl, activeTabId]);
+    setShowOverview(false);
+  }, [initialUrl]);
 
   const displayUrl = useMemo(
     () => formatDisplayUrl(activeTab.url),
@@ -350,7 +359,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   };
 
   const handleNewTab = (newUrl: string = 'safari:start') => {
-    const id = `tab-${Date.now()}`;
+    const id = `tab-${tabSeqRef.current++}`;
     setTabs((prev) => [
       ...prev,
       {
@@ -363,31 +372,34 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
     ]);
     setActiveTabId(id);
     setShowOverview(false);
+    setIsEditingAddress(false);
   };
 
   const handleCloseTab = (tabId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setTabs((prev) => {
-      if (prev.length <= 1) {
-        return [
-          {
-            id: `tab-${Date.now()}`,
-            title: 'Start Page',
-            url: 'safari:start',
-            history: ['safari:start'],
-            historyIndex: 0,
-          },
-        ];
-      }
-      const remaining = prev.filter((t) => t.id !== tabId);
-      if (activeTabId === tabId) {
-        const idx = prev.findIndex((t) => t.id === tabId);
-        const nextActive =
-          remaining[Math.max(0, idx - 1)]?.id ?? remaining[0].id;
-        setActiveTabId(nextActive);
-      }
-      return remaining;
-    });
+    if (tabs.length <= 1) {
+      const freshId = `tab-${tabSeqRef.current++}`;
+      setTabs([
+        {
+          id: freshId,
+          title: 'Start Page',
+          url: 'safari:start',
+          history: ['safari:start'],
+          historyIndex: 0,
+        },
+      ]);
+      setActiveTabId(freshId);
+      setIsEditingAddress(false);
+      return;
+    }
+    const remaining = tabs.filter((t) => t.id !== tabId);
+    if (activeTabId === tabId) {
+      const idx = tabs.findIndex((t) => t.id === tabId);
+      const nextActive =
+        remaining[Math.max(0, idx - 1)]?.id ?? remaining[0].id;
+      setActiveTabId(nextActive);
+    }
+    setTabs(remaining);
   };
 
   return (
@@ -1325,6 +1337,7 @@ interface TerminalEntry {
 
 export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { openApp } = useOsNote();
+  const { pushNotification } = useOsNotification();
   const [entries, setEntries] = useState<TerminalEntry[]>([]);
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>([]);
@@ -1385,6 +1398,8 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <span>how to reach me</span>
           <span className="text-cyan-400">open &lt;app&gt;</span>
           <span>open an app (projects, about, cv, notes, mail, settings)</span>
+          <span className="text-cyan-400">notify &lt;msg&gt;</span>
+          <span>send a GanOS system notification</span>
           <span className="text-cyan-400">ls / cat</span>
           <span>list or inspect files</span>
           <span className="text-cyan-400">neofetch</span>
@@ -1452,6 +1467,17 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </a>
         </div>
       );
+    }
+    if (name === 'notify' || name === 'alert') {
+      const messageText = args.join(' ') || 'Hello from GanOS Terminal!';
+      pushNotification({
+        appId: 'terminal',
+        appName: 'Terminal',
+        appIcon: '/macos-icons/terminal.png',
+        title: 'Terminal Notification',
+        body: messageText,
+      });
+      return `Notification sent to GanOS Notification Center: "${messageText}"`;
     }
     if (name === 'open') {
       const targetKey = (args[0] ?? '').toLowerCase();

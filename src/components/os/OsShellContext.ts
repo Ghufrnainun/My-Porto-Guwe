@@ -207,9 +207,18 @@ export type NoteContext = {
   setIsPlayingTrack: Dispatch<SetStateAction<boolean>>;
   trackPlaybackSec: number;
   setTrackPlaybackSec: Dispatch<SetStateAction<number>>;
+  trackDurationSec: number;
+  volume: number;
+  isMuted: boolean;
+  setVolume: (vol: number) => void;
+  toggleMute: () => void;
+  seekTrack: (sec: number) => void;
+  isLooping: boolean;
+  toggleLoop: () => void;
   togglePlayTrack: (track?: ListeningTrack) => void;
   nextTrack: () => void;
   prevTrack: () => void;
+  shuffleTrack: () => void;
   audioRef: RefObject<HTMLAudioElement | null>;
 };
 

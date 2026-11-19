@@ -1,11 +1,11 @@
 {
-  "name": "Ghufron Ainun Najib — Full-Stack Developer",
-  "short_name": "Ghufron",
-  "description": "Full-stack developer in Semarang, Indonesia. TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL — web products built end to end.",
+  "name": "Ghufron Ainun Najib — GanOS Portfolio",
+  "short_name": "GanOS",
+  "description": "Full-stack & mobile developer in Semarang, Indonesia. Explore GanOS — an interactive desktop portfolio with TypeScript, React, Flutter & Cloudflare projects.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#070709",
+  "theme_color": "#070709",
   "icons": [
     {
       "src": "/favicon.svg",

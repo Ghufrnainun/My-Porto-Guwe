@@ -18,6 +18,7 @@ export const DynamicIsland: React.FC = () => {
     activeTrack,
     isPlayingTrack,
     trackPlaybackSec,
+    trackDurationSec,
     togglePlayTrack,
     nextTrack,
     prevTrack,
@@ -48,7 +49,10 @@ export const DynamicIsland: React.FC = () => {
     return `${mins}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const progressPercent = Math.min(100, (trackPlaybackSec / 30) * 100);
+  const progressPercent = Math.min(
+    100,
+    (trackPlaybackSec / (trackDurationSec || 30)) * 100
+  );
 
   return (
     <div
@@ -154,7 +158,9 @@ export const DynamicIsland: React.FC = () => {
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
-                    <span className="tabular-nums">0:30</span>
+                    <span className="tabular-nums">
+                      {formatSec(trackDurationSec || 30)}
+                    </span>
                   </div>
                 </div>
               </div>

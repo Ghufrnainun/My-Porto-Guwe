@@ -13,7 +13,7 @@ import {
 
 export default function About() {
   usePageMeta({
-    title: `About ${profile.name} — Contacts`,
+    title: `About | ${profile.name}`,
     description: `${profile.name} is a semester ${profile.semester} Computer Engineering student at ${education.university} and full-stack developer based in ${profile.location}.`,
     canonicalPath: '/about',
     jsonLd: {

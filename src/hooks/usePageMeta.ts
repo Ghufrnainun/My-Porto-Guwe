@@ -23,6 +23,15 @@ export interface PageMeta {
   noindex?: boolean;
 }
 
+function inferImageMimeType(url: string): string | null {
+  const clean = url.split(/[?#]/, 1)[0].toLowerCase();
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.jpg') || clean.endsWith('.jpeg')) return 'image/jpeg';
+  if (clean.includes('images.unsplash.com/')) return 'image/jpeg';
+  return null;
+}
+
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
   if (!el) {
@@ -134,9 +143,17 @@ export function usePageMeta(meta: PageMeta) {
     if (description) upsertMeta('property', 'og:description', description);
     else removeMeta('property', 'og:description');
     upsertMeta('property', 'og:image', image);
-    upsertMeta('property', 'og:image:width', '1200');
-    upsertMeta('property', 'og:image:height', '630');
-    upsertMeta('property', 'og:image:type', 'image/png');
+    const isDefaultOg = image === DEFAULT_OG_IMAGE;
+    if (isDefaultOg) {
+      upsertMeta('property', 'og:image:width', '1200');
+      upsertMeta('property', 'og:image:height', '630');
+    } else {
+      removeMeta('property', 'og:image:width');
+      removeMeta('property', 'og:image:height');
+    }
+    const mimeType = inferImageMimeType(image);
+    if (mimeType) upsertMeta('property', 'og:image:type', mimeType);
+    else removeMeta('property', 'og:image:type');
     upsertMeta('property', 'og:image:alt', meta.title);
     upsertMeta('property', 'og:site_name', SITE_NAME);
 

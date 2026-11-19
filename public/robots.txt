@@ -15,9 +15,10 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-# Test, preview, and private routes — keep out of the index
+# Test, preview, legacy, and private routes — keep out of the index
 Disallow: /admin
 Disallow: /auth
+Disallow: /old
 Disallow: /test-animate
 Disallow: /preview-hero
 Disallow: /preview-preloader-boot

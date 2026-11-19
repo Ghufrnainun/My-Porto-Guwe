@@ -1,6 +1,6 @@
 # Ghufron Ainun Najib — Full Profile
 
-> Full-stack developer in Semarang, Indonesia. Web products built end to end — TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL.
+> Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio (GanOS) — web and mobile products built end to end with TypeScript, React, Next.js, Cloudflare Workers, Flutter, Laravel, and PostgreSQL.
 
 ## About
 
@@ -11,6 +11,11 @@ Ghufron Ainun Najib is a full-stack developer based in Semarang, Indonesia. He s
 Backends that hold up, frontends that feel right. Comfortable owning a product end to end: architecture, APIs, edge deployment, and the tactile interfaces that ship them. Solo on most projects, team lead when the project needs one.
 
 ## Projects
+
+### PB UNDIP Platform & Scoreboard (2026, solo)
+Official athletic club portal and real-time tournament scoreboard suite built for Persatuan Bulutangkis Universitas Diponegoro. Engineered reactive court scoring with Convex (rally-point rules, dynamic service tracking, deuce capping, state recovery), multi-role PIN authentication with temporary marshal codes, athlete registration with presigned Cloudflare R2 uploads and XLSX export, plus broadcast-grade videotron displays.
+- Stack: Next.js 16, React 19, TypeScript, Convex, Cloudflare R2, Tailwind CSS, Framer Motion
+- Live: https://pbundip.web.id/
 
 ### TempeMail (2026, solo)
 Disposable email service running entirely on Cloudflare Workers. Multi-domain with auto-provisioning across 20+ domains, no VPS, no SMTP server. REST API, HMAC-signed webhook delivery, an MCP server for AI agents, and a dark-theme vanilla JS frontend with inbox search and API key management. 110 tests passing.

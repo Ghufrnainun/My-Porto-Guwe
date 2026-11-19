@@ -1,8 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { BellOff, Moon, Sparkles, Trash2, X } from 'lucide-react';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
-import type { OsNotification } from '@/types/os-notification';
+import { OsShellContext, type OsAppId } from '@/components/os/OsShellContext';
+import { executeNotificationAction } from '@/lib/notificationActions';
+import type {
+  OsNotification,
+  OsNotificationAppId,
+  PushNotificationInput,
+} from '@/types/os-notification';
 
 const formatNotificationTime = (date: Date): string => {
   const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -10,6 +16,119 @@ const formatNotificationTime = (date: Date): string => {
   if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
+interface SampleAlert {
+  appId: OsNotificationAppId;
+  appName: string;
+  appIcon: string;
+  title: string;
+  body: string;
+  actionLabel?: string;
+  secondaryActionLabel?: string;
+  onAction?: () => void;
+  onSecondaryAction?: () => void;
+}
+
+const createSampleNotifications = (
+  openApp?: (id: OsAppId, payload?: string) => void,
+  pushNotification?: (input: PushNotificationInput) => string
+): readonly SampleAlert[] => [
+  {
+    appId: 'safari',
+    appName: 'GitHub',
+    appIcon: '/macos-icons/safari.png',
+    title: 'Pull Request #42 Approved',
+    body: 'ghufrnainun approved "feat(os): rich notification center with spring animations".',
+    actionLabel: 'View PR',
+    onAction: () => {
+      window.open(
+        'https://github.com/Ghufrnainun/My-Porto-Guwe/pulls',
+        '_blank',
+        'noopener,noreferrer'
+      );
+    },
+  },
+  {
+    appId: 'mail',
+    appName: 'Mail',
+    appIcon: '/macos-icons/mail.png',
+    title: 'Tech Lead @ Studio',
+    body: 'Loved your interactive GanOS portfolio. Are you open for a frontend collaboration?',
+    actionLabel: 'Reply',
+    onAction: () => {
+      if (openApp) {
+        openApp('mail');
+      } else {
+        window.location.href = 'mailto:ghufrnainunajib@gmail.com';
+      }
+    },
+  },
+  {
+    appId: 'settings',
+    appName: 'AirDrop',
+    appIcon: '/macos-icons/settings.png',
+    title: 'AirDrop from iPhone 16 Pro',
+    body: 'Would you like to receive "Design_System_v2_Specs.fig"?',
+    actionLabel: 'Accept',
+    secondaryActionLabel: 'Decline',
+    onAction: () => {
+      pushNotification?.({
+        appId: 'projects',
+        appName: 'Finder',
+        appIcon: '/macos-icons/folder.png',
+        title: 'Transfer Complete',
+        body: 'Design_System_v2_Specs.fig saved to Downloads folder.',
+        actionLabel: 'Show in Finder',
+        onAction: () => openApp?.('projects'),
+      });
+      openApp?.('projects');
+    },
+  },
+  {
+    appId: 'safari',
+    appName: 'Calendar',
+    appIcon: '/macos-icons/safari.png',
+    title: 'Team Sync in 15 mins',
+    body: 'Architecture Review: Next.js SSR vs Vite Static Deployment.',
+    actionLabel: 'Join Meet',
+    onAction: () => {
+      window.open('https://meet.google.com', '_blank', 'noopener,noreferrer');
+    },
+  },
+  {
+    appId: 'terminal',
+    appName: 'Terminal',
+    appIcon: '/macos-icons/terminal.png',
+    title: 'Build Succeeded',
+    body: 'Production bundle generated in 1.28s with zero warnings.',
+    actionLabel: 'View Log',
+    onAction: () => {
+      openApp?.('terminal');
+    },
+  },
+  {
+    appId: 'settings',
+    appName: 'GanOS System',
+    appIcon: '/macos-icons/settings.png',
+    title: 'Software Update Ready',
+    body: 'GanOS 15.2 includes performance enhancements and new dynamic widgets.',
+    actionLabel: 'Update Now',
+    onAction: () => {
+      openApp?.('settings', 'about');
+    },
+  },
+  {
+    appId: 'photos',
+    appName: 'Photos',
+    appIcon: '/macos-icons/photos.png',
+    title: 'Memories: 1 Year Ago',
+    body: 'Look back at your first React open-source contribution milestone.',
+    actionLabel: 'View',
+    onAction: () => {
+      openApp?.('projects');
+    },
+  },
+];
 
 interface NotificationCardProps {
   notification: OsNotification;
@@ -79,9 +198,16 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
       {/* Action button if defined */}
       {notification.actionLabel && (
         <div className="mt-2 flex justify-end">
-          <span className="rounded-full bg-[#0a84ff]/15 px-2.5 py-0.5 text-[10.5px] font-medium text-[#0a84ff] dark:bg-[#0a84ff]/25 dark:text-[#64b5f6]">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect();
+            }}
+            className="rounded-full bg-[#0a84ff]/15 px-2.5 py-0.5 text-[10.5px] font-medium text-[#0a84ff] transition-all hover:bg-[#0a84ff] hover:text-white dark:bg-[#0a84ff]/25 dark:text-[#64b5f6] dark:hover:bg-[#0a84ff] dark:hover:text-white"
+          >
             {notification.actionLabel}
-          </span>
+          </button>
         </div>
       )}
     </div>
@@ -100,8 +226,11 @@ export const OsNotificationCenter: React.FC = () => {
     pushNotification,
   } = useOsNotification();
 
+  const shellContext = useContext(OsShellContext);
+  const openApp = shellContext?.openApp;
   const reduceMotion = useReducedMotion();
   const drawerRef = useRef<HTMLDivElement>(null);
+  const sampleIndexRef = useRef(0);
 
   // Close on Escape or click outside
   useEffect(() => {
@@ -134,16 +263,16 @@ export const OsNotificationCenter: React.FC = () => {
         <motion.aside
           ref={drawerRef}
           aria-label="Notification Center"
-          initial={
-            reduceMotion
-              ? { opacity: 0 }
-              : { opacity: 0, x: 360 }
-          }
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 360 }}
           animate={{ opacity: 1, x: 0 }}
           exit={
             reduceMotion
               ? { opacity: 0 }
-              : { opacity: 0, x: 360, transition: { duration: 0.2, ease: 'easeIn' } }
+              : {
+                  opacity: 0,
+                  x: 360,
+                  transition: { duration: 0.2, ease: 'easeIn' },
+                }
           }
           transition={{
             type: 'spring',
@@ -172,16 +301,26 @@ export const OsNotificationCenter: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
+                  const sampleList = createSampleNotifications(
+                    openApp,
+                    pushNotification
+                  );
+                  const sample =
+                    sampleList[sampleIndexRef.current % sampleList.length];
+                  sampleIndexRef.current += 1;
                   pushNotification({
-                    appId: 'settings',
-                    appName: 'GanOS System',
-                    appIcon: '/macos-icons/settings.png',
-                    title: 'System Diagnostic Test',
-                    body: 'Notification system, spring physics, and audio chimes are operating at 100% capacity.',
-                    actionLabel: 'OK',
+                    appId: sample.appId,
+                    appName: sample.appName,
+                    appIcon: sample.appIcon,
+                    title: sample.title,
+                    body: sample.body,
+                    actionLabel: sample.actionLabel,
+                    secondaryActionLabel: sample.secondaryActionLabel,
+                    onAction: sample.onAction,
+                    onSecondaryAction: sample.onSecondaryAction,
                   });
                 }}
-                title="Send a sample notification"
+                title="Send a sample notification (click multiple times to cycle apps)"
                 className="flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-[#0a84ff] transition-colors hover:bg-[#0a84ff]/10 dark:text-[#64b5f6]"
               >
                 <Sparkles size={11} />
@@ -223,7 +362,7 @@ export const OsNotificationCenter: React.FC = () => {
                   onRemove={() => removeNotification(item.id)}
                   onSelect={() => {
                     markAsRead(item.id);
-                    item.onAction?.();
+                    executeNotificationAction(item, openApp);
                   }}
                 />
               ))
