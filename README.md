@@ -168,6 +168,12 @@ npm run build
 
 ---
 
+## Credits
+
+GanOS started from [macOS Portfolio](https://github.com/R0shish/macos-styled-portfolio) by Roshish Shrestha ([macos.rosh.sh](https://macos.rosh.sh/)), a template made to be cloned and made your own. From there it was rebuilt on Vite + React and extended with the 3D town, desktop widgets, video wallpapers, the mobile home screen, prerendered SEO and the Supabase writing log.
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

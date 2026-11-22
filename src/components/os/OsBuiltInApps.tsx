@@ -2046,6 +2046,16 @@ export const SystemSettingsApp: React.FC = () => {
                     Open /old in Safari
                   </a>
                 </SettingsRow>
+                <SettingsRow label="Based on">
+                  <a
+                    href="https://github.com/R0shish/macos-styled-portfolio"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#0a84ff] hover:underline"
+                  >
+                    macOS Portfolio by Roshish Shrestha
+                  </a>
+                </SettingsRow>
                 <SettingsRow label="Source">
                   <a
                     href={profile.github}
