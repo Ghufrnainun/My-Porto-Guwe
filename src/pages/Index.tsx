@@ -160,7 +160,7 @@ const WIDGET_CATALOG: SonomaWidgetSpec[] = [
     minSize: { width: 164, height: 164 },
     maxSize: { width: 320, height: 240 },
     defaultPos: { x: 424, y: 18 },
-    defaultEnabled: false,
+    defaultEnabled: true,
   },
   {
     id: 'music',
@@ -180,7 +180,7 @@ const WIDGET_CATALOG: SonomaWidgetSpec[] = [
     minSize: { width: 170, height: 176 },
     maxSize: { width: 320, height: 260 },
     defaultPos: { x: 622, y: 18 },
-    defaultEnabled: false,
+    defaultEnabled: true,
   },
   {
     id: 'shipped',
@@ -190,7 +190,7 @@ const WIDGET_CATALOG: SonomaWidgetSpec[] = [
     minSize: { width: 280, height: 152 },
     maxSize: { width: 520, height: 260 },
     defaultPos: { x: 18, y: 430 },
-    defaultEnabled: false,
+    defaultEnabled: true,
   },
   {
     id: 'memo',
@@ -200,11 +200,11 @@ const WIDGET_CATALOG: SonomaWidgetSpec[] = [
     minSize: { width: 250, height: 126 },
     maxSize: { width: 540, height: 280 },
     defaultPos: { x: 424, y: 226 },
-    defaultEnabled: false,
+    defaultEnabled: true,
   },
 ];
 
-const SONOMA_WIDGET_STORAGE_KEY = 'ganos-sonoma-widgets-v4';
+const SONOMA_WIDGET_STORAGE_KEY = 'ganos-sonoma-widgets-v5';
 const DEFAULT_ENABLED_WIDGETS: SonomaWidgetId[] = WIDGET_CATALOG.filter(
   (w) => w.defaultEnabled
 ).map((w) => w.id);
@@ -355,6 +355,35 @@ export default function Index() {
     shuffleTrack,
   } = useOsNote();
   const reduceMotion = useReducedMotion();
+
+  // First-visit hint: shown once per browser, gone at the first click or key press
+  const [showHint, setShowHint] = useState(false);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem('ganos-hint-seen')) return;
+    } catch {
+      return;
+    }
+    const dismiss = () => {
+      setShowHint(false);
+      try {
+        window.localStorage.setItem('ganos-hint-seen', '1');
+      } catch {
+        // private mode: the hint just comes back next visit
+      }
+    };
+    // wait out the boot screen before showing it
+    const timer = window.setTimeout(() => {
+      setShowHint(true);
+      window.addEventListener('pointerdown', dismiss, { once: true });
+      window.addEventListener('keydown', dismiss, { once: true });
+    }, 2400);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', dismiss);
+      window.removeEventListener('keydown', dismiss);
+    };
+  }, []);
 
   const { pushNotification } = useOsNotification();
 
@@ -1287,6 +1316,28 @@ export default function Index() {
           style={marqueeStyle}
         />
       )}
+
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            role="status"
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="pointer-events-none absolute inset-x-4 bottom-[76px] z-30 mx-auto w-fit max-w-full rounded-full bg-black/60 px-4 py-2 text-center text-[13px] font-medium text-white shadow-lg backdrop-blur-md sm:bottom-[92px]"
+          >
+            <span className="sm:hidden">
+              {language === 'id' ? 'Ketuk app buat buka' : 'Tap an app to open it'}
+            </span>
+            <span className="hidden sm:inline">
+              {language === 'id'
+                ? 'Klik dua kali ikon atau pilih app di dock · ⌘K buat cari'
+                : 'Double-click an icon or pick an app from the dock · ⌘K to search'}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile OS Home Screen (iOS/iPadOS widget stack above Mobile 3D Dock) */}
       <div className="block h-full w-full overflow-y-auto px-3.5 pb-28 pt-3 sm:hidden">
