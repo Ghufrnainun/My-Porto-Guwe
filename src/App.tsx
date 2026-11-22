@@ -41,6 +41,10 @@ const Resume = lazyWithRetry(() => import('./pages/Resume'), 'Resume');
 const TestAnimate = lazyWithRetry(() => import('./pages/TestAnimate'), 'TestAnimate');
 const HeroPreview = lazyWithRetry(() => import('./pages/HeroPreview'), 'HeroPreview');
 const OldHome = lazyWithRetry(() => import('./pages/OldHome'), 'OldHome');
+const Town = lazyWithRetry(() => import('./pages/Town'), 'Town');
+
+/** /town and /town/<slug>: the 3D town, shown on its own page and inside the GanOS "Town" window. */
+const TOWN_PATH = /^\/town(\/[^/]+)?\/?$/;
 
 const queryClient = new QueryClient();
 
@@ -154,6 +158,25 @@ const AnimatedAppContent = () => {
   );
 };
 
+const TownOrOs = () => {
+  const { pathname } = useLocation();
+  if (!TOWN_PATH.test(pathname)) {
+    return (
+      <AppPreloader>
+        <AnimatedAppContent />
+      </AppPreloader>
+    );
+  }
+  return (
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/town" element={<Town />} />
+        <Route path="/town/:slug" element={<Town />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
 const App = () => {
   useDelight();
   useAnalytics();
@@ -170,9 +193,7 @@ const App = () => {
                   v7_relativeSplatPath: true,
                 }}
               >
-                <AppPreloader>
-                  <AnimatedAppContent />
-                </AppPreloader>
+                <TownOrOs />
               </BrowserRouter>
             </OsNotificationProvider>
           </TooltipProvider>

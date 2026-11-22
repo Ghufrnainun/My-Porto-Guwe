@@ -53,11 +53,11 @@ import {
 } from '@/lib/desktop-layout';
 
 interface DesktopIconConfig {
-  id: 'projects' | 'cv' | 'about' | 'blog';
+  id: 'projects' | 'cv' | 'about' | 'blog' | 'town';
   label: string;
   icon: string;
   defaultIndex: number;
-  appId: 'projects' | 'resume' | 'about' | 'blog';
+  appId: 'projects' | 'resume' | 'about' | 'blog' | 'town';
 }
 
 const DESKTOP_ICONS: DesktopIconConfig[] = [
@@ -88,6 +88,13 @@ const DESKTOP_ICONS: DesktopIconConfig[] = [
     icon: '/macos-icons/folder-documents.png',
     defaultIndex: 3,
     appId: 'blog',
+  },
+  {
+    id: 'town',
+    label: 'Town',
+    icon: '/macos-icons/town.svg',
+    defaultIndex: 4,
+    appId: 'town',
   },
 ];
 
@@ -1355,7 +1362,7 @@ export default function Index() {
           </div>
 
           {/* Quick Shortcuts Row (CV, Blog, Terminal, Notes) */}
-          <div className="grid grid-cols-4 gap-2 pt-1">
+          <div className="grid grid-cols-5 gap-2 pt-1">
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={`mobile-${icon.id}`}

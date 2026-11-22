@@ -47,7 +47,14 @@ const projectsSource = readFileSync(
 const projectSlugs = [...new Set(
   [...projectsSource.matchAll(/slug:\s*'([^']+)'/g)].map((m) => m[1])
 )];
-const routes = [...staticRoutes, ...projectSlugs.map((s) => `/projects/${s}`)];
+// /town/<slug> is rendered as well, so a shared town link opens on its own page and not on the desktop markup;
+// its canonical points at /projects/<slug>, so it stays out of the sitemap.
+const routes = [
+  ...staticRoutes,
+  '/town',
+  ...projectSlugs.map((s) => `/projects/${s}`),
+  ...projectSlugs.map((s) => `/town/${s}`),
+];
 
 const escapeHtml = (s) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -145,7 +152,10 @@ try {
     const withHead = renderHead(template, meta, routePath);
     // Replace the entire #root container (and any dev preloader/noscript stub)
     // with the clean server-rendered markup right before </body>.
-    const final = withHead.replace(
+    const page = routePath.startsWith('/town')
+      ? withHead.replace(/<div\s+id="boot-splash"[\s\S]*?<!-- \/boot-splash -->/, '')
+      : withHead;
+    const final = page.replace(
       /<div id="root">[\s\S]*?(?=\s*<\/body>)/,
       `<div id="root">\n${html}\n    </div>`
     );
@@ -153,7 +163,9 @@ try {
     const outPath =
       routePath === '/'
         ? resolve(distDir, 'index.html')
-        : resolve(distDir, routePath.slice(1), 'index.html');
+        : // projects.html, not projects/index.html: Cloudflare Pages serves it at /projects, the address the canonical and
+          // sitemap use, where a folder would be redirected to /projects/
+          resolve(distDir, `${routePath.slice(1)}.html`);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, final, 'utf8');
     count += 1;

@@ -279,6 +279,13 @@ const APP_SPECS: Record<
     size: { width: 560, height: 460 },
     minSize: { width: 380, height: 320 },
   },
+  town: {
+    name: 'Town',
+    title: 'Ghufron Town',
+    icon: '/macos-icons/town.svg',
+    size: { width: 1180, height: 760 },
+    minSize: { width: 640, height: 440 },
+  },
   settings: {
     name: 'System Settings',
     title: 'System Settings',
@@ -810,6 +817,11 @@ export function OsShell({
       if (id === 'safari' && payload) {
         setSafariPayload(payload);
       }
+      // a phone gets the town as a full page: a game in a window that is already the whole screen only adds chrome
+      if (id === 'town' && window.innerWidth < 768) {
+        window.location.assign('/town');
+        return;
+      }
 
       const alreadyOpen = windowsRef.current.some((w) => w.id === id);
       if (!alreadyOpen) {
@@ -849,7 +861,8 @@ export function OsShell({
             path: targetPath,
             zIndex: nextZ,
             isMinimized: false,
-            isMaximized: false,
+            // the town is a game: it starts as big as the desktop allows
+            isMaximized: id === 'town',
             frame: computeDefaultFrame(id, current.length),
           },
         ];
@@ -1019,6 +1032,7 @@ export function OsShell({
     return (
       [
         'projects',
+        'town',
         'safari',
         'blog',
         'about',
@@ -1603,6 +1617,7 @@ export function OsShell({
   // GanOS Dock groups on 3D Frosted Glass Shelf (original icons & item set for OS-wide cohesion)
   const dockOrder: OsAppId[] = [
     'projects',
+    'town',
     'safari',
     'about',
     'blog',
@@ -2107,6 +2122,14 @@ export function OsShell({
                           <TerminalApp onClose={() => closeWindow('terminal')} />
                         ) : win.id === 'mail' ? (
                           <MailApp />
+                        ) : win.id === 'town' ? (
+                          // its own page in a frame: the town scrolls the window and fills the screen, which a GanOS window body cannot give it
+                          <iframe
+                            src="/town"
+                            title="Ghufron Town: a 3D tour of the projects"
+                            allow="fullscreen"
+                            className="block h-full w-full border-0 bg-[#1f3bff]"
+                          />
                         ) : win.path && renderWindow ? (
                           <div className="h-full w-full overflow-hidden">
                             {renderWindow(win.path)}

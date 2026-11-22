@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Anton&family=Instrument+Serif:ital@1&family=Schibsted+Grotesk:wght@400;600&display=swap"
     />
 
     <!-- Primary Meta Tags -->
@@ -401,11 +401,14 @@
         <span class="boot-label">GanOS</span>
       </div>
     </div>
+    <!-- /boot-splash -->
     <script>
       try {
         if (
           sessionStorage.getItem('portfolio_booted') === 'true' ||
-          location.pathname === '/preview-preloader-boot'
+          location.pathname === '/preview-preloader-boot' ||
+          // the town (/town, /town/<slug>) is its own page with its own loading, often inside a GanOS window
+          /^\/town(\/|$)/.test(location.pathname)
         ) {
           var s = document.getElementById('boot-splash');
           if (s) s.remove();

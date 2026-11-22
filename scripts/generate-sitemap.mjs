@@ -23,6 +23,8 @@ const staticRoutes = [
   { path: '/projects', changefreq: 'monthly', priority: '0.8' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   { path: '/resume', changefreq: 'monthly', priority: '0.6' },
+  // the 3D town. /town/<slug> is left out: those canonicalise to /projects/<slug>
+  { path: '/town', changefreq: 'monthly', priority: '0.5' },
 ];
 
 // Pull project slugs from source so case-study pages stay in sync automatically.

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePostBySlug } from '@/hooks/useBlogPosts';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { sanitizeHtml } from '@/lib/sanitizeHtml';
 
 export default function BlogPost() {
   const { id: slug } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ export default function BlogPost() {
       : 'Blog Post | Ghufron Ainun Najib',
     description:
       publishedPost?.excerpt ??
-      publishedPost?.content.slice(0, 155) ??
+      publishedPost?.content.replace(/<[^>]+>/g, ' ').replace(/s+/g, ' ').trim().slice(0, 155) ??
       'Read the latest writing from Ghufron Ainun Najib.',
     canonicalPath: slug ? `/blog/${slug}` : '/blog',
     ogType: 'article',
@@ -131,53 +132,6 @@ export default function BlogPost() {
     );
   }
 
-  // Simple markdown-like rendering
-  const renderContent = (content: string) => {
-    return content.split('\n\n').map((paragraph, i) => {
-      if (paragraph.startsWith('## ')) {
-        return (
-          <h2
-            key={i}
-            className="mb-4 mt-8 text-2xl font-bold text-black/90 dark:text-white"
-          >
-            {paragraph.replace('## ', '')}
-          </h2>
-        );
-      }
-      if (paragraph.startsWith('### ')) {
-        return (
-          <h3
-            key={i}
-            className="mb-3 mt-6 text-xl font-semibold text-black/90 dark:text-white"
-          >
-            {paragraph.replace('### ', '')}
-          </h3>
-        );
-      }
-      if (paragraph.startsWith('```')) {
-        const code = paragraph.replace(/```\w*\n?/g, '');
-        return (
-          <pre
-            key={i}
-            className="my-4 overflow-x-auto rounded-xl border border-black/10 bg-[#f7f7f8] p-4 dark:border-white/10 dark:bg-black/25"
-          >
-            <code className="font-mono text-sm text-black/85 dark:text-white/90">
-              {code}
-            </code>
-          </pre>
-        );
-      }
-      return (
-        <p
-          key={i}
-          className="mb-4 leading-relaxed text-black/70 dark:text-white/75"
-        >
-          {paragraph}
-        </p>
-      );
-    });
-  };
-
   return (
     <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
       <Toolbar hasControls leading={backLink} />
@@ -241,9 +195,10 @@ export default function BlogPost() {
             />
           )}
 
-          <div className="max-w-[68ch] text-base leading-7 [&_a]:text-[#0a84ff] [&_a]:underline-offset-4 [&_a:hover]:underline [&_code]:font-mono [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_p]:mb-5 [&_p]:text-base [&_p]:leading-7">
-            {renderContent(publishedPost.content)}
-          </div>
+          <div className="max-w-[68ch] text-base leading-7 [&_a]:text-[#0a84ff] [&_a]:underline-offset-4 [&_a:hover]:underline [&_code]:font-mono [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_p]:mb-5 [&_p]:text-base [&_p]:leading-7 [&_ul]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mb-5 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1.5 [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:bg-black/5 [&_pre]:p-4 [&_pre]:text-sm dark:[&_pre]:bg-black/25 [&_img]:my-6 [&_img]:max-w-full [&_img]:rounded-xl [&_hr]:my-8"
+            // the editor saves HTML; it is cleaned against an allowlist before it goes on the page
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(publishedPost.content) }}
+          />
         </article>
       </main>
     </div>
