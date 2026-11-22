@@ -28,7 +28,7 @@ export function ProfileWidget({
 
   if (isWide) {
     return (
-      <div className="relative flex h-full w-full overflow-hidden bg-[#141519]/[0.92] text-white backdrop-blur-2xl backdrop-saturate-150 select-none">
+      <div className="relative flex h-full w-full overflow-hidden bg-[#141519]/[0.95] text-white select-none">
         {/* Left: Full-height editorial portrait */}
         <div className="relative h-full w-[44%] shrink-0 overflow-hidden bg-[#1c1e24]">
           <img

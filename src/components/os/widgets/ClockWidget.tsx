@@ -217,9 +217,8 @@ export function ClockWidget({ now: externalNow, availability, size }: ClockWidge
       className={cn(
         'relative flex h-full w-full overflow-hidden select-none transition-colors duration-300',
         isDaytime
-          ? 'bg-[#f2f2f5]/[0.94] text-[#1d1d1f]'
-          : 'bg-[#1b1c20]/[0.94] text-[#f5f5f7]',
-        'backdrop-blur-2xl backdrop-saturate-150'
+          ? 'bg-[#f2f2f5]/[0.96] text-[#1d1d1f]'
+          : 'bg-[#1b1c20]/[0.96] text-[#f5f5f7]',
       )}
     >
       {/* Top specular highlight */}

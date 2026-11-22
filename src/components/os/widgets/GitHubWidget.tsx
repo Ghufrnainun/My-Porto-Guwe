@@ -69,7 +69,7 @@ export function GitHubWidget({
   const activeCount = range === '6m' ? stats.sixMonths : stats.oneYear;
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#0d1117]/[0.92] text-[#f0f6fc] backdrop-blur-2xl backdrop-saturate-150 select-none">
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#0d1117]/[0.95] text-[#f0f6fc] select-none">
       {/* Subtle atmospheric emerald corner sheen */}
       <div
         aria-hidden="true"

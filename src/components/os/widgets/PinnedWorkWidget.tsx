@@ -28,7 +28,7 @@ export function PinnedWorkWidget({
   const displayed = projects.slice(0, maxItems);
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#f7f7fa]/[0.88] text-[#14161b] backdrop-blur-2xl backdrop-saturate-150 select-none">
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#f7f7fa]/[0.94] text-[#14161b] select-none">
       {/* Delicate top glass highlight */}
       <div
         aria-hidden="true"

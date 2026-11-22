@@ -283,7 +283,8 @@ const APP_SPECS: Record<
     name: 'Town',
     title: 'Ghufron Town',
     icon: '/macos-icons/town.svg',
-    size: { width: 1180, height: 760 },
+    // a game window: room for the town's wide layout (900+), with desktop showing round it on a laptop
+    size: { width: 1040, height: 660 },
     minSize: { width: 640, height: 440 },
   },
   settings: {
@@ -652,6 +653,19 @@ export function OsShell({
     [wallpaperId],
   );
 
+  // the wallpaper just replaced stays on top for its 700 ms fade-out, then leaves the page. Set during render, so the
+  // outgoing layer goes from shown to fading in one commit and its opacity transition runs.
+  const [wallpaperFade, setWallpaperFade] = useState<{ shown: WallpaperId; fading: WallpaperId | null }>({
+    shown: wallpaperId,
+    fading: null,
+  });
+  if (wallpaperFade.shown !== wallpaperId) setWallpaperFade({ shown: wallpaperId, fading: wallpaperFade.shown });
+  useEffect(() => {
+    if (!wallpaperFade.fading) return;
+    const t = window.setTimeout(() => setWallpaperFade((s) => ({ ...s, fading: null })), 750);
+    return () => window.clearTimeout(t);
+  }, [wallpaperFade.fading]);
+
   const cycleWallpaper = useCallback(() => {
     setWallpaperId((current) => {
       const idx = WALLPAPERS.findIndex((item) => item.id === current);
@@ -861,8 +875,8 @@ export function OsShell({
             path: targetPath,
             zIndex: nextZ,
             isMinimized: false,
-            // the town is a game: it starts as big as the desktop allows
-            isMaximized: id === 'town',
+            // the town opens as a game window on the desktop; the green button makes it full
+            isMaximized: false,
             frame: computeDefaultFrame(id, current.length),
           },
         ];
@@ -1928,7 +1942,7 @@ export function OsShell({
       <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
         {/* Wallpaper */}
         <div aria-hidden="true" className="absolute inset-0 bg-black">
-          {WALLPAPERS.map((wallpaper) => (
+          {[activeWallpaper, ...WALLPAPERS.filter((w) => w.id === wallpaperFade.fading && w.id !== activeWallpaper.id)].map((wallpaper) => (
             <div
               key={wallpaper.id}
               className="absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none"
@@ -2033,7 +2047,12 @@ export function OsShell({
               >
                 <div
                   className={cn(
-                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/80 text-[13px] text-black/85 ring-[0.5px] ring-black/40 backdrop-blur-xl backdrop-saturate-150 dark:bg-[#3a3039]/75 dark:text-white/90',
+                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/80 text-[13px] text-black/85 ring-[0.5px] ring-black/40 dark:bg-[#3a3039]/75 dark:text-white/90',
+                    // the frosted glass is re-blurred whenever the window or what is under it changes: skip it while a
+                    // window is dragged or resized, when it fills the screen, and for the town, whose frame repaints every frame
+                    win.isMaximized || win.id === 'town' || isInteractingWindow
+                      ? 'bg-[#e8e6ea]/95 dark:bg-[#3a3039]/95'
+                      : 'backdrop-blur-xl backdrop-saturate-150',
                     'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
                     !win.isMaximized && 'rounded-[26px]',
                     isFocused

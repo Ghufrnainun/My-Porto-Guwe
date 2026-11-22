@@ -4,7 +4,8 @@ import { instance, type Instanced, type Models } from './models';
 
 /** Commit levels, paper to navy: reads on every district colour. */
 const LEVELS = [0xf3f1ea, 0xc9cdf5, 0x8d95e8, 0x4a54c9, 0x23275e];
-const COLUMNS = [-30, -26, -22, -18, 16, 20, 24];
+// 4.6 apart: a lane of about 3.3 between two blocks, room for the car (1.3 wide) to drive between them
+const COLUMNS = [-33.4, -28.8, -24.2, -19.6, 16, 20.6, 25.2];
 const ROW = 3.4;
 /** city_blocks.glb: whole buildings by commit level (see docs/town-models.md). */
 const VARIANTS = [
@@ -45,7 +46,7 @@ export function buildCity(kit: Kit, path: THREE.CatmullRomCurve3, commits: reado
     z: number;
     level: number;
     variant: number;
-    /** Uniform scale (the models are built for 1.35-1.75) and a height jitter of up to 10 %. */
+    /** Uniform scale (the models are 1 x 1 including their pavement) and a height jitter of up to 10 %. */
     w: number;
     h: number;
     /** Slot in its variant's instanced mesh. */
@@ -59,10 +60,10 @@ export function buildCity(kit: Kit, path: THREE.CatmullRomCurve3, commits: reado
     const variant = Math.floor(rnd() * VARIANTS[level].length);
     return {
       x: COLUMNS[k % 7] + (rnd() - 0.5) * 0.5,
-      z: 6 - Math.floor(k / 7) * ROW + (rnd() - 0.5) * 0.4,
+      z: 6 - Math.floor(k / 7) * ROW + (rnd() - 0.5) * 0.2,
       level,
       variant,
-      w: 1.4 + rnd() * 0.3,
+      w: 1.15 + rnd() * 0.25,
       h: 0.9 + rnd() * 0.2,
       slot: slots[level][variant]++,
       fits: true,
@@ -151,7 +152,8 @@ export function buildCity(kit: Kit, path: THREE.CatmullRomCurve3, commits: reado
       const set = models.city_blocks;
       const road = Array.from({ length: 240 }, (_, k) => path.getPoint(k / 239));
       days.forEach((d) => {
-        const r = d.w * 0.62;
+        // the pavement square, not its corners: the car may brush a kerb corner, never a wall
+        const r = d.w * 0.5 + 0.05;
         d.fits =
           road.every((q) => Math.hypot(q.x - d.x, q.z - d.z) > 3 + r) &&
           !sites.some((g) => Math.hypot(g.position.x - d.x, g.position.z - d.z) < 5 + r);

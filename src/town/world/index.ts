@@ -40,6 +40,11 @@ const shotOf = (s: Stop): [number, number] => {
 const BOUNDS = { x: [-35, 29], z: [-232, 24] } as const;
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
+/** About a 1080p frame of device pixels. Sharper than that costs fill rate the flat colours do not show. */
+const PIXEL_BUDGET = 2.1e6;
+/** Device pixels per CSS pixel: up to 1.5 on a small hi-dpi screen, down to 1 on a big one, never above the screen's own. */
+const pixelRatio = (w: number, h: number) => clamp(Math.sqrt(PIXEL_BUDGET / (w * h)), 1, Math.min(1.5, window.devicePixelRatio || 1));
+
 export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboards, reducedMotion }) => {
   const N = stops.length - 1;
   const pts = roadPoints(stops.length);
@@ -59,7 +64,7 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
     nameMesh?.scale.setScalar(nameScale);
   };
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap; // soft edges instead of stair steps
   const scene = new THREE.Scene();
@@ -225,17 +230,20 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
 
   let width = 1;
   let height = 1;
+  /** Seconds since the last draw (see the end of update). */
+  let sinceDraw = Infinity;
   const heroCam = new THREE.Vector3();
   const heroLook = new THREE.Vector3();
   const resize = (w: number, h: number) => {
     width = Math.max(1, w);
     height = Math.max(1, h);
-    renderer.setPixelRatio(healthy ? Math.min(1.5, window.devicePixelRatio) : 1);
+    renderer.setPixelRatio(healthy ? pixelRatio(width, height) : 1);
     renderer.setSize(width, height, false);
     cam.aspect = width / height;
     cam.updateProjectionMatrix();
     ground.fitHero(width, height, heroCam, heroLook);
     fitName();
+    sinceDraw = Infinity; // setSize cleared the canvas: draw on the next frame, still or not
   };
   resize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
 
@@ -322,6 +330,7 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
   };
   let time = 0;
   let slow = 0;
+  const lastLook = new THREE.Vector3();
   let wasDriving = false;
   let heading = 0;
   let speed = 0;
@@ -349,10 +358,10 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
     const dt = Math.max(0.001, frame.dt);
     time += dt;
     if (healthy) {
-      // under 30 fps for two seconds in a row: trade looks for speed
+      // under 40 fps for a second and a half: trade looks for speed
       // gaps over a quarter second are a hitch (models arriving, shaders compiling) or a hidden tab, not a slow device
-      if (dt < 0.25) slow = dt > 1 / 30 ? slow + dt : Math.max(0, slow - dt * 2);
-      if (slow > 2) degrade();
+      if (dt < 0.25) slow = dt > 1 / 40 ? slow + dt : Math.max(0, slow - dt * 2);
+      if (slow > 1.5) degrade();
     }
 
     const hero = clamp01(frame.heroProgress);
@@ -381,13 +390,19 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
       const steer = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
       speed = clamp(speed + throttle * 16 * dt - speed * 1.1 * dt, -7, 17);
       heading += steer * 2.3 * dt * clamp(speed / 5, -1, 1);
+      // hands off the wheel within 12 degrees of a street (the blocks stand on a north-south, east-west grid): settle onto it,
+      // so holding W drives down the street instead of slowly across it at whatever angle the road had
+      if (!steer && Math.abs(speed) > 0.5) {
+        const off = wrapAngle(Math.round(heading / (Math.PI / 2)) * (Math.PI / 2) - heading);
+        if (Math.abs(off) < 0.21) heading += off * (1 - Math.exp(-dt * 3));
+      }
       drivePos.x += Math.sin(heading) * speed * dt;
       drivePos.z += Math.cos(heading) * speed * dt;
       for (const [cx, cz, r] of kit.colliders) {
         const dx = drivePos.x - cx;
         const dz = drivePos.z - cz;
         const d = Math.hypot(dx, dz) || 0.01;
-        const min = r + 0.9;
+        const min = r + 0.8; // about the car's half width (0.64) plus a little air
         if (d < min) {
           drivePos.x = cx + (dx / d) * min;
           drivePos.z = cz + (dz / d) * min;
@@ -514,8 +529,15 @@ export const createWorld: CreateWorld = ({ canvas, stops, commits, hero, billboa
     // while lookAt snaps tilted the hero page for a second after any resize, e.g. the scrollbar width at load.
     pos.lerp(target, reducedMotion || (onHero > 0 && !driving) ? 1 : 1 - Math.exp(-dt * 5));
     lookAt.lerp(look, reducedMotion || onHero > 0 ? 1 : 1 - Math.exp(-dt * 8));
+    const still = !driving && !handover && night === frame.night && pos.distanceToSquared(cam.position) < 1e-6 && lookAt.distanceToSquared(lastLook) < 1e-6;
     cam.position.copy(pos);
     cam.lookAt(lookAt);
+    lastLook.copy(lookAt);
+    // a 120 or 144 Hz screen would otherwise draw the town twice as often for nothing; a camera at rest only has the
+    // screens and the idle wobble to show, which 30 frames a second carries
+    sinceDraw += dt;
+    if (sinceDraw < (still ? 1 / 30 : 1 / 60) - 0.002) return;
+    sinceDraw = 0;
     renderer.render(scene, cam);
   };
 
