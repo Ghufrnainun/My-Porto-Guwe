@@ -57,6 +57,15 @@ function absoluteUrl(path) {
   return /^https?:\/\//.test(path) ? path : `${SITE_URL}${path}`;
 }
 
+function inferImageMimeType(url) {
+  const clean = url.split(/[?#]/, 1)[0].toLowerCase();
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.jpg') || clean.endsWith('.jpeg')) return 'image/jpeg';
+  if (clean.includes('images.unsplash.com/')) return 'image/jpeg';
+  return null;
+}
+
 /** Per-route <head>: retitle + rewrite canonical/OG/Twitter/robots/jsonLd. */
 function renderHead(tpl, meta, routePath) {
   const url = meta?.canonicalPath ? `${SITE_URL}${meta.canonicalPath}` : `${SITE_URL}${routePath}`;
@@ -69,7 +78,9 @@ function renderHead(tpl, meta, routePath) {
     out = out.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
     out = out.replace(/(<meta\s+name="title"\s+content=")[^"]*(")/, `$1${title}$2`);
     out = out.replace(/(property="og:title"\s*content=")[^"]*(")/, `$1${title}$2`);
+    out = out.replace(/(property="og:image:alt"\s+content=")[^"]*(")/, `$1${title}$2`);
     out = out.replace(/(name="twitter:title"\s*content=")[^"]*(")/, `$1${title}$2`);
+    out = out.replace(/(name="twitter:image:alt"\s+content=")[^"]*(")/, `$1${title}$2`);
   }
   if (description) {
     out = out.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${description}$2`);
@@ -83,6 +94,16 @@ function renderHead(tpl, meta, routePath) {
   if (image) {
     out = out.replace(/(property="og:image"\s+content=")[^"]*(")/, `$1${image}$2`);
     out = out.replace(/(name="twitter:image"\s+content=")[^"]*(")/, `$1${image}$2`);
+    const mimeType = inferImageMimeType(image);
+    if (mimeType) {
+      out = out.replace(/(property="og:image:type"\s+content=")[^"]*(")/, `$1${mimeType}$2`);
+    } else {
+      out = out.replace(/\s*<meta\s+property="og:image:type"\s+content="[^"]*"\s*\/>/, '');
+    }
+    if (image !== `${SITE_URL}/og-image.png`) {
+      out = out.replace(/\s*<meta\s+property="og:image:width"\s+content="[^"]*"\s*\/>/, '');
+      out = out.replace(/\s*<meta\s+property="og:image:height"\s+content="[^"]*"\s*\/>/, '');
+    }
   }
 
   const jsonLd = meta?.jsonLd;

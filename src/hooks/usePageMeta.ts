@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { OsShellContext } from '@/components/os/OsShellContext';
 
 const SITE_URL = 'https://ghufronainun.tech';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
@@ -19,6 +21,15 @@ export interface PageMeta {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /** Set true to keep page out of search index (admin, auth, test routes) */
   noindex?: boolean;
+}
+
+function inferImageMimeType(url: string): string | null {
+  const clean = url.split(/[?#]/, 1)[0].toLowerCase();
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.jpg') || clean.endsWith('.jpeg')) return 'image/jpeg';
+  if (clean.includes('images.unsplash.com/')) return 'image/jpeg';
+  return null;
 }
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -97,9 +108,12 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[])
  * directive and JSON-LD structured data without a full page reload.
  */
 export function usePageMeta(meta: PageMeta) {
+  const location = useLocation();
+  const shell = useContext(OsShellContext);
+  const isActiveRoute = !shell?.activePath || location.pathname === shell.activePath.split(/[?#]/, 1)[0];
   // During server-side rendering there is no document; record so the
   // prerender script can inject the meta into static HTML.
-  if (typeof document === 'undefined') {
+  if (typeof document === 'undefined' && isActiveRoute) {
     recordMeta(meta);
   }
 
@@ -107,6 +121,7 @@ export function usePageMeta(meta: PageMeta) {
   const jsonLdKey = meta.jsonLd ? JSON.stringify(meta.jsonLd) : '';
 
   useEffect(() => {
+    if (!isActiveRoute) return;
     const path = meta.canonicalPath ?? window.location.pathname;
     const url = `${SITE_URL}${path}`;
     const description = meta.description ?? '';
@@ -128,9 +143,17 @@ export function usePageMeta(meta: PageMeta) {
     if (description) upsertMeta('property', 'og:description', description);
     else removeMeta('property', 'og:description');
     upsertMeta('property', 'og:image', image);
-    upsertMeta('property', 'og:image:width', '1200');
-    upsertMeta('property', 'og:image:height', '630');
-    upsertMeta('property', 'og:image:type', 'image/png');
+    const isDefaultOg = image === DEFAULT_OG_IMAGE;
+    if (isDefaultOg) {
+      upsertMeta('property', 'og:image:width', '1200');
+      upsertMeta('property', 'og:image:height', '630');
+    } else {
+      removeMeta('property', 'og:image:width');
+      removeMeta('property', 'og:image:height');
+    }
+    const mimeType = inferImageMimeType(image);
+    if (mimeType) upsertMeta('property', 'og:image:type', mimeType);
+    else removeMeta('property', 'og:image:type');
     upsertMeta('property', 'og:image:alt', meta.title);
     upsertMeta('property', 'og:site_name', SITE_NAME);
 
@@ -149,7 +172,7 @@ export function usePageMeta(meta: PageMeta) {
       document.getElementById(JSON_LD_ID)?.remove();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.title, meta.description, meta.canonicalPath, meta.ogType, meta.ogImage, meta.noindex, jsonLdKey]);
+  }, [meta.title, meta.description, meta.canonicalPath, meta.ogType, meta.ogImage, meta.noindex, jsonLdKey, isActiveRoute, shell?.activePath]);
 }
 
 export const seoConstants = { SITE_URL, DEFAULT_OG_IMAGE, SITE_NAME };

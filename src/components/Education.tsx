@@ -105,7 +105,7 @@ function OrgExpItem({
       className={cn(
         'group relative rounded-xl p-4 sm:p-5 transition-[background-color,border-color,box-shadow] duration-200 ease-out cursor-default border',
         isCurrentHovered
-          ? 'bg-secondary/35 dark:bg-white/[0.04] border-border/70 dark:border-white/12 shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
+          ? 'bg-secondary/35 dark:bg-white/[0.04] border-border/70 dark:border-white/[0.12] shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
           : 'border-transparent hover:bg-secondary/20 hover:border-border/40'
       )}
     >

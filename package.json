@@ -5,14 +5,15 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "node scripts/generate-sitemap.mjs && tsc && vite build && node scripts/prerender.mjs",
+        "build": "node scripts/generate-sitemap.mjs && tsc -p tsconfig.app.json --noEmit && vite build && node scripts/prerender.mjs",
         "build:assets": "node scripts/build-brand-assets.mjs && node scripts/build-og-image.mjs",
         "preview": "vite preview",
         "build:dev": "vite build --mode development",
         "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
         "test:portfolio": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-portfolio-data.mjs",
         "test:profile": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-profile-data.mjs",
-        "test:ux": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-navigation.mjs"
+        "test:ux": "node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/verify-navigation.mjs",
+        "test:widget-layout": "node scripts/verify-widget-layout.mjs"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",

@@ -1,6 +1,7 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Tag } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, CalendarDays, Tag } from 'lucide-react';
 
+import { Toolbar } from '@/components/os/OsWindowChrome';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePostBySlug } from '@/hooks/useBlogPosts';
@@ -9,28 +10,30 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 export default function BlogPost() {
   const { id: slug } = useParams<{ id: string }>();
   const { data: post, isLoading, error } = usePostBySlug(slug || '');
+  const publishedPost = post?.published ? post : null;
 
   usePageMeta({
-    title: post
-      ? `${post.title} | Ghufron Ainun Najib`
+    title: publishedPost
+      ? `${publishedPost.title} | Ghufron Ainun Najib`
       : 'Blog Post | Ghufron Ainun Najib',
     description:
-      post?.excerpt ??
-      post?.content.slice(0, 155) ??
+      publishedPost?.excerpt ??
+      publishedPost?.content.slice(0, 155) ??
       'Read the latest writing from Ghufron Ainun Najib.',
     canonicalPath: slug ? `/blog/${slug}` : '/blog',
     ogType: 'article',
-    ogImage: post?.featured_image ?? undefined,
-    jsonLd: post
+    ogImage: publishedPost?.featured_image ?? undefined,
+    jsonLd: publishedPost
       ? [
           {
             '@type': 'BlogPosting',
-            headline: post.title,
-            description: post.excerpt ?? undefined,
-            url: `https://ghufronainun.tech/blog/${post.slug}`,
-            image: post.featured_image ?? undefined,
-            datePublished: post.published_at ?? post.created_at,
-            dateModified: post.updated_at,
+            headline: publishedPost.title,
+            description: publishedPost.excerpt ?? undefined,
+            url: `https://ghufronainun.tech/blog/${publishedPost.slug}`,
+            image: publishedPost.featured_image ?? undefined,
+            datePublished:
+              publishedPost.published_at ?? publishedPost.created_at,
+            dateModified: publishedPost.updated_at,
             author: {
               '@type': 'Person',
               name: 'Ghufron Ainun Najib',
@@ -55,8 +58,8 @@ export default function BlogPost() {
               {
                 '@type': 'ListItem',
                 position: 3,
-                name: post.title,
-                item: `https://ghufronainun.tech/blog/${post.slug}`,
+                name: publishedPost.title,
+                item: `https://ghufronainun.tech/blog/${publishedPost.slug}`,
               },
             ],
           },
@@ -64,37 +67,66 @@ export default function BlogPost() {
       : undefined,
   });
 
+  const backLink = (
+    <Link
+      to="/blog"
+      className="group inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium text-black/65 transition-colors hover:bg-black/[0.06] hover:text-[#0a84ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:text-white/75 dark:hover:bg-white/[0.08]"
+    >
+      <ArrowLeft
+        className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5"
+        aria-hidden="true"
+      />
+      <span>Writing log</span>
+    </Link>
+  );
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        
-        <main className="pt-24 pb-20">
-          <article className="container mx-auto px-4 max-w-3xl">
-            <Skeleton className="h-4 w-24 mb-8" />
-            <Skeleton className="h-10 w-3/4 mb-4" />
-            <Skeleton className="h-4 w-48 mb-8" />
-            <Skeleton className="h-64 w-full mb-8" />
+      <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+        <Toolbar hasControls leading={backLink} />
+        <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
+          <main
+            className="mx-auto max-w-3xl"
+            aria-label="Loading journal entry"
+            aria-live="polite"
+          >
+            <Skeleton className="mb-8 h-4 w-24 bg-black/10 dark:bg-white/10" />
+            <Skeleton className="mb-4 h-10 w-3/4 bg-black/10 dark:bg-white/10" />
+            <Skeleton className="mb-8 h-4 w-48 bg-black/10 dark:bg-white/10" />
+            <Skeleton className="mb-8 h-56 w-full bg-black/10 dark:bg-white/10" />
             <div className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full bg-black/10 dark:bg-white/10" />
+              <Skeleton className="h-4 w-full bg-black/10 dark:bg-white/10" />
+              <Skeleton className="h-4 w-3/4 bg-black/10 dark:bg-white/10" />
             </div>
-          </article>
-        </main>
+          </main>
+        </div>
       </div>
     );
   }
 
-  if (error || !post) {
+  if (error || !publishedPost) {
     return (
-      <div className="min-h-screen bg-background">
-        
-        <main className="pt-24 pb-20 container mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold mb-4">Post not found</h1>
-          <Link to="/blog" className="text-primary hover:underline">
-            ← Back to blog
-          </Link>
-        </main>
+      <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+        <Toolbar hasControls leading={backLink} />
+        <div className="flex flex-1 items-center justify-center px-5 py-12 text-center sm:px-8">
+          <main className="mx-auto max-w-xl rounded-xl border border-black/10 bg-[#f7f7f8] p-8 dark:border-white/10 dark:bg-white/[0.04]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#0a84ff]">
+              Journal entry
+            </p>
+            <h1 className="mb-3 mt-3 text-2xl font-semibold">Post not found</h1>
+            <p className="mb-6 text-sm leading-6 text-black/60 dark:text-white/60">
+              This entry may have moved or isn’t published yet.
+            </p>
+            <Link
+              to="/blog"
+              className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#0a84ff] px-4 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" /> Back to
+              writing log
+            </Link>
+          </main>
+        </div>
       </div>
     );
   }
@@ -102,33 +134,44 @@ export default function BlogPost() {
   // Simple markdown-like rendering
   const renderContent = (content: string) => {
     return content.split('\n\n').map((paragraph, i) => {
-      // Check for headers
       if (paragraph.startsWith('## ')) {
         return (
-          <h2 key={i} className="text-2xl font-bold mt-8 mb-4">
+          <h2
+            key={i}
+            className="mb-4 mt-8 text-2xl font-bold text-black/90 dark:text-white"
+          >
             {paragraph.replace('## ', '')}
           </h2>
         );
       }
       if (paragraph.startsWith('### ')) {
         return (
-          <h3 key={i} className="text-xl font-semibold mt-6 mb-3">
+          <h3
+            key={i}
+            className="mb-3 mt-6 text-xl font-semibold text-black/90 dark:text-white"
+          >
             {paragraph.replace('### ', '')}
           </h3>
         );
       }
-      // Check for code blocks
       if (paragraph.startsWith('```')) {
         const code = paragraph.replace(/```\w*\n?/g, '');
         return (
-          <pre key={i} className="bg-muted p-4 rounded-lg overflow-x-auto my-4">
-            <code className="text-sm font-mono">{code}</code>
+          <pre
+            key={i}
+            className="my-4 overflow-x-auto rounded-xl border border-black/10 bg-[#f7f7f8] p-4 dark:border-white/10 dark:bg-black/25"
+          >
+            <code className="font-mono text-sm text-black/85 dark:text-white/90">
+              {code}
+            </code>
           </pre>
         );
       }
-      // Regular paragraph
       return (
-        <p key={i} className="mb-4 text-muted-foreground leading-relaxed">
+        <p
+          key={i}
+          className="mb-4 leading-relaxed text-black/70 dark:text-white/75"
+        >
           {paragraph}
         </p>
       );
@@ -136,43 +179,53 @@ export default function BlogPost() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      
-      <main className="pt-24 pb-20">
-        <article className="container mx-auto px-4 max-w-3xl">
-          <Link
-            to="/blog"
-            className="group inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out mb-8 active:scale-[0.98]"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-200 ease-out group-hover:-translate-x-1" />
-            Back to blog
-          </Link>
+    <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+      <Toolbar hasControls leading={backLink} />
 
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
+      <main className="flex-1 overflow-y-auto px-5 pb-10 pt-2 sm:px-8">
+        <article className="mx-auto max-w-3xl">
+          <header className="mb-8 border-b border-black/10 pb-7 dark:border-white/10">
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-[#0a84ff]">
+              Field note
+            </p>
+            <h1 className="mb-5 break-words text-2xl font-semibold tracking-tight text-black/90 sm:text-3xl dark:text-white">
+              {publishedPost.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-black/55 dark:text-white/55">
+              <span className="inline-flex items-center gap-2">
+                <CalendarDays
+                  className="size-4 text-[#0a84ff]"
+                  aria-hidden="true"
+                />
                 {new Date(
-                  post.published_at || post.created_at
+                  publishedPost.published_at || publishedPost.created_at
                 ).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
                 })}
               </span>
-              {post.category && (
+              {publishedPost.category && (
                 <>
-                  <span>•</span>
-                  <Badge variant="secondary">{post.category.name}</Badge>
+                  <span aria-hidden="true">/</span>
+                  <Badge
+                    variant="secondary"
+                    className="border border-[#0a84ff]/25 bg-[#0a84ff]/10 text-[#0a84ff]"
+                  >
+                    {publishedPost.category.name}
+                  </Badge>
                 </>
               )}
             </div>
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {post.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline" className="text-xs">
-                    <Tag className="h-3 w-3 mr-1" />
+            {publishedPost.tags && publishedPost.tags.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {publishedPost.tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant="outline"
+                    className="border-black/10 text-xs text-black/60 dark:border-white/10 dark:text-white/60"
+                  >
+                    <Tag className="mr-1 size-3" aria-hidden="true" />
                     {tag.name}
                   </Badge>
                 ))}
@@ -180,16 +233,16 @@ export default function BlogPost() {
             )}
           </header>
 
-          {post.featured_image && (
+          {publishedPost.featured_image && (
             <img
-              src={post.featured_image}
-              alt={post.title}
-              className="w-full h-64 md:h-96 object-cover rounded-xl mb-8"
+              src={publishedPost.featured_image}
+              alt={publishedPost.title}
+              className="mb-8 max-h-[28rem] w-full rounded-xl border border-black/10 object-cover dark:border-white/10"
             />
           )}
 
-          <div className="prose prose-lg dark:prose-invert max-w-none">
-            {renderContent(post.content)}
+          <div className="max-w-[68ch] text-base leading-7 [&_a]:text-[#0a84ff] [&_a]:underline-offset-4 [&_a:hover]:underline [&_code]:font-mono [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_p]:mb-5 [&_p]:text-base [&_p]:leading-7">
+            {renderContent(publishedPost.content)}
           </div>
         </article>
       </main>

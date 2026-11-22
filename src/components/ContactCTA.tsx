@@ -5,7 +5,7 @@ interface ContactCTAProps {
   onGetInTouch: () => void;
 }
 
-const springEase = [0.32, 0.72, 0, 1];
+const springEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 export function ContactCTA({ onGetInTouch }: ContactCTAProps) {
   return (

@@ -1,6 +1,6 @@
 # Ghufron Ainun Najib — Full Profile
 
-> Full-stack developer in Semarang, Indonesia. Web products built end to end — TypeScript, React, Node.js, Cloudflare Workers, Flutter, Laravel, PostgreSQL.
+> Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio (GanOS) — web and mobile products built end to end with TypeScript, React, Next.js, Cloudflare Workers, Flutter, Laravel, and PostgreSQL.
 
 ## About
 
@@ -12,6 +12,11 @@ Backends that hold up, frontends that feel right. Comfortable owning a product e
 
 ## Projects
 
+### PB UNDIP Platform & Scoreboard (2026, solo)
+Official athletic club portal and real-time tournament scoreboard suite built for Persatuan Bulutangkis Universitas Diponegoro. Engineered reactive court scoring with Convex (rally-point rules, dynamic service tracking, deuce capping, state recovery), multi-role PIN authentication with temporary marshal codes, athlete registration with presigned Cloudflare R2 uploads and XLSX export, plus broadcast-grade videotron displays.
+- Stack: Next.js 16, React 19, TypeScript, Convex, Cloudflare R2, Tailwind CSS, Framer Motion
+- Live: https://pbundip.web.id/
+
 ### TempeMail (2026, solo)
 Disposable email service running entirely on Cloudflare Workers. Multi-domain with auto-provisioning across 20+ domains, no VPS, no SMTP server. REST API, HMAC-signed webhook delivery, an MCP server for AI agents, and a dark-theme vanilla JS frontend with inbox search and API key management. 110 tests passing.
 - Stack: TypeScript, Cloudflare Workers, D1, Hono
@@ -19,7 +24,7 @@ Disposable email service running entirely on Cloudflare Workers. Multi-domain wi
 - Live: https://temp.ghufronainun.tech
 
 ### Curated Design (2026, solo)
-Curated directory of design resources for AI coding: component libraries, design systems, inspiration, dev tools, AI prompts — 292 resources across 5 categories with verified live links. Markdown-first pipeline so adding a resource is a one-line edit. CI deploy to Cloudflare Pages with unit tests for the parser and filter logic. Open contribution flow with PR templates and triage labels.
+Curated directory of design resources for AI coding: component libraries, design systems, inspiration, dev tools, AI prompts — 505 resources across 5 categories with verified live links. Markdown-first pipeline so adding a resource is a one-line edit. CI deploy to Cloudflare Pages with unit tests for the parser and filter logic. Open contribution flow with PR templates and triage labels.
 - Stack: React, Vite, Markdown, Cloudflare Pages, GitHub Actions
 - Repo: https://github.com/Ghufrnainun/curated-design
 - Live: https://design.ghuf.app

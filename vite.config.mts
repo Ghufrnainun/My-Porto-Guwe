@@ -17,5 +17,16 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('lucide-react')) return 'vendor-icons';
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('@tiptap') || id.includes('prosemirror')) return 'vendor-editor';
+          if (id.includes('@supabase')) return 'vendor-supabase';
+        },
+      },
+    },
   },
 }));

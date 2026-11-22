@@ -1,26 +1,37 @@
 # Global crawling policy
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /old
+Disallow: /test-animate
+Disallow: /preview-hero
+Disallow: /preview-preloader-boot
 
 # AI Assistants & Search Bots (GEO / AI Overviews)
 User-agent: GPTBot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /old
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /old
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /old
 
 User-agent: Applebot-Extended
 Allow: /
-
-# Test, preview, and private routes — keep out of the index
 Disallow: /admin
 Disallow: /auth
-Disallow: /test-animate
-Disallow: /preview-hero
-Disallow: /preview-preloader-boot
+Disallow: /old
 
 # Canonical host, sitemap, and LLM documentation
 Sitemap: https://ghufronainun.tech/sitemap.xml

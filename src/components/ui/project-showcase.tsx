@@ -22,7 +22,7 @@ export const defaultProjects: Project[] = [
     description: "Official athletic club portal & real-time badminton scoreboard suite with reactive court sync, PIN auth, and Cloudflare R2 registration.",
     year: "2026",
     link: "/projects/pbundip",
-    image: "/pbundip.png",
+    image: "/pbundip.webp",
     tags: ["Next.js 16", "Convex Realtime", "Cloudflare R2"],
   },
   {
@@ -30,7 +30,7 @@ export const defaultProjects: Project[] = [
     description: "Disposable email service that runs entirely on Cloudflare Workers. Multi-domain, REST API, webhooks, and MCP server.",
     year: "2026",
     link: "/projects/tempe-mail",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1400&auto=format&fit=crop",
+    image: "/tempemail.webp",
     tags: ["Cloudflare Workers", "REST API", "MCP Server"],
   },
   {
@@ -46,7 +46,7 @@ export const defaultProjects: Project[] = [
     description: "Certification website developed with a five-person team, with ownership across authentication and collaborative Git workflow.",
     year: "2025",
     link: "/projects/lsp-polines",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1400&auto=format&fit=crop",
+    image: "/lsp-polines.webp",
     tags: ["Team Collab", "Auth Architecture", "Git"],
   },
   {
@@ -209,7 +209,7 @@ export function ProjectShowcase({
                     className={cn(
                       "absolute inset-0 -mx-3 sm:-mx-5 px-3 sm:px-5 rounded-2xl transition-[opacity,transform,background-color,border-color] duration-200 ease-out pointer-events-none",
                       isCurrentHovered
-                        ? "opacity-100 bg-secondary/45 dark:bg-white/[0.04] border border-border/70 dark:border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-xs scale-100"
+                        ? "opacity-100 bg-secondary/45 dark:bg-white/[0.04] border border-border/70 dark:border-white/[0.12] shadow-[0_8px_30px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.08)] backdrop-blur-xs scale-100"
                         : "opacity-0 scale-98 border border-transparent"
                     )}
                   />

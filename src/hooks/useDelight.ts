@@ -25,6 +25,17 @@ export function useDelight() {
 
     let input = '';
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
       // Record only single character presses
       if (e.key.length === 1) {
         input = (input + e.key.toLowerCase()).slice(-10); // Keep last 10 characters

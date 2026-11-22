@@ -1,14 +1,17 @@
-import { ArrowLeft, ArrowUpRight, ExternalLink, Github } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  ExternalLink,
+  Github,
+} from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
 import { ProjectCover } from '@/components/ProjectCover';
 import { TechBadge } from '@/components/TechBadge';
-import { PortfolioProject, getPortfolioProject } from '@/data/featuredProjects';
-import NotFound from './NotFound';
+import { Toolbar } from '@/components/os/OsWindowChrome';
+import { featuredProjects, getPortfolioProject } from '@/data/featuredProjects';
 import { usePageMeta } from '@/hooks/usePageMeta';
-
-const ease = [0.22, 1, 0.36, 1] as const;
 
 function ProjectLink({
   href,
@@ -22,188 +25,33 @@ function ProjectLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-foreground transition-[transform,border-color,color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary active:scale-[0.97]"
+      className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-black/10 bg-black/[0.04] px-3.5 text-[13px] font-medium text-black/85 transition-colors hover:border-[#0a84ff] hover:bg-[#0a84ff]/10 hover:text-[#0a84ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff] dark:border-white/10 dark:bg-white/[0.06] dark:text-white/90"
     >
       {children}
-      <ArrowUpRight className="size-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      <ArrowUpRight aria-hidden="true" className="size-3.5" />
     </a>
   );
 }
 
-function DetailList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <section>
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
-        {title}
-      </p>
-      <ul className="mt-5 space-y-4">
-        {items.map((item) => (
-          <li
-            key={item}
-            className="border-l border-white/15 pl-5 text-sm leading-7 text-muted-foreground md:text-base"
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function CaseStudy({ project }: { project: PortfolioProject }) {
-  return (
-    <div className="min-h-screen bg-background">
-      
-      <main className="overflow-hidden pt-24">
-        <section className="relative py-16 md:py-24">
-          {/* Decorative glow — radial-gradient, no filter:blur() */}
-          <div
-            className="pointer-events-none absolute right-[-12rem] top-0 size-[28rem] rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${project.color}33 0%, ${project.color}10 50%, transparent 70%)`,
-            }}
-          />
-          <div className="container relative z-10 mx-auto px-6 md:px-12 lg:px-24">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease }}
-            >
-              <Link
-                to="/projects"
-                className="group inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary"
-              >
-                <ArrowLeft className="size-3.5 transition-transform duration-200 ease-out group-hover:-translate-x-1" />
-                All projects
-              </Link>
-
-              <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-                    <span>{project.year}</span>
-                    <span className="size-1 rounded-full bg-primary/50" />
-                    <span>{project.role}</span>
-                  </div>
-                  <h1 className="mt-6 max-w-5xl font-serif text-5xl font-bold leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-8xl">
-                    {project.title}
-                  </h1>
-                  <p className="mt-8 max-w-3xl text-lg leading-8 text-muted-foreground md:text-xl">
-                    {project.summary}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
-                  <div className="bg-card p-5">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
-                      Team
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-foreground">
-                      {project.team.label}
-                    </p>
-                  </div>
-                  <div className="bg-card p-5">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
-                      Repository
-                    </p>
-                    <p className="mt-2 text-sm font-semibold capitalize text-foreground">
-                      {project.visibility}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        <section className="container mx-auto px-6 md:px-12 lg:px-24">
-          <motion.div
-            initial={{ opacity: 0, y: 36 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.12, ease }}
-            className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-2 shadow-[0_50px_140px_-80px_hsl(var(--primary)/0.8)]"
-          >
-            <ProjectCover
-              project={project}
-              className="aspect-[16/9] w-full rounded-[calc(2rem-0.5rem)] object-cover"
-            />
-          </motion.div>
-        </section>
-
-        <section className="container mx-auto grid gap-14 px-6 py-20 md:px-12 md:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24 lg:px-24">
-          <div>
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
-              The problem
-            </p>
-            <p className="mt-5 font-serif text-3xl font-semibold leading-tight text-foreground md:text-4xl">
-              {project.problem}
-            </p>
-
-            <div className="mt-10 flex flex-wrap gap-2">
-              {project.technologies.map((technology) => (
-                <TechBadge key={technology} tech={technology} size="md" />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-14 md:grid-cols-2">
-            <DetailList title="Contributions" items={project.contributions} />
-            <DetailList title="Outcomes" items={project.outcomes} />
-          </div>
-        </section>
-
-        {(project.gallery?.length ?? 0) > 1 && (
-          <section className="container mx-auto grid gap-5 px-6 pb-20 md:grid-cols-2 md:px-12 md:pb-28 lg:px-24">
-            {project.gallery?.map((image, index) => (
-              <img
-                key={image}
-                src={image}
-                alt={`${project.title} gallery ${index + 1}`}
-                className="aspect-[4/3] w-full rounded-2xl border border-white/10 object-cover"
-                loading="lazy"
-              />
-            ))}
-          </section>
-        )}
-
-        {(project.repository || project.demo) && (
-          <section className="border-y border-white/10 bg-white/[0.025]">
-            <div className="container mx-auto flex flex-col gap-6 px-6 py-14 md:flex-row md:items-center md:justify-between md:px-12 lg:px-24">
-              <p className="font-serif text-3xl font-semibold text-foreground">
-                Explore the project
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {project.repository && (
-                  <ProjectLink href={project.repository}>
-                    <Github className="size-4" />
-                    Public repository
-                  </ProjectLink>
-                )}
-                {project.demo && (
-                  <ProjectLink href={project.demo}>
-                    <ExternalLink className="size-4" />
-                    Live website
-                  </ProjectLink>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
-    </div>
-  );
-}
-
-export default function ProjectCaseStudy() {
-  const { slug = '' } = useParams();
+function CaseStudyView({ slug }: { slug: string }) {
   const project = getPortfolioProject(slug);
+  const projectIndex = project
+    ? featuredProjects.findIndex((item) => item.slug === project.slug)
+    : -1;
+  const previous =
+    projectIndex > 0 ? featuredProjects[projectIndex - 1] : undefined;
+  const next =
+    projectIndex >= 0 ? featuredProjects[projectIndex + 1] : undefined;
 
   usePageMeta({
     title: project
       ? `${project.title} | Ghufron Ainun Najib`
       : 'Project | Ghufron Ainun Najib',
-    description: project?.summary ?? 'Case study from the portfolio of Ghufron Ainun Najib.',
+    description:
+      project?.summary ??
+      'Case study from the portfolio of Ghufron Ainun Najib.',
     canonicalPath: project ? `/projects/${project.slug}` : '/projects',
-    ogImage: project?.image ?? undefined,
+    ogImage: project?.image,
     jsonLd: project
       ? [
           {
@@ -213,7 +61,9 @@ export default function ProjectCaseStudy() {
             url: `https://ghufronainun.tech/projects/${project.slug}`,
             applicationCategory: 'DeveloperApplication',
             image: project.image
-              ? (/^https?:\/\//.test(project.image) ? project.image : `https://ghufronainun.tech${project.image}`)
+              ? /^https?:\/\//.test(project.image)
+                ? project.image
+                : `https://ghufronainun.tech${project.image}`
               : undefined,
             author: {
               '@type': 'Person',
@@ -248,5 +98,265 @@ export default function ProjectCaseStudy() {
       : undefined,
   });
 
-  return project ? <CaseStudy project={project} /> : <NotFound />;
+  if (!project) {
+    return (
+      <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+        <Toolbar
+          hasControls
+          leading={
+            <Link
+              to="/projects"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium text-black/65 transition-colors hover:bg-black/[0.06] hover:text-[#0a84ff] dark:text-white/70 dark:hover:bg-white/[0.08]"
+            >
+              <ArrowLeft aria-hidden="true" className="size-3.5" />
+              <span>Projects</span>
+            </Link>
+          }
+          title="Not Found"
+          centerTitle
+        />
+        <main className="grid flex-1 place-items-center px-5 py-12 text-center">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#0a84ff]">
+              Project not found
+            </p>
+            <h1 className="mt-2 text-xl font-semibold">
+              This project isn’t in the index.
+            </h1>
+            <p className="mt-2 text-sm text-black/55 dark:text-white/55">
+              Check the address or return to the project list.
+            </p>
+            <Link
+              to="/projects"
+              className="mt-5 inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#0a84ff] px-3.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
+            >
+              <ArrowLeft aria-hidden="true" className="size-4" /> Browse all
+              projects
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const gallery = [...new Set(project.gallery ?? [])].filter(
+    (image) => image !== project.image
+  );
+
+  return (
+    <div className="flex h-full flex-col bg-white text-black/85 dark:bg-[#282025] dark:text-white/90">
+      <Toolbar
+        hasControls
+        leading={
+          <Link
+            to="/projects"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium text-black/65 transition-colors hover:bg-black/[0.06] hover:text-[#0a84ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff] dark:text-white/75 dark:hover:bg-white/[0.08]"
+          >
+            <ArrowLeft aria-hidden="true" className="size-3.5" />
+            <span>All projects</span>
+          </Link>
+        }
+        trailing={
+          <span className="hidden truncate font-mono text-[11px] text-black/45 sm:inline dark:text-white/45">
+            Project file / {project.slug}
+          </span>
+        }
+      />
+
+      <main className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-y-auto px-5 pb-8 pt-2 sm:px-8">
+        <div className="mx-auto min-w-0 max-w-5xl pb-6">
+          <header className="grid gap-6 border-b border-black/10 py-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-end dark:border-white/10">
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-[#0a84ff]">
+                {project.year}{' '}
+                <span className="px-1 text-black/40 dark:text-white/40">/</span>{' '}
+                {project.role}
+              </p>
+              <h1 className="mt-2.5 max-w-4xl text-2xl font-semibold leading-tight tracking-tight text-black/90 sm:text-3xl lg:text-4xl dark:text-white">
+                {project.title}
+              </h1>
+              <p className="mt-3 max-w-3xl text-[15px] leading-7 text-black/65 dark:text-white/65">
+                {project.summary}
+              </p>
+            </div>
+            <dl className="grid grid-cols-2 gap-2.5 lg:grid-cols-1">
+              <div className="rounded-xl border border-black/10 bg-[#f7f7f8] px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
+                  Team
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-black/85 dark:text-white/90">
+                  {project.team.label}
+                </dd>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-[#f7f7f8] px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/45 dark:text-white/45">
+                  Source visibility
+                </dt>
+                <dd className="mt-1 text-sm font-medium capitalize text-black/85 dark:text-white/90">
+                  {project.visibility}
+                </dd>
+              </div>
+            </dl>
+          </header>
+
+          <section
+            aria-label={`${project.title} preview`}
+            className="mt-6 overflow-hidden rounded-xl border border-black/10 bg-black/5 dark:border-white/10 dark:bg-black/25"
+          >
+            <ProjectCover
+              project={project}
+              className="aspect-[16/8] max-h-[28rem] w-full"
+            />
+          </section>
+
+          <section className="grid min-w-0 gap-8 border-b border-black/10 py-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12 dark:border-white/10">
+            <div className="min-w-0">
+              <h2 className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.17em] text-[#0a84ff]">
+                Project context
+              </h2>
+              <p className="mt-3 text-[15px] leading-7 text-black/80 dark:text-white/85">
+                {project.problem}
+              </p>
+              <h3 className="mt-6 font-mono text-[10.5px] font-semibold uppercase tracking-[0.17em] text-black/50 dark:text-white/50">
+                Technologies
+              </h3>
+              <div
+                className="mt-3 flex flex-wrap gap-1.5"
+                aria-label="Technologies"
+              >
+                {project.technologies.map((technology) => (
+                  <TechBadge
+                    key={technology}
+                    tech={technology}
+                    showIcon={false}
+                    className="!border-black/10 !bg-black/[0.04] !text-black/75 dark:!border-white/10 dark:!bg-white/[0.07] dark:!text-white/80"
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="grid min-w-0 gap-7 sm:grid-cols-2">
+              <section aria-labelledby="contributions-heading">
+                <h2
+                  id="contributions-heading"
+                  className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.17em] text-[#0a84ff]"
+                >
+                  Contributions
+                </h2>
+                <ul className="mt-3 space-y-3">
+                  {project.contributions.map((item) => (
+                    <li
+                      key={item}
+                      className="border-l-2 border-black/10 pl-3 text-[13.5px] leading-6 text-black/65 dark:border-white/15 dark:text-white/70"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section aria-labelledby="outcomes-heading">
+                <h2
+                  id="outcomes-heading"
+                  className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.17em] text-[#0a84ff]"
+                >
+                  Outcomes
+                </h2>
+                <ul className="mt-3 space-y-3">
+                  {project.outcomes.map((item) => (
+                    <li
+                      key={item}
+                      className="border-l-2 border-black/10 pl-3 text-[13.5px] leading-6 text-black/65 dark:border-white/15 dark:text-white/70"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          </section>
+
+          {gallery.length > 0 && (
+            <section
+              aria-label={`${project.title} screenshots`}
+              className="grid min-w-0 gap-3 border-b border-black/10 py-6 sm:grid-cols-2 dark:border-white/10"
+            >
+              <h2 className="sr-only">Screenshots</h2>
+              {gallery.map((image, index) => (
+                <img
+                  key={image}
+                  src={image}
+                  alt={`${project.title} screenshot ${index + 1}`}
+                  loading="lazy"
+                  className="aspect-[16/10] w-full rounded-xl border border-black/10 object-cover object-top dark:border-white/10"
+                />
+              ))}
+            </section>
+          )}
+
+          {(project.repository || project.demo) && (
+            <section className="flex flex-col gap-3 border-b border-black/10 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
+              <div>
+                <h2 className="text-sm font-semibold">Project links</h2>
+                <p className="mt-0.5 text-[13px] text-black/55 dark:text-white/55">
+                  Available destinations for this project.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {project.repository && (
+                  <ProjectLink href={project.repository}>
+                    <Github aria-hidden="true" className="size-4" /> Repository
+                  </ProjectLink>
+                )}
+                {project.demo && (
+                  <ProjectLink href={project.demo}>
+                    <ExternalLink aria-hidden="true" className="size-4" /> Live
+                    demo
+                  </ProjectLink>
+                )}
+              </div>
+            </section>
+          )}
+
+          <nav
+            aria-label="Adjacent projects"
+            className="flex min-w-0 items-center justify-between gap-4 pt-5"
+          >
+            {previous ? (
+              <Link
+                to={`/projects/${previous.slug}`}
+                className="group min-w-0 rounded-lg px-2 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff]"
+              >
+                <span className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider text-black/45 dark:text-white/45">
+                  <ArrowLeft aria-hidden="true" className="size-3" /> Previous
+                </span>
+                <span className="mt-1 block truncate text-sm font-medium text-black/85 group-hover:text-[#0a84ff] dark:text-white/90">
+                  {previous.title}
+                </span>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <Link
+                to={`/projects/${next.slug}`}
+                className="group min-w-0 rounded-lg px-2 py-2 text-right focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a84ff]"
+              >
+                <span className="flex items-center justify-end gap-1.5 text-[10.5px] uppercase tracking-wider text-black/45 dark:text-white/45">
+                  Next <ArrowRight aria-hidden="true" className="size-3" />
+                </span>
+                <span className="mt-1 block truncate text-sm font-medium text-black/85 group-hover:text-[#0a84ff] dark:text-white/90">
+                  {next.title}
+                </span>
+              </Link>
+            )}
+          </nav>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default function ProjectCaseStudy() {
+  const { slug = '' } = useParams();
+  return <CaseStudyView slug={slug} />;
 }

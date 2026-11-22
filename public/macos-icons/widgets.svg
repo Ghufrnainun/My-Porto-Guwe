@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="widgetBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2937" />
+      <stop offset="50%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+
+    <!-- Card 1: Clock (Cyan) -->
+    <linearGradient id="cardClock" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <!-- Card 2: Weather (Orange/Yellow) -->
+    <linearGradient id="cardWeather" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+
+    <!-- Card 3: Activity / Green -->
+    <linearGradient id="cardActivity" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Card 4: Music / Purple -->
+    <linearGradient id="cardMusic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="8" y="8" width="112" height="112" rx="26" ry="26" fill="url(#widgetBg)" />
+  <rect x="8" y="8" width="112" height="112" rx="26" ry="26" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+
+  <!-- 4 Mini Widget Cards -->
+  <!-- Top Left: Clock Card -->
+  <g filter="url(#cardShadow)">
+    <rect x="22" y="22" width="38" height="38" rx="10" fill="url(#cardClock)" />
+    <!-- Clock Hands -->
+    <circle cx="41" cy="41" r="11" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9" />
+    <line x1="41" y1="41" x2="41" y2="34" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+    <line x1="41" y1="41" x2="47" y2="41" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />
+    <circle cx="41" cy="41" r="1.5" fill="#ffffff" />
+  </g>
+
+  <!-- Top Right: Weather Card -->
+  <g filter="url(#cardShadow)">
+    <rect x="68" y="22" width="38" height="38" rx="10" fill="url(#cardWeather)" />
+    <!-- Sun & Cloud -->
+    <circle cx="89" cy="36" r="6" fill="#fef08a" />
+    <path d="M78 48 h16 a6 6 0 0 0 1 -11 a9 9 0 0 0 -15 -4 a7 7 0 0 0 -2 15 z" fill="#ffffff" opacity="0.95" />
+  </g>
+
+  <!-- Bottom Left: Battery / Rings -->
+  <g filter="url(#cardShadow)">
+    <rect x="22" y="68" width="38" height="38" rx="10" fill="url(#cardActivity)" />
+    <!-- Activity Ring -->
+    <circle cx="41" cy="87" r="10" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3" />
+    <circle cx="41" cy="87" r="10" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="45 60" stroke-linecap="round" />
+    <text x="41" y="90.5" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">92%</text>
+  </g>
+
+  <!-- Bottom Right: Music Waves -->
+  <g filter="url(#cardShadow)">
+    <rect x="68" y="68" width="38" height="38" rx="10" fill="url(#cardMusic)" />
+    <!-- Waveform Bars -->
+    <rect x="76" y="84" width="3" height="12" rx="1.5" fill="#ffffff" />
+    <rect x="82" y="78" width="3" height="18" rx="1.5" fill="#ffffff" />
+    <rect x="88" y="74" width="3" height="22" rx="1.5" fill="#ffffff" />
+    <rect x="94" y="80" width="3" height="16" rx="1.5" fill="#ffffff" />
+  </g>
+</svg>
