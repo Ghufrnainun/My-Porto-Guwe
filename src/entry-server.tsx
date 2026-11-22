@@ -18,6 +18,7 @@ import ProjectCaseStudy from './pages/ProjectCaseStudy';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import Resume from './pages/Resume';
+import Town from './pages/Town';
 
 /**
  * Server-side entry used by scripts/prerender.mjs to emit static HTML
@@ -31,6 +32,18 @@ export function renderRoute(path: string) {
   const queryClient = new QueryClient();
   const routePath = path.split('?')[0];
   const appName = routePath.startsWith('/projects') ? 'Projects' : routePath.startsWith('/blog') ? 'Writing' : routePath === '/resume' ? 'Resume' : routePath === '/about' ? 'About' : 'Finder';
+
+  if (routePath === '/town' || routePath.startsWith('/town/')) {
+    const town = renderToString(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/town" element={<Town />} />
+          <Route path="/town/:slug" element={<Town />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    return { html: town, meta: getCapturedMeta() as PageMeta | null };
+  }
 
   const html = renderToString(
     <QueryClientProvider client={queryClient}>

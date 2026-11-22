@@ -10,6 +10,8 @@ export interface PortfolioProject {
   };
   visibility: 'public' | 'private';
   problem: string;
+  /** Why it is built this way: the choice and the trade-off, in my own words. */
+  why?: string;
   contributions: string[];
   outcomes: string[];
   technologies: string[];
@@ -32,6 +34,8 @@ export const featuredProjects: PortfolioProject[] = [
     visibility: 'private',
     problem:
       'Persatuan Bulutangkis Universitas Diponegoro needed a robust, all-in-one digital platform: a zero-latency live scoreboard that umpires can control from mobile devices with broadcast-grade videotron displays, paired with a secure athlete registration workflow and club administration.',
+    why:
+      'I picked Convex partly to learn it. It is a cloud database that pushes every change to all open screens, much like a WebSocket, so the phone the umpire holds and the big display stay in step with no polling. The club now runs it at every tournament it holds.',
     contributions: [
       'Engineered the reactive real-time court scoring engine using Convex with rally-point rules, dynamic service court tracking, deuce capping, and state recovery.',
       'Designed a custom multi-role authentication system featuring master PIN (SHA-256), temporary 6-digit access codes for event marshals with brute-force lockout, and WhatsApp auto-login dispatch.',
@@ -59,6 +63,8 @@ export const featuredProjects: PortfolioProject[] = [
     visibility: 'public',
     problem:
       'Temp mail services are usually slow, single-domain, or closed-source. I wanted one that is self-hosted, multi-domain, and costs nothing to run.',
+    why:
+      'It had to cost nothing to run. A VPS is a monthly bill and a mail server to look after, so it all sits on the Cloudflare free tier: Email Routing hands each incoming mail to one Worker and D1 stores it. Adding a domain is not manual work either. One setup script creates the database and the catch-all routing rule for every domain on the list, and it is safe to run again.',
     contributions: [
       'Built the worker, email ingestion, and auto-provisioning for 20+ domains.',
       'Designed the REST API, HMAC-signed webhook delivery, and MCP server.',
@@ -109,7 +115,7 @@ export const featuredProjects: PortfolioProject[] = [
     summary:
       'A rental platform spanning a Flutter mobile experience and a Next.js 16 admin and API surface, built with TypeScript 5, Firebase, and Midtrans.',
     year: '2026',
-    role: 'Full-Stack Developer',
+    role: 'Fullstack Developer',
     team: { size: 4, label: '4-person team' },
     visibility: 'public',
     problem:

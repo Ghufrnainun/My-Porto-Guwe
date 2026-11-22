@@ -9,14 +9,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Anton&family=Instrument+Serif:ital@1&family=Schibsted+Grotesk:wght@400;600&display=swap"
     />
 
     <!-- Primary Meta Tags -->
     <title>Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio</title>
     <meta
       name="title"
-      content="Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio"
+      content="Ghufron Ainun Najib, full-stack and mobile developer, beside a screenshot of the GanOS desktop portfolio"
     />
     <meta
       name="description"
@@ -38,7 +38,7 @@
     <meta property="og:url" content="https://ghufronainun.tech/" />
     <meta
       property="og:title"
-      content="Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio"
+      content="Ghufron Ainun Najib, full-stack and mobile developer, beside a screenshot of the GanOS desktop portfolio"
     />
     <meta
       property="og:description"
@@ -53,7 +53,7 @@
     <meta property="og:image:type" content="image/png" />
     <meta
       property="og:image:alt"
-      content="Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio"
+      content="Ghufron Ainun Najib, full-stack and mobile developer, beside a screenshot of the GanOS desktop portfolio"
     />
     <meta property="og:site_name" content="Ghufron Ainun Najib" />
     <meta property="og:locale" content="en_US" />
@@ -63,7 +63,7 @@
     <meta name="twitter:url" content="https://ghufronainun.tech/" />
     <meta
       name="twitter:title"
-      content="Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio"
+      content="Ghufron Ainun Najib, full-stack and mobile developer, beside a screenshot of the GanOS desktop portfolio"
     />
     <meta
       name="twitter:description"
@@ -75,7 +75,7 @@
     />
     <meta
       name="twitter:image:alt"
-      content="Ghufron Ainun Najib | GanOS — Full-Stack Developer Portfolio"
+      content="Ghufron Ainun Najib, full-stack and mobile developer, beside a screenshot of the GanOS desktop portfolio"
     />
     <meta name="twitter:creator" content="@ghufronainun" />
 
@@ -401,11 +401,14 @@
         <span class="boot-label">GanOS</span>
       </div>
     </div>
+    <!-- /boot-splash -->
     <script>
       try {
         if (
           sessionStorage.getItem('portfolio_booted') === 'true' ||
-          location.pathname === '/preview-preloader-boot'
+          location.pathname === '/preview-preloader-boot' ||
+          // the town (/town, /town/<slug>) is its own page with its own loading, often inside a GanOS window
+          /^\/town(\/|$)/.test(location.pathname)
         ) {
           var s = document.getElementById('boot-splash');
           if (s) s.remove();

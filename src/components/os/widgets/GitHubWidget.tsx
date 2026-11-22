@@ -199,7 +199,7 @@ export function GitHubWidget({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#0d1117]/[0.95] text-[#f0f6fc] backdrop-blur-2xl select-none">
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-[#0d1117]/[0.95] text-[#f0f6fc] select-none">
       {/* Hairline top specular edge (flat surface, zero decorative glow blobs) */}
       <div
         aria-hidden="true"

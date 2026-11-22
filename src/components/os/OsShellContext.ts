@@ -31,7 +31,8 @@ export type OsAppId =
   | 'notes'
   | 'terminal'
   | 'mail'
-  | 'settings';
+  | 'settings'
+  | 'town';
 
 export type SettingsPaneId = 'appearance' | 'wallpaper' | 'displays' | 'about';
 export type OsAppearance = 'light' | 'dark' | 'auto';
