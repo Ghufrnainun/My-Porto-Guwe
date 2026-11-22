@@ -243,7 +243,7 @@ export function Skills() {
             className="flex justify-center"
           >
             <div
-              className="relative inline-flex flex-wrap items-center justify-center p-1 rounded-full border border-border/80 dark:border-white/12 bg-secondary/40 dark:bg-black/50 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)]"
+              className="relative inline-flex flex-wrap items-center justify-center p-1 rounded-full border border-border/80 dark:border-white/[0.12] bg-secondary/40 dark:bg-black/50 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)]"
               role="tablist"
               aria-label="Filter skills by category"
             >

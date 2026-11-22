@@ -2,6 +2,8 @@ import type { OsAppId } from '@/components/os/OsShellContext';
 
 export type OsNotificationAppId =
   | OsAppId
+  | 'finder'
+  | 'photos'
   | 'github'
   | 'system'
   | 'music'

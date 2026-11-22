@@ -129,24 +129,25 @@ export function Cursor({
             <AnimatePresence mode="wait">
               {isVisible && (
                 <motion.div
-                  initial={
-                    variants?.initial || {
-                      scale: 0.4,
-                      opacity: 0,
+                  variants={
+                    variants ?? {
+                      initial: {
+                        scale: 0.4,
+                        opacity: 0,
+                      },
+                      animate: {
+                        scale: 1,
+                        opacity: 1,
+                      },
+                      exit: {
+                        scale: 0.4,
+                        opacity: 0,
+                      },
                     }
                   }
-                  animate={
-                    variants?.animate || {
-                      scale: 1,
-                      opacity: 1,
-                    }
-                  }
-                  exit={
-                    variants?.exit || {
-                      scale: 0.4,
-                      opacity: 0,
-                    }
-                  }
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
                   transition={
                     transition || {
                       type: 'spring',

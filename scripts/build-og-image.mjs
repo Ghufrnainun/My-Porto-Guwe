@@ -348,7 +348,7 @@ async function generateOgImage() {
         <text x="766" y="358" class="font-sans" font-size="10" font-weight="600" fill="#f3f4f6">Curated Design</text>
         <text x="766" y="373" class="font-mono" font-size="8" fill="#9ca3af">React · Vite</text>
         <rect x="766" y="383" width="46" height="11" rx="4" fill="rgba(99,102,241,0.22)" />
-        <text x="789" y="391" text-anchor="middle" class="font-mono" font-size="7.5" fill="#a5b4fc">292+ UI</text>
+        <text x="789" y="391" text-anchor="middle" class="font-mono" font-size="7.5" fill="#a5b4fc">505+ UI</text>
 
         <!-- Card 4: SewaInAja -->
         <rect x="870" y="288" width="102" height="114" rx="9" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" stroke-width="0.9" />

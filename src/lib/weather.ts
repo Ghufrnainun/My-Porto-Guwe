@@ -145,83 +145,101 @@ export interface WallpaperGlassProfile {
 }
 
 const WALLPAPER_GLASS_PROFILES: Record<WallpaperId, WallpaperGlassProfile> = {
-  zephyr: {
+  prism: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(142, 91, 232, 0.24)',
+    refractionSecondary: 'rgba(127, 168, 240, 0.24)',
+    rimTint: 'rgba(226, 206, 255, 0.42)',
+  },
+  glassy: {
     isLightSurface: true,
-    refractionPrimary: 'rgba(104, 152, 232, 0.22)',
-    refractionSecondary: 'rgba(240, 145, 165, 0.20)',
-    rimTint: 'rgba(196, 224, 255, 0.55)',
-  },
-  crimson: {
-    isLightSurface: true,
-    refractionPrimary: 'rgba(182, 209, 239, 0.26)',
-    refractionSecondary: 'rgba(242, 97, 118, 0.18)',
-    rimTint: 'rgba(255, 220, 226, 0.58)',
-  },
-  matsukaze: {
-    isLightSurface: true,
-    refractionPrimary: 'rgba(136, 171, 141, 0.24)',
-    refractionSecondary: 'rgba(222, 235, 213, 0.26)',
-    rimTint: 'rgba(225, 245, 222, 0.58)',
-  },
-  sunrise: {
-    isLightSurface: true,
-    refractionPrimary: 'rgba(246, 161, 146, 0.24)',
-    refractionSecondary: 'rgba(176, 106, 179, 0.18)',
-    rimTint: 'rgba(255, 232, 206, 0.62)',
-  },
-  twilight: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(160, 216, 239, 0.20)',
-    refractionSecondary: 'rgba(244, 179, 194, 0.22)',
-    rimTint: 'rgba(216, 210, 255, 0.34)',
-  },
-  okibi: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(247, 158, 114, 0.24)',
-    refractionSecondary: 'rgba(214, 93, 83, 0.20)',
-    rimTint: 'rgba(255, 208, 180, 0.34)',
-  },
-  dusk: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(117, 151, 222, 0.22)',
-    refractionSecondary: 'rgba(246, 178, 168, 0.24)',
-    rimTint: 'rgba(224, 204, 255, 0.34)',
-  },
-  ocean: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(72, 184, 204, 0.22)',
-    refractionSecondary: 'rgba(32, 86, 108, 0.24)',
-    rimTint: 'rgba(164, 232, 244, 0.32)',
-  },
-  graphite: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(212, 218, 232, 0.14)',
-    refractionSecondary: 'rgba(148, 163, 184, 0.14)',
-    rimTint: 'rgba(235, 240, 248, 0.28)',
-  },
-  lagoon: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(99, 237, 232, 0.22)',
-    refractionSecondary: 'rgba(54, 118, 238, 0.24)',
-    rimTint: 'rgba(165, 242, 248, 0.34)',
-  },
-  neptune: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(125, 227, 242, 0.22)',
-    refractionSecondary: 'rgba(124, 92, 246, 0.24)',
-    rimTint: 'rgba(196, 222, 255, 0.36)',
-  },
-  cinema: {
-    isLightSurface: false,
-    refractionPrimary: 'rgba(255, 159, 69, 0.22)',
-    refractionSecondary: 'rgba(232, 80, 91, 0.20)',
-    rimTint: 'rgba(255, 210, 182, 0.34)',
+    refractionPrimary: 'rgba(59, 210, 187, 0.22)',
+    refractionSecondary: 'rgba(199, 243, 233, 0.28)',
+    rimTint: 'rgba(218, 250, 244, 0.62)',
   },
   aurora: {
     isLightSurface: false,
-    refractionPrimary: 'rgba(102, 248, 167, 0.20)',
-    refractionSecondary: 'rgba(76, 196, 184, 0.22)',
-    rimTint: 'rgba(180, 250, 220, 0.34)',
+    refractionPrimary: 'rgba(95, 232, 150, 0.22)',
+    refractionSecondary: 'rgba(46, 122, 106, 0.24)',
+    rimTint: 'rgba(182, 250, 214, 0.36)',
+  },
+  sky: {
+    isLightSurface: true,
+    refractionPrimary: 'rgba(242, 184, 160, 0.24)',
+    refractionSecondary: 'rgba(199, 126, 158, 0.22)',
+    rimTint: 'rgba(255, 228, 212, 0.60)',
+  },
+  watercolor: {
+    isLightSurface: true,
+    refractionPrimary: 'rgba(175, 137, 237, 0.24)',
+    refractionSecondary: 'rgba(121, 191, 234, 0.24)',
+    rimTint: 'rgba(232, 226, 255, 0.60)',
+  },
+  perla: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(194, 177, 248, 0.24)',
+    refractionSecondary: 'rgba(0, 177, 206, 0.22)',
+    rimTint: 'rgba(245, 224, 248, 0.40)',
+  },
+  kai: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(143, 217, 200, 0.22)',
+    refractionSecondary: 'rgba(224, 122, 154, 0.22)',
+    rimTint: 'rgba(232, 244, 240, 0.36)',
+  },
+  'silk-gold': {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(242, 194, 76, 0.24)',
+    refractionSecondary: 'rgba(154, 103, 18, 0.22)',
+    rimTint: 'rgba(255, 234, 168, 0.42)',
+  },
+  lagoon: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(99, 237, 232, 0.24)',
+    refractionSecondary: 'rgba(29, 93, 219, 0.26)',
+    rimTint: 'rgba(176, 246, 250, 0.38)',
+  },
+  'kasane-crimson': {
+    isLightSurface: true,
+    refractionPrimary: 'rgba(182, 209, 239, 0.26)',
+    refractionSecondary: 'rgba(231, 35, 81, 0.18)',
+    rimTint: 'rgba(255, 224, 230, 0.60)',
+  },
+  'kasane-violet': {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(154, 136, 209, 0.24)',
+    refractionSecondary: 'rgba(233, 184, 189, 0.20)',
+    rimTint: 'rgba(228, 214, 248, 0.40)',
+  },
+  'kasane-ochre': {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(177, 178, 212, 0.22)',
+    refractionSecondary: 'rgba(176, 94, 7, 0.20)',
+    rimTint: 'rgba(236, 228, 216, 0.38)',
+  },
+  forms: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(154, 107, 255, 0.24)',
+    refractionSecondary: 'rgba(255, 100, 125, 0.22)',
+    rimTint: 'rgba(235, 214, 255, 0.38)',
+  },
+  mist: {
+    isLightSurface: false,
+    refractionPrimary: 'rgba(130, 162, 214, 0.20)',
+    refractionSecondary: 'rgba(58, 74, 107, 0.24)',
+    rimTint: 'rgba(206, 222, 248, 0.34)',
+  },
+  glint: {
+    isLightSurface: true,
+    refractionPrimary: 'rgba(255, 176, 124, 0.24)',
+    refractionSecondary: 'rgba(158, 78, 116, 0.20)',
+    rimTint: 'rgba(255, 234, 210, 0.60)',
+  },
+  rings: {
+    isLightSurface: true,
+    refractionPrimary: 'rgba(238, 187, 203, 0.24)',
+    refractionSecondary: 'rgba(137, 91, 138, 0.20)',
+    rimTint: 'rgba(250, 232, 240, 0.58)',
   },
 };
 
@@ -229,7 +247,7 @@ export function getWallpaperGlassProfile(
   wallpaperId: WallpaperId,
   mode: GlassToneMode = 'auto'
 ): WallpaperGlassProfile {
-  const base = WALLPAPER_GLASS_PROFILES[wallpaperId] ?? WALLPAPER_GLASS_PROFILES.zephyr;
+  const base = WALLPAPER_GLASS_PROFILES[wallpaperId] ?? WALLPAPER_GLASS_PROFILES.prism;
   if (mode === 'auto') return base;
   return {
     ...base,

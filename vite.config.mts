@@ -21,17 +21,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
-          if (id.includes('framer-motion')) return 'vendor-motion';
-          if (id.includes('@radix-ui')) return 'vendor-radix';
-          if (id.includes('@tanstack')) return 'vendor-query';
           if (id.includes('lucide-react')) return 'vendor-icons';
-          if (
-            /node_modules[/\\](react|react-dom|scheduler|react-router|react-router-dom)[/\\]/.test(
-              id,
-            )
-          ) {
-            return 'vendor-react';
-          }
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('@tiptap') || id.includes('prosemirror')) return 'vendor-editor';
+          if (id.includes('@supabase')) return 'vendor-supabase';
         },
       },
     },

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowUpRight,
   Bookmark,
+  BookOpen,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -8,6 +10,8 @@ import {
   Compass,
   Copy,
   ExternalLink,
+  FileText,
+  FolderKanban,
   Globe,
   History,
   Info,
@@ -20,8 +24,10 @@ import {
   Search,
   Send,
   Share,
+  ShieldAlert,
   Image as ImageIcon,
   Sun,
+  User,
   X,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -34,6 +40,7 @@ import {
   skillTiers,
 } from '@/data/profile';
 import { featuredProjects } from '@/data/featuredProjects';
+import { RECENT_TRACKS } from '@/data/recentTracks';
 import {
   GANOS_VERSION,
   useOsNote,
@@ -63,82 +70,369 @@ interface SafariTab {
   historyIndex: number;
 }
 
-const SAFARI_BOOKMARKS = [
-  {
-    id: 'yt-odoriko',
-    label: 'Odoriko — Vaundy',
-    url: 'https://www.youtube.com/embed/7HgJIAUtICU?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'yt-loser',
-    label: 'LOSER — Kenshi Yonezu',
-    url: 'https://www.youtube.com/embed/Dx_fKPBPYUI?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'yt-supernova',
-    label: 'Supernova — aespa',
-    url: 'https://www.youtube.com/embed/phuiiNCxRMg?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'yt-whiplash',
-    label: 'Whiplash — aespa',
-    url: 'https://www.youtube.com/embed/jWQx2f-CErU?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'yt-kickback',
-    label: 'KICK BACK — Kenshi Yonezu',
-    url: 'https://www.youtube.com/embed/M2cckDmNLMI?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'yt-nightcall',
-    label: 'Nightcall — Kavinsky',
-    url: 'https://www.youtube.com/embed/MV_3Dpw-BRY?autoplay=1',
-    category: 'tracks',
-  },
-  {
-    id: 'fav-old',
-    label: 'Legacy Portfolio (/old)',
-    url: '/old',
-    category: 'fav',
-  },
+type SafariPortfolioIconKey = 'projects' | 'resume' | 'blog' | 'about' | 'legacy';
+
+interface SafariPortfolioBookmark {
+  id: string;
+  label: string;
+  shortLabel: string;
+  pathHint: string;
+  url: string;
+  keywords: string[];
+  icon: SafariPortfolioIconKey;
+}
+
+interface SafariTrackBookmark {
+  id: string;
+  label: string;
+  title: string;
+  artist: string;
+  duration?: string;
+  coverImage: string;
+  coverBg: string;
+  url: string;
+}
+
+interface SafariExternalLink {
+  id: string;
+  label: string;
+  hostHint: string;
+  url: string;
+}
+
+type BlockedInfo =
+  | { kind: 'url'; targetUrl: string; hostname: string }
+  | { kind: 'query'; query: string; searchUrl: string };
+
+const MAX_SAFARI_TABS = 4;
+
+const ALLOWED_INTERNAL_PREFIXES = [
+  '/old',
+  '/projects',
+  '/blog',
+  '/resume',
+  '/about',
+] as const;
+
+const OWN_PORTFOLIO_HOSTS = new Set([
+  'ghufronainun.tech',
+  'www.ghufronainun.tech',
+]);
+
+const ALLOWED_EMBED_HOSTS = new Set([
+  'www.youtube.com',
+  'youtube.com',
+  'www.youtube-nocookie.com',
+]);
+
+const SAFARI_PORTFOLIO_BOOKMARKS: readonly SafariPortfolioBookmark[] = [
   {
     id: 'fav-projects',
     label: 'Featured Projects',
+    shortLabel: 'Projects',
+    pathHint: '/projects',
     url: '/projects',
-    category: 'fav',
-  },
-  {
-    id: 'fav-blog',
-    label: 'Engineering Blog',
-    url: '/blog',
-    category: 'fav',
+    keywords: ['projects', 'work', 'case study', 'pbundip', 'tempemail'],
+    icon: 'projects',
   },
   {
     id: 'fav-resume',
     label: 'Curriculum Vitae',
+    shortLabel: 'Resume',
+    pathHint: '/resume',
     url: '/resume',
-    category: 'fav',
+    keywords: ['resume', 'cv', 'curriculum vitae', 'experience'],
+    icon: 'resume',
+  },
+  {
+    id: 'fav-blog',
+    label: 'Engineering Blog',
+    shortLabel: 'Writing',
+    pathHint: '/blog',
+    url: '/blog',
+    keywords: ['blog', 'writing', 'articles', 'posts', 'notes'],
+    icon: 'blog',
   },
   {
     id: 'fav-about',
     label: 'About Ghufron',
+    shortLabel: 'About Me',
+    pathHint: '/about',
     url: '/about',
-    category: 'fav',
+    keywords: ['about', 'profile', 'bio', 'ghufron'],
+    icon: 'about',
+  },
+  {
+    id: 'fav-old',
+    label: 'Legacy Portfolio',
+    shortLabel: 'Legacy Portfolio',
+    pathHint: '/old',
+    url: '/old',
+    keywords: ['old', 'legacy', 'archive', 'previous'],
+    icon: 'legacy',
   },
 ];
 
+const CURATED_SAFARI_TRACK_IDS = [
+  'odoriko',
+  'loser',
+  'supernova',
+  'whiplash',
+  'kickback',
+  'nightcall',
+] as const;
+
+const SAFARI_TRACK_BOOKMARKS: readonly SafariTrackBookmark[] =
+  CURATED_SAFARI_TRACK_IDS.flatMap((trackId) => {
+    const track = RECENT_TRACKS.find((t) => t.id === trackId);
+    if (!track) return [];
+    return [
+      {
+        id: `yt-${track.id}`,
+        label: `${track.title} — ${track.artist}`,
+        title: track.title,
+        artist: track.artist,
+        duration: track.duration,
+        coverImage: track.coverImage,
+        coverBg: track.coverBg,
+        url: `https://www.youtube.com/embed/${track.ytId}?autoplay=1`,
+      },
+    ];
+  });
+
+const SAFARI_EXTERNAL_LINKS: readonly SafariExternalLink[] = [
+  {
+    id: 'ext-github',
+    label: 'GitHub',
+    hostHint: 'github.com/Ghufrnainun',
+    url: profile.github,
+  },
+  {
+    id: 'ext-linkedin',
+    label: 'LinkedIn',
+    hostHint: 'linkedin.com/in/ghufronainunnajib',
+    url: profile.linkedin,
+  },
+];
+
+function renderPortfolioBookmarkIcon(icon: SafariPortfolioIconKey, size = 18) {
+  switch (icon) {
+    case 'projects':
+      return <FolderKanban size={size} className="text-[#0a84ff]" />;
+    case 'resume':
+      return <FileText size={size} className="text-[#30b0c7]" />;
+    case 'blog':
+      return <BookOpen size={size} className="text-[#bf5af2]" />;
+    case 'about':
+      return <User size={size} className="text-[#34c759]" />;
+    case 'legacy':
+      return <History size={size} className="text-[#ff9f0a]" />;
+  }
+}
+
+function isAllowedInternalPath(path: string): boolean {
+  const clean = path.split(/[?#]/)[0] || '/';
+  return ALLOWED_INTERNAL_PREFIXES.some(
+    (prefix) => clean === prefix || clean.startsWith(`${prefix}/`),
+  );
+}
+
+function extractYouTubeEmbedUrl(raw: string): string | null {
+  try {
+    const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const parsed = new URL(normalized);
+    const host = parsed.hostname.toLowerCase();
+    let vidId = '';
+
+    if (host === 'youtu.be' || host === 'www.youtu.be') {
+      vidId = parsed.pathname.split('/').filter(Boolean)[0] ?? '';
+    } else if (
+      host === 'youtube.com' ||
+      host === 'www.youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'www.youtube-nocookie.com'
+    ) {
+      if (parsed.pathname === '/watch') {
+        vidId = parsed.searchParams.get('v') ?? '';
+      } else if (parsed.pathname.startsWith('/embed/')) {
+        vidId = parsed.pathname.split('/embed/')[1]?.split('/')[0] ?? '';
+      } else if (parsed.pathname.startsWith('/shorts/')) {
+        vidId = parsed.pathname.split('/shorts/')[1]?.split('/')[0] ?? '';
+      }
+    }
+
+    if (vidId && /^[a-zA-Z0-9_-]{6,20}$/.test(vidId)) {
+      return `https://www.youtube.com/embed/${vidId}?autoplay=1`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function makeBlockedUrl(targetUrl: string): string {
+  return `safari:blocked?url=${encodeURIComponent(targetUrl)}`;
+}
+
+function makeBlockedQuery(query: string): string {
+  return `safari:blocked?q=${encodeURIComponent(query)}`;
+}
+
+function parseBlockedUrl(url: string): BlockedInfo | null {
+  if (!url.startsWith('safari:blocked?')) return null;
+  const params = new URLSearchParams(url.slice('safari:blocked?'.length));
+  const blockedTarget = params.get('url');
+  if (blockedTarget) {
+    let hostname = blockedTarget;
+    try {
+      hostname = new URL(blockedTarget).hostname.replace(/^www\./, '');
+    } catch {
+      /* keep raw */
+    }
+    return { kind: 'url', targetUrl: blockedTarget, hostname };
+  }
+  const query = params.get('q');
+  if (query) {
+    return {
+      kind: 'query',
+      query,
+      searchUrl: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+    };
+  }
+  return null;
+}
+
+function isSafeEmbeddableUrl(url: string): boolean {
+  if (url === 'safari:start' || url.startsWith('safari:blocked?')) return false;
+  if (url.startsWith('/')) return isAllowedInternalPath(url);
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (ALLOWED_EMBED_HOSTS.has(host) && parsed.pathname.startsWith('/embed/')) {
+      return true;
+    }
+    if (
+      typeof window !== 'undefined' &&
+      host === window.location.hostname.toLowerCase() &&
+      isAllowedInternalPath(parsed.pathname)
+    ) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function resolveSafariInput(rawInput: string): string {
+  const input = rawInput.trim();
+  if (!input) return 'safari:start';
+  const lower = input.toLowerCase();
+
+  if (
+    lower === 'safari:start' ||
+    lower === 'start' ||
+    lower === 'favorites' ||
+    lower === 'home'
+  ) {
+    return 'safari:start';
+  }
+  if (input.startsWith('safari:blocked?')) {
+    return input;
+  }
+
+  // 1. Direct internal route
+  if (input.startsWith('/')) {
+    if (isAllowedInternalPath(input)) return input;
+    const origin =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : profile.website;
+    return makeBlockedUrl(`${origin}${input}`);
+  }
+
+  // 2. YouTube links (watch / shorts / youtu.be / embed)
+  const ytEmbed = extractYouTubeEmbedUrl(input);
+  if (ytEmbed) return ytEmbed;
+
+  // 3. Domain / URL input
+  const hasProtocol = /^https?:\/\//i.test(input);
+  const looksLikeDomain =
+    !/\s/.test(input) &&
+    /^([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i.test(input);
+
+  if (hasProtocol || looksLikeDomain) {
+    const normalized = hasProtocol ? input : `https://${input}`;
+    try {
+      const parsed = new URL(normalized);
+      const host = parsed.hostname.toLowerCase();
+      const isOwnHost =
+        OWN_PORTFOLIO_HOSTS.has(host) ||
+        (typeof window !== 'undefined' &&
+          host === window.location.hostname.toLowerCase());
+
+      if (isOwnHost) {
+        const internalPath = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        if (parsed.pathname === '/' || parsed.pathname === '') {
+          return 'safari:start';
+        }
+        if (isAllowedInternalPath(parsed.pathname)) {
+          return internalPath;
+        }
+      }
+
+      if (ALLOWED_EMBED_HOSTS.has(host) && parsed.pathname.startsWith('/embed/')) {
+        return parsed.toString();
+      }
+
+      return makeBlockedUrl(parsed.toString());
+    } catch {
+      return makeBlockedQuery(input);
+    }
+  }
+
+  // 4. Plain-text keyword matching curated portfolio pages & tracks
+  const portfolioMatch = SAFARI_PORTFOLIO_BOOKMARKS.find(
+    (b) =>
+      b.label.toLowerCase().includes(lower) ||
+      b.pathHint.slice(1).toLowerCase() === lower ||
+      b.keywords.some((kw) => kw.includes(lower) || lower.includes(kw)),
+  );
+  if (portfolioMatch) return portfolioMatch.url;
+
+  const trackMatch = SAFARI_TRACK_BOOKMARKS.find(
+    (t) =>
+      t.title.toLowerCase().includes(lower) ||
+      t.artist.toLowerCase().includes(lower) ||
+      t.label.toLowerCase().includes(lower),
+  );
+  if (trackMatch) return trackMatch.url;
+
+  const externalMatch = SAFARI_EXTERNAL_LINKS.find(
+    (e) =>
+      e.label.toLowerCase().includes(lower) ||
+      e.hostHint.toLowerCase().includes(lower),
+  );
+  if (externalMatch) return makeBlockedUrl(externalMatch.url);
+
+  // 5. Unknown search query -> sandbox notice with Google handoff
+  return makeBlockedQuery(input);
+}
+
 function formatDisplayUrl(url: string): string {
   if (url === 'safari:start') return 'Favorites';
+  const blocked = parseBlockedUrl(url);
+  if (blocked) {
+    return blocked.kind === 'url' ? blocked.hostname : blocked.query;
+  }
   if (url === '/old') return 'ghufronainun.tech/old';
   try {
     const parsed = new URL(url);
     if (
-      parsed.hostname.includes('youtube.com') &&
+      parsed.hostname.includes('youtube') &&
       parsed.pathname.includes('/embed/')
     ) {
       const vidId = parsed.pathname.split('/embed/')[1]?.split('?')[0];
@@ -153,15 +447,20 @@ function formatDisplayUrl(url: string): string {
 
 function formatDisplayTitle(url: string): string {
   if (url === 'safari:start') return 'Start Page';
-  if (url === '/old') return 'Legacy Portfolio';
-  if (url === '/projects') return 'Projects';
-  if (url === '/blog') return 'Writing';
-  if (url === '/resume') return 'Resume';
-  if (url === '/about') return 'About Me';
-  const match = SAFARI_BOOKMARKS.find((b) => b.url === url);
-  if (match) return match.label;
+  const blocked = parseBlockedUrl(url);
+  if (blocked) {
+    return blocked.kind === 'url'
+      ? blocked.hostname
+      : `Search: ${blocked.query}`;
+  }
+  const portfolio = SAFARI_PORTFOLIO_BOOKMARKS.find((b) => b.url === url);
+  if (portfolio) return portfolio.shortLabel;
+  const track = SAFARI_TRACK_BOOKMARKS.find((b) => b.url === url);
+  if (track) return track.label;
   if (url.includes('youtube.com/embed/')) {
     const id = url.split('/embed/')[1]?.split('?')[0];
+    const recentMatch = RECENT_TRACKS.find((t) => t.ytId === id);
+    if (recentMatch) return `${recentMatch.title} — ${recentMatch.artist}`;
     return `YouTube (${id})`;
   }
   return formatDisplayUrl(url);
@@ -169,6 +468,10 @@ function formatDisplayTitle(url: string): string {
 
 function formatExternalUrl(url: string): string {
   if (url === 'safari:start') return window.location.origin;
+  const blocked = parseBlockedUrl(url);
+  if (blocked) {
+    return blocked.kind === 'url' ? blocked.targetUrl : blocked.searchUrl;
+  }
   if (url.includes('youtube.com/embed/')) {
     const vidId = url.split('/embed/')[1]?.split('?')[0];
     return `https://www.youtube.com/watch?v=${vidId}`;
@@ -179,16 +482,42 @@ function formatExternalUrl(url: string): string {
   return url;
 }
 
+type QuickSwitcherItem =
+  | {
+      key: string;
+      kind: 'portfolio';
+      label: string;
+      meta: string;
+      url: string;
+      icon: SafariPortfolioIconKey;
+    }
+  | {
+      key: string;
+      kind: 'track';
+      label: string;
+      meta: string;
+      url: string;
+    }
+  | {
+      key: string;
+      kind: 'external';
+      label: string;
+      meta: string;
+      url: string;
+    };
+
 export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   initialUrl = '/old',
 }) => {
   const { pushNotification } = useOsNotification();
+  const safeInitialUrl = resolveSafariInput(initialUrl);
+
   const [tabs, setTabs] = useState<SafariTab[]>([
     {
       id: 'tab-1',
-      title: formatDisplayTitle(initialUrl),
-      url: initialUrl,
-      history: [initialUrl],
+      title: formatDisplayTitle(safeInitialUrl),
+      url: safeInitialUrl,
+      history: [safeInitialUrl],
       historyIndex: 0,
     },
   ]);
@@ -197,7 +526,12 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   const [showOverview, setShowOverview] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [addressInput, setAddressInput] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isReloading, setIsReloading] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(() =>
+    isSafeEmbeddableUrl(safeInitialUrl),
+  );
+  const [copiedShare, setCopiedShare] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   const activeTab = useMemo(
@@ -207,31 +541,75 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
 
   const activeTabIdRef = useRef(activeTabId);
   activeTabIdRef.current = activeTabId;
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
   const prevInitialUrlRef = useRef(initialUrl);
   const tabSeqRef = useRef(2);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   // Sync only when initialUrl prop actually updates from external desktop actions (e.g. music widget)
   useEffect(() => {
     if (!initialUrl || initialUrl === prevInitialUrlRef.current) return;
     prevInitialUrlRef.current = initialUrl;
+    const resolved = resolveSafariInput(initialUrl);
     const targetTabId = activeTabIdRef.current;
+
+    const existing = tabsRef.current.find((t) => t.url === resolved);
+    if (existing) {
+      setActiveTabId(existing.id);
+      setShowOverview(false);
+      setIsEditingAddress(false);
+      return;
+    }
+
     setTabs((prev) => {
       const current = prev.find((t) => t.id === targetTabId);
-      if (current && current.url === initialUrl) return prev;
+      if (current && current.url === resolved) return prev;
       return prev.map((t) => {
         if (t.id !== targetTabId) return t;
-        const nextHist = [...t.history.slice(0, t.historyIndex + 1), initialUrl];
+        const nextHist = [...t.history.slice(0, t.historyIndex + 1), resolved];
         return {
           ...t,
-          url: initialUrl,
-          title: formatDisplayTitle(initialUrl),
+          url: resolved,
+          title: formatDisplayTitle(resolved),
           history: nextHist,
           historyIndex: nextHist.length - 1,
         };
       });
     });
     setShowOverview(false);
+    setIsEditingAddress(false);
   }, [initialUrl]);
+
+  // Auto-select address bar text on edit open
+  useEffect(() => {
+    if (!isEditingAddress) return;
+    const raf = window.requestAnimationFrame(() => {
+      addressInputRef.current?.focus();
+      addressInputRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [isEditingAddress]);
+
+  const blockedInfo = useMemo(
+    () => parseBlockedUrl(activeTab.url),
+    [activeTab.url],
+  );
+  const canEmbedCurrent = useMemo(
+    () => isSafeEmbeddableUrl(activeTab.url),
+    [activeTab.url],
+  );
+
+  // Track iframe loading state with a safe timeout fallback for cross-origin embeds
+  useEffect(() => {
+    if (!canEmbedCurrent) {
+      setIsIframeLoading(false);
+      return;
+    }
+    setIsIframeLoading(true);
+    const fallback = window.setTimeout(() => setIsIframeLoading(false), 2600);
+    return () => window.clearTimeout(fallback);
+  }, [activeTab.url, reloadKey, canEmbedCurrent]);
 
   const displayUrl = useMemo(
     () => formatDisplayUrl(activeTab.url),
@@ -243,53 +621,91 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
     [activeTab.url],
   );
 
+  const quickSwitcherItems = useMemo<QuickSwitcherItem[]>(() => {
+    const q = addressInput.trim().toLowerCase();
+    const portfolio: QuickSwitcherItem[] = SAFARI_PORTFOLIO_BOOKMARKS.filter(
+      (b) =>
+        !q ||
+        b.label.toLowerCase().includes(q) ||
+        b.pathHint.toLowerCase().includes(q) ||
+        b.keywords.some((kw) => kw.includes(q)),
+    ).map((b) => ({
+      key: b.id,
+      kind: 'portfolio',
+      label: b.label,
+      meta: `ghufronainun.tech${b.pathHint}`,
+      url: b.url,
+      icon: b.icon,
+    }));
+
+    const tracks: QuickSwitcherItem[] = SAFARI_TRACK_BOOKMARKS.filter(
+      (t) =>
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        t.artist.toLowerCase().includes(q) ||
+        t.label.toLowerCase().includes(q),
+    )
+      .slice(0, q ? 6 : 3)
+      .map((t) => ({
+        key: t.id,
+        kind: 'track',
+        label: t.title,
+        meta: `${t.artist} · YouTube`,
+        url: t.url,
+      }));
+
+    const externals: QuickSwitcherItem[] = SAFARI_EXTERNAL_LINKS.filter(
+      (e) =>
+        !q ||
+        e.label.toLowerCase().includes(q) ||
+        e.hostHint.toLowerCase().includes(q),
+    ).map((e) => ({
+      key: e.id,
+      kind: 'external',
+      label: e.label,
+      meta: e.hostHint,
+      url: e.url,
+    }));
+
+    return [...portfolio, ...tracks, ...externals];
+  }, [addressInput]);
+
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [addressInput, isEditingAddress]);
+
   const canGoBack = activeTab.historyIndex > 0;
   const canGoForward = activeTab.historyIndex < activeTab.history.length - 1;
+  const canAddTab = tabs.length < MAX_SAFARI_TABS;
+  const canReload = canEmbedCurrent;
 
   const navigateTo = (rawInput: string) => {
-    let target = rawInput.trim();
-    if (!target) return;
+    const target = resolveSafariInput(rawInput);
 
-    // Convert YouTube watch links to embed so they work inside iframe
-    if (target.includes('youtube.com/watch') || target.includes('youtu.be/')) {
-      try {
-        let vidId = '';
-        if (target.includes('youtu.be/')) {
-          vidId =
-            target.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0] ?? '';
-        } else {
-          const u = new URL(
-            target.startsWith('http') ? target : `https://${target}`,
-          );
-          vidId = u.searchParams.get('v') ?? '';
+    // Anti-duplicate: if another tab already holds this exact curated destination, focus it
+    if (target !== 'safari:start' && !target.startsWith('safari:blocked?')) {
+      const existingTab = tabs.find(
+        (t) => t.id !== activeTabId && t.url === target,
+      );
+      if (existingTab) {
+        const currentIsEmptyStart =
+          activeTab.url === 'safari:start' &&
+          activeTab.history.length === 1 &&
+          tabs.length > 1;
+        if (currentIsEmptyStart) {
+          setTabs((prev) => prev.filter((t) => t.id !== activeTabId));
         }
-        if (vidId) {
-          target = `https://www.youtube.com/embed/${vidId}?autoplay=1`;
-        }
-      } catch {
-        /* ignore */
+        setActiveTabId(existingTab.id);
+        setShowOverview(false);
+        setIsEditingAddress(false);
+        return;
       }
-    } else if (
-      !target.startsWith('/') &&
-      !target.startsWith('http://') &&
-      !target.startsWith('https://') &&
-      target !== 'safari:start'
-    ) {
-      if (target === 'old' || target === 'legacy') target = '/old';
-      else if (
-        target === 'projects' ||
-        target === 'about' ||
-        target === 'blog' ||
-        target === 'resume'
-      )
-        target = `/${target}`;
-      else if (target.includes('.')) target = `https://${target}`;
-      else target = '/projects';
     }
 
     setTabs((prev) =>
       prev.map((t) => {
         if (t.id !== activeTabId) return t;
+        if (t.url === target) return t;
         const nextHistory = [...t.history.slice(0, t.historyIndex + 1), target];
         return {
           ...t,
@@ -302,6 +718,15 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
     );
     setShowOverview(false);
     setIsEditingAddress(false);
+  };
+
+  const handleSelectQuickItem = (item: QuickSwitcherItem) => {
+    setIsEditingAddress(false);
+    if (item.kind === 'external') {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    navigateTo(item.url);
   };
 
   const handleBack = () => {
@@ -339,15 +764,19 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   };
 
   const handleReload = () => {
+    if (!canReload) return;
     setIsReloading(true);
+    setIsIframeLoading(true);
     setReloadKey((k) => k + 1);
-    window.setTimeout(() => setIsReloading(false), 500);
+    window.setTimeout(() => setIsReloading(false), 450);
   };
 
   const handleShare = () => {
     if (navigator.clipboard) {
       void navigator.clipboard.writeText(externalUrl);
     }
+    setCopiedShare(true);
+    window.setTimeout(() => setCopiedShare(false), 1600);
     pushNotification({
       appId: 'safari',
       appName: 'Safari',
@@ -359,14 +788,39 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
   };
 
   const handleNewTab = (newUrl: string = 'safari:start') => {
+    const resolved = resolveSafariInput(newUrl);
+
+    // Anti-duplicate for non-start destinations
+    if (resolved !== 'safari:start') {
+      const existing = tabs.find((t) => t.url === resolved);
+      if (existing) {
+        setActiveTabId(existing.id);
+        setShowOverview(false);
+        setIsEditingAddress(false);
+        return;
+      }
+    }
+
+    if (tabs.length >= MAX_SAFARI_TABS) {
+      pushNotification({
+        appId: 'safari',
+        appName: 'Safari',
+        appIcon: '/macos-icons/safari.png',
+        title: `Tab Limit (${MAX_SAFARI_TABS})`,
+        body: 'Close an existing tab before opening a new one.',
+        durationMs: 2600,
+      });
+      return;
+    }
+
     const id = `tab-${tabSeqRef.current++}`;
     setTabs((prev) => [
       ...prev,
       {
         id,
-        title: formatDisplayTitle(newUrl),
-        url: newUrl,
-        history: [newUrl],
+        title: formatDisplayTitle(resolved),
+        url: resolved,
+        history: [resolved],
         historyIndex: 0,
       },
     ]);
@@ -407,6 +861,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
       {/* Safari Main Toolbar */}
       <Toolbar
         hasControls
+        className="z-30"
         leading={
           <>
             {/* Sidebar Toggle Button */}
@@ -418,7 +873,13 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                 icon={
                   <span className="flex items-center gap-0.5 px-0.5">
                     <PanelLeft size={15} />
-                    <ChevronDown size={11} className={sidebarOpen ? 'rotate-180 transition-transform' : ''} />
+                    <ChevronDown
+                      size={11}
+                      className={cn(
+                        'transition-transform duration-150 ease-smooth-out motion-reduce:transition-none',
+                        sidebarOpen && 'rotate-180',
+                      )}
+                    />
                   </span>
                 }
               />
@@ -427,14 +888,14 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
             {/* Back & Forward History Navigation */}
             <ToolbarGroup>
               <ToolbarButton
-                title={canGoBack ? 'Click to go back' : 'Back'}
+                title={canGoBack ? 'Go Back' : 'Back'}
                 disabled={!canGoBack}
                 onClick={handleBack}
                 icon={<ChevronLeft size={16} />}
               />
               <span className="h-4 w-[0.5px] bg-black/15 dark:bg-white/15" />
               <ToolbarButton
-                title={canGoForward ? 'Click to go forward' : 'Forward'}
+                title={canGoForward ? 'Go Forward' : 'Forward'}
                 disabled={!canGoForward}
                 onClick={handleForward}
                 icon={<ChevronRight size={16} />}
@@ -443,72 +904,257 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
           </>
         }
         center={
-          /* Smart Interactive Address Bar */
-          <ToolbarGroup className="w-full max-w-[440px] justify-between px-3 text-[13px]">
-            <Lock size={12} className="shrink-0 opacity-45" />
-
-            {isEditingAddress ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  navigateTo(addressInput);
-                }}
-                className="flex-1 px-2"
-              >
-                <input
-                  type="text"
-                  autoFocus
-                  value={addressInput}
-                  onChange={(e) => setAddressInput(e.target.value)}
-                  onBlur={() => setIsEditingAddress(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setIsEditingAddress(false);
-                  }}
-                  placeholder="Enter URL or search..."
-                  className="w-full bg-transparent text-center text-[12.5px] text-black outline-none focus:text-left dark:text-white"
+          /* Curated Combobox Address Bar + Quick Switcher */
+          <div className="relative w-full max-w-[440px]">
+            <ToolbarGroup
+              className={cn(
+                'w-full justify-between px-3 text-[13px] transition-shadow duration-150 ease-smooth-out',
+                isEditingAddress &&
+                  'ring-2 ring-[#0a84ff]/70 dark:ring-[#0a84ff]/80',
+              )}
+            >
+              {blockedInfo ? (
+                <ShieldAlert
+                  size={12}
+                  className="shrink-0 text-amber-500/90"
+                  aria-hidden="true"
                 />
-              </form>
-            ) : (
+              ) : (
+                <Lock
+                  size={12}
+                  className="shrink-0 opacity-45"
+                  aria-hidden="true"
+                />
+              )}
+
+              {isEditingAddress ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (
+                      highlightedIndex >= 0 &&
+                      quickSwitcherItems[highlightedIndex]
+                    ) {
+                      handleSelectQuickItem(
+                        quickSwitcherItems[highlightedIndex],
+                      );
+                      return;
+                    }
+                    navigateTo(addressInput);
+                  }}
+                  className="min-w-0 flex-1 px-2"
+                >
+                  <input
+                    ref={addressInputRef}
+                    type="text"
+                    role="combobox"
+                    aria-label="Search portfolio pages or enter URL"
+                    aria-expanded={true}
+                    aria-controls="safari-quick-switcher"
+                    aria-autocomplete="list"
+                    aria-activedescendant={
+                      highlightedIndex >= 0 &&
+                      quickSwitcherItems[highlightedIndex]
+                        ? `safari-qs-${quickSwitcherItems[highlightedIndex].key}`
+                        : undefined
+                    }
+                    value={addressInput}
+                    onChange={(e) => setAddressInput(e.target.value)}
+                    onBlur={() => setIsEditingAddress(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        setIsEditingAddress(false);
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!quickSwitcherItems.length) return;
+                        setHighlightedIndex((prev) =>
+                          prev < quickSwitcherItems.length - 1 ? prev + 1 : 0,
+                        );
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (!quickSwitcherItems.length) return;
+                        setHighlightedIndex((prev) =>
+                          prev > 0 ? prev - 1 : quickSwitcherItems.length - 1,
+                        );
+                      }
+                    }}
+                    placeholder="Jump to portfolio page or embed..."
+                    className="w-full bg-transparent text-left text-[12.5px] text-black outline-none placeholder:text-black/40 dark:text-white dark:placeholder:text-white/40"
+                  />
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressInput(
+                      activeTab.url === 'safari:start' ? '' : displayUrl,
+                    );
+                    setIsEditingAddress(true);
+                  }}
+                  title="Search portfolio pages or enter URL"
+                  aria-label={`Current address: ${displayUrl}. Click to search or navigate`}
+                  className="min-w-0 flex-1 truncate px-2 text-center text-black/85 transition-opacity duration-150 hover:opacity-75 focus-visible:outline-none dark:text-white/90"
+                >
+                  {displayUrl}
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => {
-                  setAddressInput(
-                    activeTab.url === 'safari:start' ? '' : displayUrl,
-                  );
-                  setIsEditingAddress(true);
-                }}
-                title="Click to edit address or enter URL"
-                className="flex-1 truncate px-2 text-center text-black/85 transition-opacity hover:opacity-75 dark:text-white/90"
+                onClick={handleReload}
+                disabled={!canReload}
+                title={canReload ? 'Reload page' : 'Nothing to reload'}
+                aria-label="Reload page"
+                className="shrink-0 rounded-full p-0.5 opacity-55 transition-[opacity,transform] duration-150 ease-smooth-out enabled:hover:opacity-100 enabled:active:scale-[0.92] disabled:opacity-25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]"
               >
-                {displayUrl}
+                <RotateCw
+                  size={12}
+                  className={isReloading ? 'animate-spin' : ''}
+                />
               </button>
-            )}
+            </ToolbarGroup>
 
-            <button
-              type="button"
-              onClick={handleReload}
-              title="Reload page"
-              aria-label="Reload page"
-              className="shrink-0 opacity-55 transition-opacity hover:opacity-100"
-            >
-              <RotateCw
-                size={12}
-                className={isReloading ? 'animate-spin' : ''}
-              />
-            </button>
-          </ToolbarGroup>
+            {/* Quick Switcher Popover (anchored top-center, 0ms keyboard selection) */}
+            {isEditingAddress && (
+              <div
+                id="safari-quick-switcher"
+                role="listbox"
+                aria-label="Curated destinations"
+                onMouseDown={(e) => e.preventDefault()}
+                className="absolute inset-x-0 top-[calc(100%+6px)] z-50 origin-top overflow-hidden rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-[0_14px_36px_rgba(0,0,0,0.22)] backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150 ease-smooth-out motion-reduce:animate-none dark:border-white/[0.12] dark:bg-[#221b20]/95 dark:shadow-[0_18px_42px_rgba(0,0,0,0.55)]"
+              >
+                <div className="flex items-center justify-between px-2.5 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-black/40 dark:text-white/35">
+                  <span>Quick Switcher</span>
+                  <span className="font-mono normal-case tracking-normal opacity-80">
+                    ↑↓ · Enter · Esc
+                  </span>
+                </div>
+
+                {quickSwitcherItems.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto">
+                    {quickSwitcherItems.map((item, idx) => {
+                      const isHighlighted = idx === highlightedIndex;
+                      const isCurrent =
+                        item.kind !== 'external' && activeTab.url === item.url;
+                      return (
+                        <button
+                          key={item.key}
+                          id={`safari-qs-${item.key}`}
+                          role="option"
+                          aria-selected={isHighlighted}
+                          type="button"
+                          onMouseEnter={() => setHighlightedIndex(idx)}
+                          onClick={() => handleSelectQuickItem(item)}
+                          className={cn(
+                            'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-[12.5px] focus-visible:outline-none',
+                            isHighlighted
+                              ? 'bg-[#0a84ff] text-white'
+                              : 'text-black/85 dark:text-white/85',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg',
+                              isHighlighted
+                                ? 'bg-white/20 text-white'
+                                : 'bg-black/[0.05] dark:bg-white/[0.08]',
+                            )}
+                          >
+                            {item.kind === 'portfolio' ? (
+                              isHighlighted ? (
+                                <Globe size={13} />
+                              ) : (
+                                renderPortfolioBookmarkIcon(item.icon, 13)
+                              )
+                            ) : item.kind === 'track' ? (
+                              <Music
+                                size={13}
+                                className={
+                                  isHighlighted ? 'text-white' : 'text-[#ff2d55]'
+                                }
+                              />
+                            ) : (
+                              <ExternalLink size={12} />
+                            )}
+                          </span>
+
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium leading-tight">
+                              {item.label}
+                            </span>
+                            <span
+                              className={cn(
+                                'block truncate font-mono text-[10.5px] leading-tight',
+                                isHighlighted
+                                  ? 'text-white/75'
+                                  : 'text-black/45 dark:text-white/40',
+                              )}
+                            >
+                              {item.meta}
+                            </span>
+                          </span>
+
+                          {item.kind === 'external' ? (
+                            <ArrowUpRight
+                              size={13}
+                              className={
+                                isHighlighted
+                                  ? 'shrink-0 text-white/90'
+                                  : 'shrink-0 text-black/40 dark:text-white/40'
+                              }
+                            />
+                          ) : isCurrent ? (
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                                isHighlighted
+                                  ? 'bg-white/20 text-white'
+                                  : 'bg-black/[0.06] text-black/55 dark:bg-white/10 dark:text-white/60',
+                              )}
+                            >
+                              Open
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="px-2.5 py-3 text-center text-[12px] text-black/55 dark:text-white/50">
+                    Press{' '}
+                    <kbd className="rounded bg-black/10 px-1.5 py-0.5 font-mono text-[10.5px] dark:bg-white/10">
+                      Enter
+                    </kbd>{' '}
+                    to open outside GanOS Sandbox
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         }
         trailing={
           <ToolbarGroup>
-            {/* Share / Copy URL Button */}
+            {/* Share / Copy URL Button with confirmation state */}
             <ToolbarButton
-              title="Copy link to clipboard"
+              title={copiedShare ? 'Link copied' : 'Copy link to clipboard'}
               onClick={handleShare}
-              icon={<Share size={14} />}
+              icon={
+                copiedShare ? (
+                  <Check size={14} className="text-emerald-500" />
+                ) : (
+                  <Share size={14} />
+                )
+              }
             />
-            {/* New Tab Button */}
+            {/* New Tab Button (capped at MAX_SAFARI_TABS) */}
             <ToolbarButton
-              title="New Tab (inside Safari)"
+              title={
+                canAddTab
+                  ? `New Tab (${tabs.length}/${MAX_SAFARI_TABS})`
+                  : `Maximum ${MAX_SAFARI_TABS} tabs open`
+              }
+              disabled={!canAddTab}
               onClick={() => handleNewTab()}
               icon={<Plus size={15} />}
             />
@@ -526,7 +1172,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
 
       {/* Safari Tab Strip (when 2+ tabs are open) */}
       {tabs.length > 1 && (
-        <div className="flex h-[32px] shrink-0 items-center gap-1 border-b border-black/10 bg-[#e4e2e6] px-2.5 text-[12px] dark:border-white/10 dark:bg-[#1f1b20] select-none">
+        <div className="flex h-[32px] shrink-0 select-none items-center gap-1 border-b border-black/10 bg-[#e4e2e6] px-2.5 text-[12px] dark:border-white/10 dark:bg-[#1f1b20]">
           {tabs.map((tab) => (
             <div
               key={tab.id}
@@ -544,19 +1190,19 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                 }
               }}
               className={cn(
-                'group flex h-[25px] max-w-[210px] flex-1 cursor-default items-center justify-between rounded-[7px] px-2.5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
+                'group flex h-[25px] min-w-0 max-w-[210px] flex-1 cursor-default items-center justify-between rounded-[7px] px-2.5 transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
                 tab.id === activeTabId
                   ? 'bg-white font-medium text-black shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#2f272d] dark:text-white'
                   : 'text-black/60 hover:bg-black/5 dark:text-white/60 dark:hover:bg-white/5',
               )}
             >
-              <span className="truncate">{tab.title}</span>
+              <span className="min-w-0 truncate">{tab.title}</span>
               <button
                 type="button"
                 aria-label={`Close ${tab.title} tab`}
                 onClick={(e) => handleCloseTab(tab.id, e)}
                 title="Close Tab"
-                className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-black/10 focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-80 dark:hover:bg-white/15"
+                className="ml-1.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0a84ff] group-hover:opacity-100 [@media(hover:none)]:opacity-80 dark:hover:bg-white/15"
               >
                 <X size={10} />
               </button>
@@ -564,20 +1210,41 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
           ))}
           <button
             type="button"
+            disabled={!canAddTab}
+            aria-label={
+              canAddTab
+                ? 'New Tab'
+                : `Maximum ${MAX_SAFARI_TABS} tabs open`
+            }
             onClick={() => handleNewTab()}
-            title="New Tab"
-            className="flex h-6 w-6 items-center justify-center rounded-md text-black/60 transition-colors hover:bg-black/10 hover:text-black dark:text-white/60 dark:hover:bg-white/15 dark:hover:text-white"
+            title={
+              canAddTab
+                ? 'New Tab'
+                : `Maximum ${MAX_SAFARI_TABS} tabs open`
+            }
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-black/60 transition-[background-color,color,transform] duration-150 ease-smooth-out enabled:hover:bg-black/10 enabled:hover:text-black enabled:active:scale-[0.94] disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:text-white/60 dark:enabled:hover:bg-white/15 dark:enabled:hover:text-white"
           >
             <Plus size={13} />
           </button>
         </div>
       )}
 
-      {/* Main Safari Body: Sidebar + Web Content */}
-      <div className="relative flex flex-1 min-h-0 overflow-hidden">
-        {/* Slide-out Bookmarks & History Sidebar */}
+      {/* Main Safari Body: Loading Hairline + Sidebar + Web Content */}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {/* Subtle top loading progress hairline */}
+        {isIframeLoading && !showOverview && canEmbedCurrent && (
+          <div
+            role="status"
+            aria-label="Loading page"
+            className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[2px] overflow-hidden bg-black/5 dark:bg-white/5"
+          >
+            <div className="h-full w-1/2 animate-pulse bg-[#0a84ff] motion-reduce:animate-none" />
+          </div>
+        )}
+
+        {/* Slide-out Bookmarks Sidebar */}
         {sidebarOpen && (
-          <aside className="w-56 shrink-0 border-r border-black/10 bg-white/70 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#20191f]/70 overflow-y-auto select-none">
+          <aside className="w-56 shrink-0 select-none overflow-y-auto border-r border-black/10 bg-white/75 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#20191f]/80">
             <div className="flex items-center justify-between pb-2 text-[11px] font-bold uppercase tracking-wider text-black/45 dark:text-white/40">
               <span className="flex items-center gap-1.5">
                 <Bookmark size={12} />
@@ -585,66 +1252,98 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
               </span>
               <button
                 type="button"
+                aria-label="Close Sidebar"
                 onClick={() => setSidebarOpen(false)}
                 title="Close Sidebar"
-                className="text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white"
+                className="rounded p-0.5 text-black/40 transition-colors hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:text-white/40 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
             </div>
 
             <div className="space-y-4 pt-1">
-              {/* Favorites Section */}
+              {/* Primary: Portfolio */}
               <div>
                 <div className="px-1 text-[11px] font-semibold text-black/40 dark:text-white/35">
-                  Favorites
+                  Portfolio
                 </div>
                 <div className="mt-1 space-y-0.5">
-                  {SAFARI_BOOKMARKS.filter((b) => b.category === 'fav').map(
-                    (b) => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        onClick={() => navigateTo(b.url)}
-                        className={cn(
-                          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] transition-colors',
-                          activeTab.url === b.url
-                            ? 'bg-[#0a84ff] text-white'
-                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-black/80 dark:text-white/85',
+                  {SAFARI_PORTFOLIO_BOOKMARKS.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => navigateTo(b.url)}
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] transition-[background-color,color,transform] duration-150 ease-smooth-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
+                        activeTab.url === b.url
+                          ? 'bg-[#0a84ff] font-medium text-white'
+                          : 'text-black/80 hover:bg-black/5 dark:text-white/85 dark:hover:bg-white/5',
+                      )}
+                    >
+                      <span className="shrink-0">
+                        {activeTab.url === b.url ? (
+                          <Globe size={13} className="text-white" />
+                        ) : (
+                          renderPortfolioBookmarkIcon(b.icon, 13)
                         )}
-                      >
-                        <Globe size={13} className="shrink-0 opacity-70" />
-                        <span className="truncate">{b.label}</span>
-                      </button>
-                    ),
-                  )}
+                      </span>
+                      <span className="truncate">{b.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Music Videos Section */}
+              {/* Secondary: On Rotation */}
               <div>
                 <div className="px-1 text-[11px] font-semibold text-black/40 dark:text-white/35">
-                  Recent Tracks
+                  On Rotation
                 </div>
                 <div className="mt-1 space-y-0.5">
-                  {SAFARI_BOOKMARKS.filter((b) => b.category === 'tracks').map(
-                    (b) => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        onClick={() => navigateTo(b.url)}
+                  {SAFARI_TRACK_BOOKMARKS.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => navigateTo(t.url)}
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] transition-[background-color,color,transform] duration-150 ease-smooth-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
+                        activeTab.url === t.url
+                          ? 'bg-[#0a84ff] font-medium text-white'
+                          : 'text-black/80 hover:bg-black/5 dark:text-white/85 dark:hover:bg-white/5',
+                      )}
+                    >
+                      <Music
+                        size={13}
                         className={cn(
-                          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] transition-colors',
-                          activeTab.url === b.url
-                            ? 'bg-[#0a84ff] text-white'
-                            : 'hover:bg-black/5 dark:hover:bg-white/5 text-black/80 dark:text-white/85',
+                          'shrink-0',
+                          activeTab.url === t.url
+                            ? 'text-white'
+                            : 'text-[#ff2d55] opacity-80',
                         )}
-                      >
-                        <Music size={13} className="shrink-0 opacity-70 text-[#ff2d55]" />
-                        <span className="truncate">{b.label}</span>
-                      </button>
-                    ),
-                  )}
+                      />
+                      <span className="truncate">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* External Links */}
+              <div>
+                <div className="px-1 text-[11px] font-semibold text-black/40 dark:text-white/35">
+                  External
+                </div>
+                <div className="mt-1 space-y-0.5">
+                  {SAFARI_EXTERNAL_LINKS.map((ext) => (
+                    <a
+                      key={ext.id}
+                      href={ext.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] text-black/75 transition-[background-color,color,transform] duration-150 ease-smooth-out hover:bg-black/5 hover:text-black active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:text-white/75 dark:hover:bg-white/5 dark:hover:text-white"
+                    >
+                      <span className="truncate">{ext.label}</span>
+                      <ArrowUpRight size={12} className="shrink-0 opacity-60" />
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>
@@ -653,16 +1352,17 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
 
         {/* Tab Overview Overlay */}
         {showOverview ? (
-          <div className="flex-1 overflow-y-auto p-6 bg-black/[0.04] dark:bg-black/30">
+          <div className="flex-1 overflow-y-auto bg-black/[0.04] p-6 dark:bg-black/30">
             <div className="mx-auto max-w-3xl">
               <div className="flex items-center justify-between pb-4">
-                <h2 className="text-[16px] font-bold text-black dark:text-white">
-                  Open Tabs ({tabs.length})
+                <h2 className="text-[16px] font-bold tabular-nums text-black dark:text-white">
+                  Open Tabs ({tabs.length} / {MAX_SAFARI_TABS})
                 </h2>
                 <button
                   type="button"
+                  disabled={!canAddTab}
                   onClick={() => handleNewTab()}
-                  className="flex items-center gap-1.5 rounded-full bg-[#0a84ff] px-3 py-1 text-[12px] font-medium text-white shadow-sm hover:opacity-90"
+                  className="flex items-center gap-1.5 rounded-full bg-[#0a84ff] px-3 py-1 text-[12px] font-medium text-white shadow-sm transition-[opacity,transform] duration-150 ease-smooth-out enabled:hover:opacity-90 enabled:active:scale-[0.97] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2"
                 >
                   <Plus size={13} />
                   <span>New Tab</span>
@@ -687,21 +1387,22 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                       }
                     }}
                     className={cn(
-                      'group relative flex aspect-[4/3] flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-[transform,border-color,background-color] duration-150 ease-smooth-out hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
+                      'group relative flex aspect-[4/3] min-w-0 flex-col justify-between overflow-hidden rounded-xl border p-3 text-left transition-[transform,border-color,background-color] duration-150 ease-smooth-out [@media(hover:hover)_and_(pointer:fine)]:hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]',
                       tab.id === activeTabId
                         ? 'border-[#0a84ff] bg-white ring-2 ring-[#0a84ff]/30 dark:bg-[#282025]'
                         : 'border-black/10 bg-white/60 dark:border-white/10 dark:bg-[#1a1518]/60',
                     )}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="truncate text-[12px] font-bold text-black dark:text-white">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-[12px] font-bold text-black dark:text-white">
                         {tab.title}
                       </span>
                       <button
                         type="button"
+                        aria-label={`Close ${tab.title} tab`}
                         onClick={(e) => handleCloseTab(tab.id, e)}
                         title="Close Tab"
-                        className="rounded-full p-1 opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/15"
+                        className="shrink-0 rounded-full p-1 opacity-0 transition-opacity hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0a84ff] group-hover:opacity-100 [@media(hover:none)]:opacity-80 dark:hover:bg-white/15"
                       >
                         <X size={12} />
                       </button>
@@ -716,50 +1417,219 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
             </div>
           </div>
         ) : activeTab.url === 'safari:start' ? (
-          /* Apple Safari Start Page */
-          <div className="flex-1 overflow-y-auto p-8 bg-white dark:bg-[#181317] select-none">
-            <div className="mx-auto max-w-2xl">
-              <div className="pb-8 text-center">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0a84ff] to-[#5ac8fa] text-white shadow-md">
-                  <Compass size={24} />
+          /* Curated Start Page — Primary Portfolio first, Secondary On Rotation below */
+          <div className="flex-1 select-none overflow-y-auto bg-white px-6 py-7 dark:bg-[#181317] sm:px-8">
+            <div className="mx-auto max-w-2xl space-y-7">
+              {/* Compact Header */}
+              <div className="flex items-center justify-between gap-4 border-b border-black/[0.06] pb-4 dark:border-white/[0.07]">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0a84ff] to-[#5ac8fa] text-white shadow-sm">
+                    <Compass size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-[18px] font-bold tracking-tight text-black dark:text-white">
+                      Start Page
+                    </h1>
+                    <p className="truncate text-[12px] text-black/50 dark:text-white/45">
+                      Curated portfolio routes &amp; verified media embeds
+                    </p>
+                  </div>
                 </div>
-                <h1 className="mt-3 text-2xl font-bold tracking-tight text-black dark:text-white">
-                  Favorites
-                </h1>
-                <p className="mt-1 text-sm text-black/50 dark:text-white/50">
-                  Quick bookmarks inside GanOS Safari
-                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressInput('');
+                    setIsEditingAddress(true);
+                  }}
+                  className="hidden shrink-0 items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1.5 text-[11.5px] font-medium text-black/65 transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/[0.06] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08] sm:inline-flex"
+                >
+                  <Search size={12} />
+                  <span>Quick Jump</span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
-                {SAFARI_BOOKMARKS.map((bookmark) => (
-                  <button
-                    key={bookmark.id}
-                    type="button"
-                    onClick={() => navigateTo(bookmark.url)}
-                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-center transition-[transform,background-color,box-shadow] duration-150 ease-smooth-out hover:-translate-y-0.5 hover:bg-black/[0.05] hover:shadow-md active:scale-[0.97] dark:border-white/5 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+              {/* Section 1: Portfolio (Primary) */}
+              <section aria-labelledby="safari-section-portfolio">
+                <div className="mb-3 flex items-center justify-between">
+                  <h2
+                    id="safari-section-portfolio"
+                    className="text-[11px] font-semibold uppercase tracking-[0.08em] text-black/45 dark:text-white/45"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5 group-hover:scale-105 dark:bg-[#2c232a] dark:ring-white/10">
-                      {bookmark.category === 'tracks' ? (
-                        <Music size={20} className="text-[#ff2d55]" />
-                      ) : (
-                        <Globe size={20} className="text-[#0a84ff]" />
+                    Portfolio
+                  </h2>
+                  <span className="font-mono text-[10.5px] text-black/35 dark:text-white/30">
+                    ghufronainun.tech
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {SAFARI_PORTFOLIO_BOOKMARKS.map((bookmark) => (
+                    <button
+                      key={bookmark.id}
+                      type="button"
+                      onClick={() => navigateTo(bookmark.url)}
+                      className="group flex min-w-0 flex-col items-start gap-2.5 rounded-2xl border border-black/[0.07] bg-black/[0.02] p-3.5 text-left transition-[transform,background-color,border-color,box-shadow] duration-150 ease-smooth-out [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-black/15 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-black/[0.045] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-sm active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:border-white/[0.08] dark:bg-white/[0.03] dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-white/15 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.07]"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-150 ease-smooth-out [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105 dark:bg-[#2a2128] dark:ring-white/10">
+                        {renderPortfolioBookmarkIcon(bookmark.icon, 18)}
+                      </span>
+                      <div className="min-w-0 w-full">
+                        <span className="block truncate text-[13px] font-semibold text-black dark:text-white">
+                          {bookmark.label}
+                        </span>
+                        <span className="mt-0.5 block truncate font-mono text-[10.5px] text-black/45 dark:text-white/40">
+                          {bookmark.pathHint}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 2: On Rotation (Secondary & Compact) */}
+              <section aria-labelledby="safari-section-tracks">
+                <div className="mb-3 flex items-center justify-between">
+                  <h2
+                    id="safari-section-tracks"
+                    className="text-[11px] font-semibold uppercase tracking-[0.08em] text-black/45 dark:text-white/45"
+                  >
+                    On Rotation
+                  </h2>
+                  <span className="text-[11px] text-black/35 dark:text-white/30">
+                    YouTube Embeds
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {SAFARI_TRACK_BOOKMARKS.map((track) => (
+                    <button
+                      key={track.id}
+                      type="button"
+                      onClick={() => navigateTo(track.url)}
+                      className="group flex min-w-0 items-center gap-3 rounded-xl border border-black/[0.06] bg-black/[0.015] p-2 text-left transition-[transform,background-color,border-color] duration-150 ease-smooth-out [@media(hover:hover)_and_(pointer:fine)]:hover:border-black/[0.12] [@media(hover:hover)_and_(pointer:fine)]:hover:bg-black/[0.045] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:border-white/[0.06] dark:bg-white/[0.025] dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-white/[0.14] dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/[0.06]"
+                    >
+                      <span
+                        className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-black/10 dark:ring-white/10"
+                        style={{ background: track.coverBg }}
+                      >
+                        <img
+                          src={track.coverImage}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-semibold leading-tight text-black dark:text-white">
+                          {track.title}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[11px] leading-tight text-black/50 dark:text-white/45">
+                          {track.artist}
+                        </span>
+                      </div>
+                      {track.duration && (
+                        <span className="shrink-0 pr-1 font-mono text-[10.5px] tabular-nums text-black/35 dark:text-white/35">
+                          {track.duration}
+                        </span>
                       )}
-                    </span>
-                    <span className="line-clamp-1 text-[12.5px] font-semibold text-black dark:text-white">
-                      {bookmark.label}
-                    </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 3: External Profiles (opens in real browser tab) */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[0.06] pt-4 dark:border-white/[0.07]">
+                <div className="flex flex-wrap items-center gap-2">
+                  {SAFARI_EXTERNAL_LINKS.map((ext) => (
+                    <a
+                      key={ext.id}
+                      href={ext.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.02] px-3 py-1 text-[11.5px] font-medium text-black/75 transition-[background-color,color,transform] duration-150 ease-smooth-out hover:bg-black/[0.06] hover:text-black active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/75 dark:hover:bg-white/[0.09] dark:hover:text-white"
+                    >
+                      <span>{ext.label}</span>
+                      <ArrowUpRight size={12} className="opacity-65" />
+                    </a>
+                  ))}
+                </div>
+                <span className="text-[11px] text-black/35 dark:text-white/30">
+                  External links open in a new browser tab
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : blockedInfo || !canEmbedCurrent ? (
+          /* Curated Sandbox Blocked View (replaces white refused-to-connect iframe errors) */
+          <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-white px-6 py-10 text-center dark:bg-[#181317]">
+            <div className="mx-auto flex max-w-md flex-col items-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-black/10 bg-black/[0.03] text-black/60 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/70">
+                <ShieldAlert size={22} />
+              </div>
+
+              <h2 className="text-[17px] font-semibold tracking-tight text-black dark:text-white">
+                {blockedInfo?.kind === 'url'
+                  ? `${blockedInfo.hostname} can’t open inside GanOS Safari`
+                  : blockedInfo?.kind === 'query'
+                    ? `No portfolio page matches “${blockedInfo.query}”`
+                    : 'This address isn’t available in sandbox mode'}
+              </h2>
+
+              <p className="mt-2 text-[13px] leading-relaxed text-black/55 dark:text-white/50">
+                {blockedInfo?.kind === 'url'
+                  ? 'Most external websites block embedded frames. Open it directly in your browser tab or return to curated portfolio pages.'
+                  : 'GanOS Safari only embeds Ghufron’s portfolio routes and curated media. You can run this search in a real browser tab instead.'}
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+                <a
+                  href={externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0a84ff] px-4 py-2 text-[12.5px] font-medium text-white shadow-sm transition-[opacity,transform] duration-150 ease-smooth-out hover:opacity-90 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#181317]"
+                >
+                  <span>
+                    {blockedInfo?.kind === 'query'
+                      ? 'Search on Google'
+                      : 'Open in New Tab'}
+                  </span>
+                  <ArrowUpRight size={14} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => navigateTo('safari:start')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.12] bg-black/[0.03] px-4 py-2 text-[12.5px] font-medium text-black/80 transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/[0.07] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:border-white/[0.12] dark:bg-white/[0.05] dark:text-white/85 dark:hover:bg-white/[0.1]"
+                >
+                  <span>Back to Start Page</span>
+                </button>
+              </div>
+
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-1.5 border-t border-black/[0.06] pt-4 dark:border-white/[0.07]">
+                {SAFARI_PORTFOLIO_BOOKMARKS.slice(0, 4).map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => navigateTo(b.url)}
+                    className="rounded-full px-2.5 py-1 text-[11.5px] font-medium text-black/55 transition-[background-color,color,transform] duration-150 ease-smooth-out hover:bg-black/[0.05] hover:text-black active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] dark:text-white/50 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                  >
+                    {b.shortLabel}
                   </button>
                 ))}
               </div>
             </div>
           </div>
         ) : (
-          /* Live Iframe View */
+          /* Sandboxed Live Iframe View (only for verified internal routes & YouTube embeds) */
           <iframe
             key={reloadKey + activeTab.url}
             src={activeTab.url}
             title={`Safari — ${displayUrl}`}
+            onLoad={() => setIsIframeLoading(false)}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             className="w-full flex-grow overflow-hidden rounded-b-[inherit] border-0 bg-white dark:bg-[#141210]"
@@ -836,6 +1706,8 @@ export const SystemSettingsApp: React.FC = () => {
     setWallpaperId,
     autoRotateWallpaper,
     setAutoRotateWallpaper,
+    wallpaperMotion,
+    setWallpaperMotion,
     brightness,
     setBrightness,
     settingsPane,
@@ -1000,40 +1872,121 @@ export const SystemSettingsApp: React.FC = () => {
           )}
 
           {currentPane.id === 'wallpaper' && (
-            <>
+            <div className="space-y-4">
               <SettingsGroup>
                 <div className="flex items-center gap-4 py-3">
                   <div
-                    className="relative aspect-video w-36 shrink-0 overflow-hidden rounded-lg ring-1 ring-black/10"
+                    className="relative aspect-video w-36 shrink-0 overflow-hidden rounded-lg ring-1 ring-black/10 dark:ring-white/15"
                     style={{ background: currentWallpaper.preview }}
-                  />
-                  <div>
-                    <div className="font-semibold">{currentWallpaper.label}</div>
-                    <div className="text-[12px] text-black/50 dark:text-white/50">
+                  >
+                    <img
+                      src={currentWallpaper.thumbnail}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      {currentWallpaper.kind === 'image'
+                        ? 'Still Wallpaper'
+                        : 'Dynamic Wallpaper'}
+                    </div>
+                    <div className="text-[12px] text-black/55 dark:text-white/55">
                       {currentWallpaper.subtitle}
                     </div>
                   </div>
                 </div>
-              </SettingsGroup>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
-                {WALLPAPERS.map((item) => (
+                <SettingsRow label="Animate wallpaper">
                   <button
-                    key={item.id}
                     type="button"
-                    onClick={() => setWallpaperId(item.id)}
+                    role="switch"
+                    aria-checked={wallpaperMotion}
+                    onClick={() => setWallpaperMotion((current) => !current)}
                     className={cn(
-                      'relative aspect-video cursor-default overflow-hidden rounded-lg ring-1 ring-black/10',
-                      wallpaperId === item.id &&
-                        'ring-[3px] ring-[#0a84ff] ring-offset-2 ring-offset-[#f2f2f7] dark:ring-offset-[#282025]',
+                      'relative h-6 w-11 rounded-full transition-[background-color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97]',
+                      wallpaperMotion
+                        ? 'bg-[#0a84ff]'
+                        : 'bg-black/15 dark:bg-white/20',
                     )}
-                    style={{ background: item.preview }}
-                    title={item.label}
                   >
-                    <span className="sr-only">{item.label}</span>
+                    <span
+                      className={cn(
+                        'block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ease-smooth-out',
+                        wallpaperMotion ? 'translate-x-5' : 'translate-x-0.5',
+                      )}
+                    />
                   </button>
-                ))}
-              </div>
-            </>
+                </SettingsRow>
+                <SettingsRow label="Auto-rotate wallpaper (2 min)">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoRotateWallpaper}
+                    onClick={() =>
+                      setAutoRotateWallpaper((current) => !current)
+                    }
+                    className={cn(
+                      'relative h-6 w-11 rounded-full transition-[background-color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97]',
+                      autoRotateWallpaper
+                        ? 'bg-[#0a84ff]'
+                        : 'bg-black/15 dark:bg-white/20',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ease-smooth-out',
+                        autoRotateWallpaper ? 'translate-x-5' : 'translate-x-0.5',
+                      )}
+                    />
+                  </button>
+                </SettingsRow>
+              </SettingsGroup>
+
+              {(
+                [
+                  {
+                    id: 'dynamic',
+                    title: 'Dynamic',
+                    items: WALLPAPERS.filter((w) => w.kind !== 'image'),
+                  },
+                  {
+                    id: 'still',
+                    title: 'Still',
+                    items: WALLPAPERS.filter((w) => w.kind === 'image'),
+                  },
+                ] as const
+              ).map((group) => (
+                <div key={group.id} className="space-y-2">
+                  <div className="px-1 text-[11px] font-semibold uppercase tracking-wider text-black/50 dark:text-white/50">
+                    {group.title}
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(min(124px,100%),1fr))] gap-3">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setWallpaperId(item.id)}
+                        aria-label={`Select wallpaper ${item.label}`}
+                        aria-pressed={wallpaperId === item.id}
+                        className={cn(
+                          'relative aspect-video w-full overflow-hidden rounded-lg ring-1 ring-black/10 transition-[transform,box-shadow] duration-150 ease-smooth-out hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97] dark:ring-white/15',
+                          wallpaperId === item.id &&
+                            'ring-[3px] ring-[#0a84ff] ring-offset-2 ring-offset-[#f2f2f7] dark:ring-offset-[#282025]',
+                        )}
+                        style={{ background: item.preview }}
+                      >
+                        <img
+                          src={item.thumbnail}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           {currentPane.id === 'displays' && (

@@ -53,6 +53,7 @@ import { OsNotificationBannerContainer } from '@/components/os/OsNotificationBan
 import { OsNotificationCenter } from '@/components/os/OsNotificationCenter';
 import { DynamicIsland } from '@/components/os/DynamicIsland';
 import { AppSwitcherHUD, type AppSwitcherItem } from '@/components/os/AppSwitcherHUD';
+import { WallpaperStage } from '@/components/os/WallpaperStage';
 import { RECENT_TRACKS, type ListeningTrack } from '@/data/recentTracks';
 import {
   playWindowOpenSound,
@@ -194,7 +195,7 @@ type MenuDef = {
 
 const MENUBAR_HEIGHT = 32;
 const DOCK_RESERVED_HEIGHT = 92;
-const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v3';
+const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v5';
 const LANGUAGE_STORAGE_KEY = 'ganos-system-language';
 const WALLPAPER_ROTATE_INTERVAL_MS = 120_000;
 
@@ -291,19 +292,26 @@ const APP_SPECS: Record<
 const isValidWallpaperId = (value: unknown): value is WallpaperId =>
   typeof value === 'string' && WALLPAPERS.some((item) => item.id === value);
 
-const readWallpaperPrefs = (): { id: WallpaperId; autoRotate: boolean } => {
-  if (typeof window === 'undefined') return { id: 'zephyr', autoRotate: true };
+const readWallpaperPrefs = (): {
+  id: WallpaperId;
+  autoRotate: boolean;
+  motion: boolean;
+} => {
+  if (typeof window === 'undefined') {
+    return { id: 'prism', autoRotate: true, motion: true };
+  }
   try {
     const raw = JSON.parse(
       window.localStorage.getItem(WALLPAPER_STORAGE_KEY) ?? 'null',
-    ) as { id?: unknown; autoRotate?: unknown } | null;
+    ) as { id?: unknown; autoRotate?: unknown; motion?: unknown } | null;
     return {
-      id: isValidWallpaperId(raw?.id) ? raw.id : 'zephyr',
+      id: isValidWallpaperId(raw?.id) ? raw.id : 'prism',
       autoRotate:
         typeof raw?.autoRotate === 'boolean' ? raw.autoRotate : true,
+      motion: typeof raw?.motion === 'boolean' ? raw.motion : true,
     };
   } catch {
-    return { id: 'zephyr', autoRotate: true };
+    return { id: 'prism', autoRotate: true, motion: true };
   }
 };
 
@@ -429,6 +437,9 @@ export function OsShell({
   );
   const [autoRotateWallpaper, setAutoRotateWallpaper] = useState<boolean>(
     () => readWallpaperPrefs().autoRotate,
+  );
+  const [wallpaperMotion, setWallpaperMotion] = useState<boolean>(
+    () => readWallpaperPrefs().motion,
   );
 
   const [windows, setWindows] = useState<OsWindow[]>(() => {
@@ -657,12 +668,16 @@ export function OsShell({
     try {
       window.localStorage.setItem(
         WALLPAPER_STORAGE_KEY,
-        JSON.stringify({ id: wallpaperId, autoRotate: autoRotateWallpaper }),
+        JSON.stringify({
+          id: wallpaperId,
+          autoRotate: autoRotateWallpaper,
+          motion: wallpaperMotion,
+        }),
       );
     } catch {
       /* ignore */
     }
-  }, [wallpaperId, autoRotateWallpaper]);
+  }, [wallpaperId, autoRotateWallpaper, wallpaperMotion]);
 
   // Auto-rotate wallpaper every 2 minutes when enabled
   useEffect(() => {
@@ -1533,6 +1548,11 @@ export function OsShell({
           checked: autoRotateWallpaper,
           onClick: () => setAutoRotateWallpaper((v) => !v),
         },
+        {
+          label: 'Animate Wallpaper',
+          checked: wallpaperMotion,
+          onClick: () => setWallpaperMotion((v) => !v),
+        },
       ],
     },
     {
@@ -1795,6 +1815,8 @@ export function OsShell({
       cycleWallpaper,
       autoRotateWallpaper,
       setAutoRotateWallpaper,
+      wallpaperMotion,
+      setWallpaperMotion,
       appearance,
       setAppearance,
       systemFont,
@@ -1836,6 +1858,7 @@ export function OsShell({
       activeWallpaper.label,
       cycleWallpaper,
       autoRotateWallpaper,
+      wallpaperMotion,
       appearance,
       setAppearance,
       systemFont,
@@ -1912,18 +1935,11 @@ export function OsShell({
       <OsMusicPlaybackContext.Provider value={musicPlaybackValue}>
       <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
         {/* Wallpaper */}
-        <div aria-hidden="true" className="absolute inset-0 bg-black">
-          {WALLPAPERS.map((wallpaper) => (
-            <div
-              key={wallpaper.id}
-              className="absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none"
-              style={{
-                background: wallpaper.background,
-                opacity: wallpaper.id === activeWallpaper.id ? 1 : 0,
-              }}
-            />
-          ))}
-        </div>
+        <WallpaperStage
+          wallpaper={activeWallpaper}
+          animate={wallpaperMotion}
+          paused={power !== 'on'}
+        />
 
         {/* Desktop surface (isolated in z-0 stacking context so windows always sit above desktop icons/widgets) */}
         <div
@@ -2815,9 +2831,14 @@ export function OsShell({
                 }
                 setPower('on');
               }}
-              className="absolute inset-0 z-[60] flex cursor-pointer flex-col items-center justify-between py-[9vh] text-white focus:outline-none"
+              className="absolute inset-0 z-[60] flex cursor-pointer flex-col items-center justify-between overflow-hidden py-[9vh] text-white focus:outline-none"
               style={{ background: activeWallpaper.background }}
             >
+              <WallpaperStage
+                wallpaper={activeWallpaper}
+                animate={wallpaperMotion}
+                paused={false}
+              />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
 
               {/* Top Date & Time (isolated clock ticker with tabular numerals) */}
