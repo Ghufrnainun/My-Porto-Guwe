@@ -24,7 +24,7 @@ Disposable email service running entirely on Cloudflare Workers. Multi-domain wi
 - Live: https://temp.ghufronainun.tech
 
 ### Curated Design (2026, solo)
-Curated directory of design resources for AI coding: component libraries, design systems, inspiration, dev tools, AI prompts — 292 resources across 5 categories with verified live links. Markdown-first pipeline so adding a resource is a one-line edit. CI deploy to Cloudflare Pages with unit tests for the parser and filter logic. Open contribution flow with PR templates and triage labels.
+Curated directory of design resources for AI coding: component libraries, design systems, inspiration, dev tools, AI prompts — 505 resources across 5 categories with verified live links. Markdown-first pipeline so adding a resource is a one-line edit. CI deploy to Cloudflare Pages with unit tests for the parser and filter logic. Open contribution flow with PR templates and triage labels.
 - Stack: React, Vite, Markdown, Cloudflare Pages, GitHub Actions
 - Repo: https://github.com/Ghufrnainun/curated-design
 - Live: https://design.ghuf.app

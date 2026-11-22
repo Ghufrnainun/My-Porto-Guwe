@@ -10,7 +10,7 @@ Ghufron Ainun Najib is a full-stack developer and Bachelor of Applied Science in
 
 - [PB UNDIP Platform & Scoreboard](https://ghufronainun.tech/projects/pbundip): official athletic club portal and real-time tournament scoreboard suite for Persatuan Bulutangkis Universitas Diponegoro — Next.js 16, React 19, Convex, Cloudflare R2.
 - [TempeMail](https://ghufronainun.tech/projects/tempe-mail): disposable email service on Cloudflare Workers. Multi-domain, REST API, webhooks, MCP server for AI agents.
-- [Curated Design](https://ghufronainun.tech/projects/curated-design): searchable directory of 292 design resources for AI coding, markdown-first and open to contributions.
+- [Curated Design](https://ghufronainun.tech/projects/curated-design): searchable directory of 505 design resources for AI coding, markdown-first and open to contributions.
 - [SewaInAja](https://ghufronainun.tech/projects/sewainaja): rental platform — Flutter mobile app plus Next.js 16 admin/API, Firebase and Midtrans payments, 4-person team.
 - [LSP Polines](https://ghufronainun.tech/projects/lsp-polines): certification platform, Laravel + Livewire + MySQL, led a 5-person team.
 - [IMPP Website](https://ghufronainun.tech/projects/impp-website): public site and CMS for Ikatan Mahasiswa Pemalang Polines, Laravel + MySQL.

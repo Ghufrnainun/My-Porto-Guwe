@@ -127,7 +127,7 @@ export default function PostEditor() {
         tags: tagData?.map((t) => t.tag_id) || [],
       };
 
-      setPost(postWithTags as BlogPost);
+      setPost(postWithTags as unknown as BlogPost);
       setSelectedTags(tagData?.map((t) => t.tag_id) || []);
       setFeaturedImage(data.featured_image);
 
