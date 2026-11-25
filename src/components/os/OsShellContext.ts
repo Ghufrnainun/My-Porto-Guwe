@@ -291,6 +291,22 @@ export type SystemFontId = 'inter' | 'geist' | 'jakarta';
 export type OsLanguage = 'en' | 'id';
 export const GANOS_VERSION = '2.4';
 
+export type TrashItemKind = 'icon' | 'widget' | 'easter-egg';
+
+export interface TrashItem {
+  id: string;
+  kind: TrashItemKind;
+  sourceId?: string;
+  label: string;
+  icon: string;
+  sizeLabel: string;
+  noteEn?: string;
+  noteId?: string;
+  actionAppId?: OsAppId;
+  actionLabelEn?: string;
+  actionLabelId?: string;
+}
+
 export type MusicPlaybackContextValue = {
   trackPlaybackSec: number;
   trackDurationSec: number;
@@ -341,6 +357,15 @@ export type NoteContext = {
   prevTrack: () => void;
   shuffleTrack: () => ListeningTrack;
   audioRef: RefObject<HTMLAudioElement | null>;
+  trashItems: TrashItem[];
+  deletedDesktopSources: string[];
+  trashDropActive: boolean;
+  setTrashDropActive: (active: boolean) => void;
+  moveToTrash: (item: Omit<TrashItem, 'id'> & { id?: string }) => void;
+  restoreTrashItem: (id: string) => void;
+  restoreAllTrash: () => void;
+  restoreDesktopItems: () => void;
+  emptyTrash: () => void;
 };
 
 export const OsShellContext = createContext<NoteContext | null>(null);

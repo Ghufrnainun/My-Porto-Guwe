@@ -1,18 +1,18 @@
-# Ghufron Ainun Najib — GanOS Portfolio
+# Ghufron Ainun Najib — Desktop Portfolio
 
 > Full-stack & mobile developer in Semarang, Indonesia. An interactive desktop portfolio experience built end to end.
 
 **Live Website:** [ghufronainun.tech](https://ghufronainun.tech/)
 
-[![GanOS Desktop Preview](docs/screenshots/ganos-desktop.webp)](https://ghufronainun.tech/)
+[![Desktop Portfolio Preview](docs/screenshots/ganos-desktop.webp)](https://ghufronainun.tech/)
 
 ---
 
 ## Overview
 
-This repository powers **[ghufronainun.tech](https://ghufronainun.tech/)** — **GanOS**, a macOS-inspired interactive web desktop housing the portfolio, engineering case studies, writing log, and resume of **Ghufron Ainun Najib**.
+This repository powers **[ghufronainun.tech](https://ghufronainun.tech/)** — a macOS-inspired interactive web desktop housing the portfolio, engineering case studies, writing log, and resume of **Ghufron Ainun Najib**.
 
-Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpapers, spring-driven window management, and an adaptive iOS/iPadOS-style mobile home screen. The previous editorial portfolio remains preserved at `/old` and browseable directly inside GanOS Safari.
+Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpapers, spring-driven window management, and an adaptive iOS/iPadOS-style mobile home screen. The previous editorial portfolio remains preserved at `/old` and browseable directly inside the embedded Safari app.
 
 ---
 
@@ -20,13 +20,13 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 
 | Finder & Case Studies | Mobile OS Home Screen |
 | :---: | :---: |
-| ![GanOS Projects Finder](docs/screenshots/ganos-projects.webp) | <img src="docs/screenshots/ganos-mobile.webp" alt="GanOS Mobile Home Screen" width="260" /> |
+| ![Projects Finder](docs/screenshots/ganos-projects.webp) | <img src="docs/screenshots/ganos-mobile.webp" alt="Mobile Home Screen" width="260" /> |
 
 ---
 
 ## Highlights
 
-- **Interactive Desktop Shell (`GanOS 2.4`)**: Draggable/resizable windows with edge snapping, 3D glass dock with magnification physics, Menu Bar, Control Center, Dynamic Island, `⌘K` Spotlight search, `⌘Tab` app switcher, and Notification Center.
+- **Interactive Desktop Shell (`v2.4`)**: Draggable/resizable windows with edge snapping, 3D glass dock with magnification physics, Menu Bar, Control Center, Dynamic Island, `⌘K` Spotlight search, `⌘Tab` app switcher, and Notification Center.
 - **Built-in Apps**: Finder (Projects & Case Studies), curated sandboxed Safari (`/old`, portfolio routes, & YouTube embeds), Notes (with interactive skills checklist & scratchpad), interactive `zsh` Terminal (`help`, `neofetch`, `open`, `notify`), Mail, and System Settings (appearance, system font switcher, display brightness, and 16 dynamic/still wallpapers).
 - **Live Desktop Widgets**: GitHub contribution heatmap & 12-month velocity bar chart (`6M` / `1Y`), live Semarang weather widget with adaptive glass refraction, interactive Music player, Quick Memo, and responsive Mobile Home Screen widget stack.
 - **Hardware-Decoded Wallpapers**: 16 curated wallpapers (9 seamless H.264 MP4 loops with instant WebP posters + 7 high-res stills) with automatic `prefers-reduced-motion` and tab-visibility throttling.
@@ -102,7 +102,7 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 ├── scripts/                   # Sitemap, brand assets, prerender & verification scripts
 ├── src/
 │   ├── components/
-│   │   ├── os/                # GanOS shell, apps, widgets, Dynamic Island & WallpaperStage
+│   │   ├── os/                # Desktop shell, apps, widgets, Dynamic Island & WallpaperStage
 │   │   └── ui/                # Reusable UI & 3D glass dock primitives
 │   ├── data/                  # Static content (featuredProjects, sideProjects, profile, tracks)
 │   ├── hooks/                 # Custom hooks (SEO metadata, auth, analytics)
@@ -170,7 +170,7 @@ npm run build
 
 ## Credits
 
-GanOS started from [macOS Portfolio](https://github.com/R0shish/macos-styled-portfolio) by Roshish Shrestha ([macos.rosh.sh](https://macos.rosh.sh/)), a template made to be cloned and made your own. From there it was rebuilt on Vite + React and extended with the 3D town, desktop widgets, video wallpapers, the mobile home screen, prerendered SEO and the Supabase writing log.
+This desktop portfolio started from [macOS Portfolio](https://github.com/R0shish/macos-styled-portfolio) by Roshish Shrestha ([macos.rosh.sh](https://macos.rosh.sh/)), a template made to be cloned and made your own. From there it was rebuilt on Vite + React and extended with the 3D town, desktop widgets, video wallpapers, the mobile home screen, prerendered SEO and the Supabase writing log.
 
 ---
 

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import {
+  playClickSound,
+  playPanelOpenSound,
+  playStepSound,
+  playToggleSound,
+  playWindowCloseSound,
+  playWindowOpenSound,
+} from '@/lib/soundEffects';
 import { BILLBOARDS, COMMITS, HERO, PROJECTS, STOPS } from '@/town/content';
 import type { CreateWorld, ProjectStop, World } from '@/town/types';
 import { useTownNight } from '@/town/useNight';
@@ -167,7 +175,14 @@ const TownTour = ({ night, onToggleNight, onWork, onOpenProject, onFail, goToRef
         onToggleNight={onToggleNight}
         onWork={onWork}
       />
-      <HeroButtons gone={tour.started} onExplore={() => goTo(0)} onWork={onWork} />
+      <HeroButtons
+        gone={tour.started}
+        onExplore={() => {
+          playClickSound();
+          goTo(0);
+        }}
+        onWork={onWork}
+      />
       <SceneTitle
         title={nearStop?.title ?? ['', '']}
         hidden={story !== null || project?.side === 1 || tour.driving}
@@ -216,12 +231,15 @@ const Town = () => {
   const [plain, setPlain] = useState(() => !inBrowser || reducedMotion || !hasWebGL());
   const [night, setNight] = useTownNight();
   const [workOpen, setWorkOpen] = useState(false);
+  const workOpenRef = useRef(workOpen);
+  workOpenRef.current = workOpen;
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const goToRef = useRef<((stop: number) => void) | null>(null);
   const from = useRef<DOMRect | null>(null);
   /** Sheets opened by a click in this session: closing those goes Back instead of piling up history. */
   const pushed = useRef(0);
+  const suppressWorkCloseSound = useRef(false);
 
   // /town/<slug> is the town with that sheet open. ?p=<slug> is the earlier form of the same link.
   const { slug: pathSlug } = useParams();
@@ -242,7 +260,9 @@ const Town = () => {
     (p: ProjectStop, rect: DOMRect | null = null) => {
       from.current = rect;
       pushed.current += 1;
+      suppressWorkCloseSound.current = true;
       setWorkOpen(false);
+      playWindowOpenSound();
       navigate(pathOf(p));
     },
     [navigate],
@@ -250,6 +270,7 @@ const Town = () => {
 
   const closeProject = useCallback(() => {
     from.current = null;
+    playWindowCloseSound();
     if (pushed.current > 0) {
       pushed.current -= 1;
       navigate(-1);
@@ -266,6 +287,7 @@ const Town = () => {
         goToRef.current(at + 1);
       } else if (next) {
         from.current = null;
+        playStepSound(true);
         navigate(pathOf(next), { replace: true });
       } else {
         closeProject();
@@ -274,9 +296,24 @@ const Town = () => {
     [closeProject, project, navigate],
   );
 
-  const toggleNight = useCallback(() => setNight((v) => !v), [setNight]);
-  const openWork = useCallback(() => setWorkOpen(true), []);
-  const closeWork = useCallback(() => setWorkOpen(false), []);
+  const toggleNight = useCallback(() => {
+    playToggleSound(!night);
+    setNight(!night);
+  }, [night, setNight]);
+
+  const openWork = useCallback(() => {
+    suppressWorkCloseSound.current = false;
+    playPanelOpenSound(true);
+    setWorkOpen(true);
+  }, []);
+
+  const closeWork = useCallback(() => {
+    if (workOpenRef.current && !suppressWorkCloseSound.current) {
+      playPanelOpenSound(false);
+    }
+    suppressWorkCloseSound.current = false;
+    setWorkOpen(false);
+  }, []);
   const fail = useCallback(() => setPlain(true), []);
 
   // /town/<slug> of something that is not in town: the start of the town

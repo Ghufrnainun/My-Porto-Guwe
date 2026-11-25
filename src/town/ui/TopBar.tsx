@@ -23,8 +23,8 @@ export const TopBar = ({ district, night, onToggleNight, onWork }: Props) => (
     <div className="fixed right-[var(--town-pad)] top-3 z-[5] flex items-center gap-2 text-town-fg">
       {/* on its own page the town needs a way back to the desktop; inside the GanOS window, the window's close button is that way */}
       {!embedded && (
-        <a href="/" aria-label="Back to GanOS" className={`${PILL} ${MONO} border-transparent bg-town-bg`}>
-          ←<span className="max-sm:hidden">&nbsp;GanOS</span>
+        <a href="/" aria-label="Back to desktop" className={`${PILL} ${MONO} border-transparent bg-town-bg`}>
+          ←<span className="max-sm:hidden">&nbsp;Desktop</span>
         </a>
       )}
       {/* a switch: the knob is a sun by day; it slides across and becomes a moon at night (CSS in index.css) */}

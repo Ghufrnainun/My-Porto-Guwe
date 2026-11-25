@@ -14,7 +14,7 @@ import {
   useOsMusicPlayback,
   useOsNote,
 } from '@/components/os/OsShellContext';
-import { playClickSound } from '@/lib/soundEffects';
+import { playClickSound, playPanelOpenSound } from '@/lib/soundEffects';
 
 export const DynamicIsland: React.FC = () => {
   const {
@@ -91,7 +91,7 @@ export const DynamicIsland: React.FC = () => {
         }
         onClick={() => {
           if (!isExpanded) {
-            playClickSound();
+            playPanelOpenSound(true);
             setIsExpanded(true);
           }
         }}
@@ -101,7 +101,7 @@ export const DynamicIsland: React.FC = () => {
             ? 'h-[148px] w-[350px] rounded-[28px] p-3.5'
             : isPlayingTrack
               ? 'h-[26px] w-[216px] items-center justify-between rounded-full px-2.5'
-              : 'h-[24px] w-[132px] items-center justify-between rounded-full px-3',
+              : 'h-[24px] w-[172px] items-center justify-between rounded-full px-3',
         )}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -147,7 +147,10 @@ export const DynamicIsland: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsExpanded(false)}
+                    onClick={() => {
+                      playPanelOpenSound(false);
+                      setIsExpanded(false);
+                    }}
                     aria-label="Collapse Dynamic Island"
                     className="relative flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-white/70 transition-[background-color,transform] duration-150 after:absolute after:-inset-1.5 hover:bg-white/20 active:scale-[0.96]"
                   >
@@ -293,13 +296,18 @@ export const DynamicIsland: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.12 }}
-              className="flex w-full items-center justify-between text-[11px] text-white/75"
+              className="flex w-full items-center justify-between gap-2 text-[11px] text-white/75"
             >
-              <div className="flex items-center gap-1.5">
-                <span className="flex h-1.5 w-1.5 rounded-full bg-[#0a84ff]" />
-                <span className="font-semibold tracking-tight">GanOS</span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <img
+                  src="/brand-logo.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
+                <span className="font-semibold tracking-tight">Ghufron</span>
               </div>
-              <div className="flex items-center gap-1 opacity-60 text-[10px]">
+              <div className="flex shrink-0 items-center gap-1 text-[10px] opacity-60">
                 <Volume2 size={11} />
                 <span>Ready</span>
               </div>

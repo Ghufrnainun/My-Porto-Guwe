@@ -14,6 +14,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Check,
   Globe,
+  HelpCircle,
   Maximize2,
   Minimize2,
   Minus,
@@ -42,6 +43,7 @@ import {
   type OsPowerState,
   type SettingsPaneId,
   type SystemFontId,
+  type TrashItem,
   type WallpaperId,
 } from '@/components/os/OsShellContext';
 import {
@@ -52,63 +54,83 @@ import { useOsNotification } from '@/components/os/OsNotificationContext';
 import { OsNotificationBannerContainer } from '@/components/os/OsNotificationBanner';
 import { OsNotificationCenter } from '@/components/os/OsNotificationCenter';
 import { DynamicIsland } from '@/components/os/DynamicIsland';
-import { AppSwitcherHUD, type AppSwitcherItem } from '@/components/os/AppSwitcherHUD';
+import {
+  AppSwitcherHUD,
+  type AppSwitcherItem,
+} from '@/components/os/AppSwitcherHUD';
+import { QuickStartGuide } from '@/components/os/QuickStartGuide';
+import { DEFAULT_TRASH_EASTER_EGGS, TrashPopover } from '@/components/os/TrashPopover';
 import { WallpaperStage } from '@/components/os/WallpaperStage';
+import { usePreloader } from '@/hooks/usePreloader';
 import { RECENT_TRACKS, type ListeningTrack } from '@/data/recentTracks';
 import {
-  playWindowOpenSound,
-  playWindowCloseSound,
-  playTrashEmptySound,
   playCameraShutterSound,
+  playPanelOpenSound,
+  playSoftSelectSound,
+  playSuccessSound,
+  playToggleSound,
+  playTrashDropSound,
+  playTrashEmptySound,
+  playUnlockSound,
+  playWindowCloseSound,
+  playWindowMinimizeSound,
+  playWindowOpenSound,
+  playWindowSnapSound,
 } from '@/lib/soundEffects';
 
 const SafariApp = lazy(() =>
-  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.SafariApp })),
+  import('@/components/os/OsBuiltInApps').then((m) => ({
+    default: m.SafariApp,
+  }))
 );
 const SystemSettingsApp = lazy(() =>
   import('@/components/os/OsBuiltInApps').then((m) => ({
     default: m.SystemSettingsApp,
-  })),
+  }))
 );
 const NotesApp = lazy(() =>
-  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.NotesApp })),
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.NotesApp }))
 );
 const TerminalApp = lazy(() =>
-  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.TerminalApp })),
+  import('@/components/os/OsBuiltInApps').then((m) => ({
+    default: m.TerminalApp,
+  }))
 );
 const MailApp = lazy(() =>
-  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.MailApp })),
+  import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.MailApp }))
 );
 
-const MenuBarClock: React.FC<{ language: OsLanguage }> = React.memo(({ language }) => {
-  const [now, setNow] = useState(() => new Date());
+const MenuBarClock: React.FC<{ language: OsLanguage }> = React.memo(
+  ({ language }) => {
+    const [now, setNow] = useState(() => new Date());
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 15_000);
-    return () => window.clearInterval(id);
-  }, []);
+    useEffect(() => {
+      const id = window.setInterval(() => setNow(new Date()), 15_000);
+      return () => window.clearInterval(id);
+    }, []);
 
-  const formattedDate = now
-    .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
+    const formattedDate = now
+      .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'Asia/Jakarta',
+      })
+      .replace(',', '');
+    const formattedTime = now.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
       timeZone: 'Asia/Jakarta',
-    })
-    .replace(',', '');
-  const formattedTime = now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Jakarta',
-  });
+    });
 
-  return (
-    <>
-      <span className="hidden sm:inline">{formattedDate}</span>
-      <span className="tabular-nums">{formattedTime}</span>
-    </>
-  );
-});
+    return (
+      <>
+        <span className="hidden sm:inline">{formattedDate}</span>
+        <span className="tabular-nums">{formattedTime}</span>
+      </>
+    );
+  }
+);
 
 const LockScreenClock: React.FC = React.memo(() => {
   const [now, setNow] = useState(() => new Date());
@@ -197,7 +219,36 @@ const MENUBAR_HEIGHT = 32;
 const DOCK_RESERVED_HEIGHT = 92;
 const WALLPAPER_STORAGE_KEY = 'ganos-wallpaper-v5';
 const LANGUAGE_STORAGE_KEY = 'ganos-system-language';
+const QUICK_START_STORAGE_KEY = 'ganos-quick-start-seen-v1';
+const TRASH_SESSION_KEY = 'ganos-trash-session-v1';
 const WALLPAPER_ROTATE_INTERVAL_MS = 120_000;
+
+type StoredTrashState = {
+  items: TrashItem[];
+  deletedDesktopSources: string[];
+};
+
+const readTrashSession = (): StoredTrashState => {
+  if (typeof window === 'undefined') {
+    return { items: [...DEFAULT_TRASH_EASTER_EGGS], deletedDesktopSources: [] };
+  }
+  try {
+    const raw = JSON.parse(
+      window.sessionStorage.getItem(TRASH_SESSION_KEY) ?? 'null',
+    ) as { items?: unknown; deletedDesktopSources?: unknown } | null;
+    if (raw && Array.isArray(raw.items)) {
+      return {
+        items: raw.items as TrashItem[],
+        deletedDesktopSources: Array.isArray(raw.deletedDesktopSources)
+          ? raw.deletedDesktopSources.filter((s): s is string => typeof s === 'string')
+          : [],
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+  return { items: [...DEFAULT_TRASH_EASTER_EGGS], deletedDesktopSources: [] };
+};
 
 const readLanguagePref = (): OsLanguage => {
   if (typeof window === 'undefined') return 'en';
@@ -310,12 +361,11 @@ const readWallpaperPrefs = (): {
   }
   try {
     const raw = JSON.parse(
-      window.localStorage.getItem(WALLPAPER_STORAGE_KEY) ?? 'null',
+      window.localStorage.getItem(WALLPAPER_STORAGE_KEY) ?? 'null'
     ) as { id?: unknown; autoRotate?: unknown; motion?: unknown } | null;
     return {
       id: isValidWallpaperId(raw?.id) ? raw.id : 'prism',
-      autoRotate:
-        typeof raw?.autoRotate === 'boolean' ? raw.autoRotate : true,
+      autoRotate: typeof raw?.autoRotate === 'boolean' ? raw.autoRotate : true,
       motion: typeof raw?.motion === 'boolean' ? raw.motion : true,
     };
   } catch {
@@ -325,7 +375,7 @@ const readWallpaperPrefs = (): {
 
 const computeDefaultFrame = (
   appId: OsAppId,
-  cascadeIndex: number,
+  cascadeIndex: number
 ): WindowFrame => {
   const spec = APP_SPECS[appId];
   if (typeof window === 'undefined') {
@@ -351,7 +401,10 @@ const computeDefaultFrame = (
   const offset = (cascadeIndex % 6) * 22;
   return {
     x: Math.max(8, Math.round((vw - width) / 2 - 40 + offset)),
-    y: Math.max(8, Math.round((vh - DOCK_RESERVED_HEIGHT - height) / 2 + offset)),
+    y: Math.max(
+      8,
+      Math.round((vh - DOCK_RESERVED_HEIGHT - height) / 2 + offset)
+    ),
     width,
     height,
   };
@@ -393,6 +446,7 @@ export function OsShell({
     clearAppBadge,
   } = useOsNotification();
 
+  const { isReady: isPreloaderReady } = usePreloader();
   const [isTakingScreenshot, setIsTakingScreenshot] = useState(false);
   const [isInteractingWindow, setIsInteractingWindow] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
@@ -400,6 +454,14 @@ export function OsShell({
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const [spotlightQuery, setSpotlightQuery] = useState('');
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
+  const quickStartOpenedFromMenubarRef = useRef(false);
+  const quickStartTriggerRef = useRef<HTMLButtonElement>(null);
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trashDropActive, setTrashDropActive] = useState(false);
+  const [trashState, setTrashState] = useState<StoredTrashState>(() =>
+    readTrashSession(),
+  );
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [power, setPower] = useState<OsPowerState>(() => {
     if (!lockScreen) return 'on';
@@ -418,7 +480,7 @@ export function OsShell({
     if (typeof window === 'undefined') return 'jakarta';
     try {
       const stored = window.localStorage.getItem(
-        'ganos-system-font',
+        'ganos-system-font'
       ) as SystemFontId | null;
       if (stored === 'inter' || stored === 'geist' || stored === 'jakarta') {
         return stored;
@@ -437,17 +499,17 @@ export function OsShell({
   const [dockRevealed, setDockRevealed] = useState(false);
   const [widgetGalleryOpen, setWidgetGalleryOpen] = useState(false);
   const [note, setNote] = useState(
-    'A note to self: make useful things, keep learning, and leave the codebase better than you found it.',
+    'A note to self: make useful things, keep learning, and leave the codebase better than you found it.'
   );
 
   const [wallpaperId, setWallpaperId] = useState<WallpaperId>(
-    () => readWallpaperPrefs().id,
+    () => readWallpaperPrefs().id
   );
   const [autoRotateWallpaper, setAutoRotateWallpaper] = useState<boolean>(
-    () => readWallpaperPrefs().autoRotate,
+    () => readWallpaperPrefs().autoRotate
   );
   const [wallpaperMotion, setWallpaperMotion] = useState<boolean>(
-    () => readWallpaperPrefs().motion,
+    () => readWallpaperPrefs().motion
   );
 
   const [windows, setWindows] = useState<OsWindow[]>(() => {
@@ -478,7 +540,9 @@ export function OsShell({
   } | null>(null);
 
   const [activeTrack, setActiveTrack] = useState<ListeningTrack>(
-    () => RECENT_TRACKS[Math.floor(Math.random() * RECENT_TRACKS.length)] ?? RECENT_TRACKS[0]
+    () =>
+      RECENT_TRACKS[Math.floor(Math.random() * RECENT_TRACKS.length)] ??
+      RECENT_TRACKS[0]
   );
   const [isPlayingTrack, setIsPlayingTrack] = useState(false);
   const [trackPlaybackSec, setTrackPlaybackSec] = useState(0);
@@ -495,7 +559,9 @@ export function OsShell({
   const [isLooping, setIsLooping] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const [snapTarget, setSnapTarget] = useState<'left' | 'right' | 'top' | null>(null);
+  const [snapTarget, setSnapTarget] = useState<'left' | 'right' | 'top' | null>(
+    null
+  );
   const snapTargetRef = useRef<'left' | 'right' | 'top' | null>(null);
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -559,13 +625,17 @@ export function OsShell({
   );
 
   const nextTrack = useCallback(() => {
-    const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
+    const currentIndex = RECENT_TRACKS.findIndex(
+      (t) => t.id === activeTrack.id
+    );
     const next = RECENT_TRACKS[(currentIndex + 1) % RECENT_TRACKS.length];
     void playTrack(next);
   }, [activeTrack, playTrack]);
 
   const prevTrack = useCallback(() => {
-    const currentIndex = RECENT_TRACKS.findIndex((t) => t.id === activeTrack.id);
+    const currentIndex = RECENT_TRACKS.findIndex(
+      (t) => t.id === activeTrack.id
+    );
     const prev =
       RECENT_TRACKS[
         (currentIndex - 1 + RECENT_TRACKS.length) % RECENT_TRACKS.length
@@ -625,16 +695,14 @@ export function OsShell({
   }, []);
 
   const isDark =
-    appearance === 'auto'
-      ? resolvedTheme !== 'light'
-      : appearance === 'dark';
+    appearance === 'auto' ? resolvedTheme !== 'light' : appearance === 'dark';
 
   const setAppearance = useCallback(
     (next: OsAppearance) => {
       setAppearanceState(next);
       setTheme(next === 'auto' ? 'system' : next);
     },
-    [setTheme],
+    [setTheme]
   );
 
   const setSystemFont = useCallback((font: SystemFontId) => {
@@ -661,7 +729,7 @@ export function OsShell({
 
   const activeWallpaper = useMemo(
     () => WALLPAPERS.find((w) => w.id === wallpaperId) ?? WALLPAPERS[0],
-    [wallpaperId],
+    [wallpaperId]
   );
 
   const cycleWallpaper = useCallback(() => {
@@ -680,7 +748,7 @@ export function OsShell({
           id: wallpaperId,
           autoRotate: autoRotateWallpaper,
           motion: wallpaperMotion,
-        }),
+        })
       );
     } catch {
       /* ignore */
@@ -690,7 +758,10 @@ export function OsShell({
   // Auto-rotate wallpaper every 2 minutes when enabled
   useEffect(() => {
     if (!autoRotateWallpaper) return;
-    const timer = window.setInterval(cycleWallpaper, WALLPAPER_ROTATE_INTERVAL_MS);
+    const timer = window.setInterval(
+      cycleWallpaper,
+      WALLPAPER_ROTATE_INTERVAL_MS
+    );
     return () => window.clearInterval(timer);
   }, [autoRotateWallpaper, cycleWallpaper]);
 
@@ -732,7 +803,7 @@ export function OsShell({
         return current.map((w) =>
           w.id === currentRouteApp
             ? { ...w, path: routePath, isMinimized: false, zIndex: nextZ }
-            : w,
+            : w
         );
       }
       return [
@@ -760,7 +831,6 @@ export function OsShell({
     window.addEventListener('pointerdown', onPointerDown);
     return () => window.removeEventListener('pointerdown', onPointerDown);
   }, [openMenu]);
-
 
   // Keep windows clamped on viewport resize
   useEffect(() => {
@@ -791,7 +861,7 @@ export function OsShell({
               height,
             },
           };
-        }),
+        })
       );
     };
     window.addEventListener('resize', onResize);
@@ -800,21 +870,24 @@ export function OsShell({
 
   const focusWindow = useCallback(
     (id: OsAppId) => {
+      const existing = windowsRef.current.find((w) => w.id === id);
+      if (existing?.isMinimized) {
+        playWindowOpenSound();
+      }
       const nextZ = ++zCounter.current;
       setFocusedId(id);
       setWindows((current) =>
         current.map((w) =>
-          w.id === id ? { ...w, zIndex: nextZ, isMinimized: false } : w,
-        ),
+          w.id === id ? { ...w, zIndex: nextZ, isMinimized: false } : w
+        )
       );
       const spec = APP_SPECS[id];
-      const existing = windowsRef.current.find((w) => w.id === id);
       const targetPath = existing?.path ?? spec.path;
       if (targetPath && targetPath !== routePath) {
         navigate(targetPath);
       }
     },
-    [navigate, routePath],
+    [navigate, routePath]
   );
 
   const openApp = useCallback(
@@ -822,6 +895,16 @@ export function OsShell({
       setOpenMenu(null);
       setLauncherOpen(false);
       setSpotlightOpen(false);
+      setQuickStartOpen((open) => {
+        if (open) {
+          try {
+            window.localStorage.setItem(QUICK_START_STORAGE_KEY, 'true');
+          } catch {
+            /* ignore */
+          }
+        }
+        return false;
+      });
       clearAppBadge(id);
 
       if (id === 'settings' && payload) {
@@ -839,20 +922,19 @@ export function OsShell({
         return;
       }
 
-      const alreadyOpen = windowsRef.current.some((w) => w.id === id);
+      const existingWindow = windowsRef.current.find((w) => w.id === id);
+      const alreadyOpen = Boolean(existingWindow);
       if (!alreadyOpen) {
         setLaunchingId(id);
         window.setTimeout(
           () => setLaunchingId((curr) => (curr === id ? null : curr)),
-          750,
+          750
         );
       }
 
       const spec = APP_SPECS[id];
       const targetPath =
-        id === 'projects' && payload
-          ? `/projects/${payload}`
-          : spec.path;
+        id === 'projects' && payload ? `/projects/${payload}` : spec.path;
 
       const nextZ = ++zCounter.current;
       setFocusedId(id);
@@ -867,7 +949,7 @@ export function OsShell({
                   zIndex: nextZ,
                   isMinimized: false,
                 }
-              : w,
+              : w
           );
         }
         return [
@@ -887,61 +969,161 @@ export function OsShell({
       if (targetPath && targetPath !== routePath) {
         navigate(targetPath);
       }
-      playWindowOpenSound();
+      if (!existingWindow || existingWindow.isMinimized) {
+        playWindowOpenSound();
+      } else {
+        playSoftSelectSound();
+      }
     },
-    [clearAppBadge, navigate, routePath],
+    [clearAppBadge, navigate, routePath]
   );
 
-  // Single calm welcome notification on first session visit
-  useEffect(() => {
-    if (power !== 'on') return;
+  const openQuickStart = useCallback((fromMenubar = false) => {
+    setOpenMenu(null);
+    setSpotlightOpen(false);
+    quickStartOpenedFromMenubarRef.current = fromMenubar;
+    setQuickStartOpen(true);
+  }, []);
 
-    const hasShownWelcome = window.sessionStorage.getItem('ganos_welcome_shown');
-    if (!hasShownWelcome) {
-      const timer = window.setTimeout(() => {
-        pushNotification({
-          id: 'welcome-notification',
-          appId: 'settings',
-          appName: 'GanOS System',
-          appIcon: '/macos-icons/settings.png',
-          title: 'Welcome to GanOS',
-          body: 'Press ⌘K for Spotlight, or pick your workspace language:',
-          durationMs: 11000,
-          secondaryActionLabel: '🇬🇧 English',
-          onSecondaryAction: () => {
-            setLanguage('en');
-            pushNotification({
-              appId: 'settings',
-              appName: 'GanOS System',
-              appIcon: '/macos-icons/settings.png',
-              title: '🇬🇧 English Selected',
-              body: 'Press ⌘K for Spotlight search or explore the dock to get started.',
-              actionLabel: 'Explore Projects',
-              onAction: () => openApp('projects'),
-              silent: true,
-            });
-          },
-          actionLabel: '🇮🇩 Bahasa Indonesia',
-          onAction: () => {
-            setLanguage('id');
-            pushNotification({
-              appId: 'settings',
-              appName: 'GanOS System',
-              appIcon: '/macos-icons/settings.png',
-              title: '🇮🇩 Bahasa Indonesia Aktif',
-              body: 'Gunakan ⌘K untuk Spotlight Search atau klik dock untuk mulai menjelajahi portofolio.',
-              actionLabel: 'Jelajahi Proyek',
-              onAction: () => openApp('projects'),
-              silent: true,
-            });
-          },
-        });
-        window.sessionStorage.setItem('ganos_welcome_shown', 'true');
-      }, 1600);
-
-      return () => window.clearTimeout(timer);
+  const closeQuickStart = useCallback(() => {
+    setQuickStartOpen(false);
+    try {
+      window.localStorage.setItem(QUICK_START_STORAGE_KEY, 'true');
+    } catch {
+      /* ignore */
     }
-  }, [power, pushNotification, openApp, setLanguage]);
+  }, []);
+
+  // Show lightweight 3-step anchored tour once for first-time visitors after preloader finishes
+  useEffect(() => {
+    if (
+      !isPreloaderReady ||
+      power !== 'on' ||
+      routePath !== '/' ||
+      windows.length > 0
+    ) {
+      return;
+    }
+
+    let hasSeenGuide = false;
+    try {
+      hasSeenGuide =
+        window.localStorage.getItem(QUICK_START_STORAGE_KEY) === 'true';
+    } catch {
+      hasSeenGuide = false;
+    }
+    if (hasSeenGuide) return;
+
+    const timer = window.setTimeout(() => {
+      quickStartOpenedFromMenubarRef.current = false;
+      setQuickStartOpen(true);
+    }, 340);
+
+    return () => window.clearTimeout(timer);
+  }, [isPreloaderReady, power, routePath, windows.length]);
+
+  // Step aside cleanly when Spotlight opens
+  useEffect(() => {
+    if (spotlightOpen && quickStartOpen) {
+      closeQuickStart();
+    }
+  }, [spotlightOpen, quickStartOpen, closeQuickStart]);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(TRASH_SESSION_KEY, JSON.stringify(trashState));
+    } catch {
+      /* ignore */
+    }
+  }, [trashState]);
+
+  const restoreTrashItem = useCallback((id: string) => {
+    playSuccessSound();
+    setTrashState((prev) => ({
+      ...prev,
+      items: prev.items.filter((item) => item.id !== id),
+    }));
+  }, []);
+
+  const moveToTrash = useCallback(
+    (incoming: Omit<TrashItem, 'id'> & { id?: string }) => {
+      const itemId =
+        incoming.id ?? `${incoming.kind}:${incoming.sourceId ?? incoming.label}`;
+      const newItem: TrashItem = { ...incoming, id: itemId };
+
+      setTrashState((prev) => {
+        if (prev.items.some((item) => item.id === itemId)) return prev;
+        return {
+          ...prev,
+          items: [newItem, ...prev.items],
+        };
+      });
+
+      playTrashDropSound();
+      pushNotification({
+        appId: 'finder',
+        appName: 'Finder',
+        appIcon: '/macos-icons/trash.png',
+        title:
+          language === 'id'
+            ? `${incoming.label} dipindahkan ke Sampah`
+            : `${incoming.label} moved to Trash`,
+        body:
+          language === 'id'
+            ? 'Klik ikon Trash di Dock untuk mengembalikan atau mengosongkan.'
+            : 'Click Trash in the Dock anytime to put it back.',
+        actionLabel: language === 'id' ? 'Urungkan' : 'Undo',
+        onAction: () => restoreTrashItem(itemId),
+        durationMs: 5000,
+        silent: true,
+      });
+    },
+    [language, pushNotification, restoreTrashItem],
+  );
+
+  const restoreAllTrash = useCallback(() => {
+    playSuccessSound();
+    setTrashState((prev) => ({
+      items: prev.items.filter((item) => item.kind === 'easter-egg'),
+      deletedDesktopSources: [],
+    }));
+  }, []);
+
+  const restoreDesktopItems = useCallback(() => {
+    playSuccessSound();
+    setTrashState((prev) => ({
+      items: prev.items.filter((item) => item.kind === 'easter-egg'),
+      deletedDesktopSources: [],
+    }));
+  }, []);
+
+  const emptyTrash = useCallback(() => {
+    setTrashState((prev) => {
+      const newlyDeleted = prev.items
+        .filter((item) => item.kind !== 'easter-egg' && item.sourceId)
+        .map((item) => `${item.kind}:${item.sourceId}`);
+      const merged = Array.from(
+        new Set([...prev.deletedDesktopSources, ...newlyDeleted]),
+      );
+      return {
+        items: [],
+        deletedDesktopSources: merged,
+      };
+    });
+    playTrashEmptySound();
+    pushNotification({
+      appId: 'finder',
+      appName: 'Finder',
+      appIcon: '/macos-icons/trash.png',
+      title: language === 'id' ? 'Sampah Dikosongkan' : 'Trash Emptied',
+      body:
+        language === 'id'
+          ? 'Tempat sampah sudah bersih.'
+          : 'Recycle bin is clean and quiet.',
+      durationMs: 3200,
+      silent: true,
+    });
+  }, [language, pushNotification]);
 
   // Real-time network online/offline notifications
   useEffect(() => {
@@ -965,8 +1147,8 @@ export function OsShell({
         appIcon: '/macos-icons/settings.png',
         title: isId ? 'Wi-Fi Terputus' : 'Wi-Fi Disconnected',
         body: isId
-          ? 'GanOS sedang berjalan dalam mode cache offline.'
-          : 'GanOS is running in offline cache mode.',
+          ? 'Berjalan dalam mode cache offline.'
+          : 'Running in offline cache mode.',
       });
     };
     window.addEventListener('online', handleOnline);
@@ -996,15 +1178,15 @@ export function OsShell({
         return remaining;
       });
     },
-    [navigate, routePath],
+    [navigate, routePath]
   );
 
   const minimizeWindow = useCallback(
     (id: OsAppId) => {
-      playWindowCloseSound();
+      playWindowMinimizeSound();
       setWindows((current) => {
         const next = current.map((w) =>
-          w.id === id ? { ...w, isMinimized: true } : w,
+          w.id === id ? { ...w, isMinimized: true } : w
         );
         const topVisible = [...next]
           .filter((w) => !w.isMinimized)
@@ -1020,14 +1202,15 @@ export function OsShell({
         return next;
       });
     },
-    [navigate, routePath],
+    [navigate, routePath]
   );
 
   const toggleMaximize = useCallback((id: OsAppId) => {
+    playWindowSnapSound();
     setWindows((current) =>
       current.map((w) =>
-        w.id === id ? { ...w, isMaximized: !w.isMaximized } : w,
-      ),
+        w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
+      )
     );
   }, []);
 
@@ -1082,11 +1265,14 @@ export function OsShell({
       // 1. Spotlight Search: Cmd+Space (Mac), Ctrl+Space (Windows), Cmd+K / Ctrl+K
       if (
         isCmdOrCtrl &&
-        (event.key === ' ' || event.code === 'Space' || event.key.toLowerCase() === 'k')
+        (event.key === ' ' ||
+          event.code === 'Space' ||
+          event.key.toLowerCase() === 'k')
       ) {
         event.preventDefault();
         setOpenMenu(null);
         setLauncherOpen(false);
+        playPanelOpenSound(!spotlightOpen);
         setSpotlightOpen((open) => !open);
         return;
       }
@@ -1120,12 +1306,15 @@ export function OsShell({
       // 5. App Switcher HUD: Cmd+Tab / Ctrl+Tab
       if (isCmdOrCtrl && event.key === 'Tab') {
         event.preventDefault();
+        playSoftSelectSound();
         if (!isSwitcherOpen) {
           setIsSwitcherOpen(true);
           setSwitcherIndex(switcherApps.length > 1 ? 1 : 0);
         } else {
           if (event.shiftKey) {
-            setSwitcherIndex((prev) => (prev - 1 + switcherApps.length) % switcherApps.length);
+            setSwitcherIndex(
+              (prev) => (prev - 1 + switcherApps.length) % switcherApps.length
+            );
           } else {
             setSwitcherIndex((prev) => (prev + 1) % switcherApps.length);
           }
@@ -1159,9 +1348,7 @@ export function OsShell({
           appName: 'Screen Capture',
           appIcon: '/macos-icons/preview.png',
           title: `Screen Shot ${timeStr}.png`,
-          body: isId
-            ? 'Tersimpan di Desktop GanOS'
-            : 'Screenshot saved to GanOS Desktop',
+          body: isId ? 'Tersimpan di Desktop' : 'Screenshot saved to Desktop',
           actionLabel: isId ? 'Buka Finder' : 'Open in Finder',
           onAction: () => openApp('projects'),
         });
@@ -1171,6 +1358,7 @@ export function OsShell({
       // 7. Toggle Notification Center: Cmd+Shift+N / Ctrl+Shift+N
       if (isCmdOrCtrl && event.shiftKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
+        playPanelOpenSound(!isCenterOpen);
         setIsCenterOpen((prev) => !prev);
         return;
       }
@@ -1208,19 +1396,21 @@ export function OsShell({
     switcherIndex,
     language,
     pushNotification,
+    spotlightOpen,
+    isCenterOpen,
     setIsCenterOpen,
   ]);
 
   const startWindowDrag = (
     id: OsAppId,
-    event: React.PointerEvent<HTMLDivElement>,
+    event: React.PointerEvent<HTMLDivElement>
   ) => {
     const win = windows.find((w) => w.id === id);
     if (!win || win.isMaximized || window.innerWidth < 768) return;
     if (
       !(event.target as HTMLElement).closest('.handle') ||
       (event.target as HTMLElement).closest(
-        'button, input, textarea, a, .window-controls',
+        'button, input, textarea, a, .window-controls'
       )
     ) {
       return;
@@ -1272,25 +1462,26 @@ export function OsShell({
                   ...w.frame,
                   x: Math.max(
                     80 - w.frame.width,
-                    Math.min(drag.origX + dx, window.innerWidth - 80),
+                    Math.min(drag.origX + dx, window.innerWidth - 80)
                   ),
                   y: Math.max(
                     0,
                     Math.min(
                       drag.origY + dy,
-                      window.innerHeight - MENUBAR_HEIGHT - 56,
-                    ),
+                      window.innerHeight - MENUBAR_HEIGHT - 56
+                    )
                   ),
                 },
               }
-            : w,
-        ),
+            : w
+        )
       );
     };
     const onUp = () => {
       const drag = dragRef.current;
       const snap = snapTargetRef.current;
       if (drag && snap) {
+        playWindowSnapSound();
         const vw = window.innerWidth;
         const vh = window.innerHeight - MENUBAR_HEIGHT;
         if (snap === 'left') {
@@ -1306,12 +1497,12 @@ export function OsShell({
                       width: Math.max(380, Math.round(vw / 2 - 14)),
                       height: Math.max(
                         300,
-                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16),
+                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16)
                       ),
                     },
                   }
-                : w,
-            ),
+                : w
+            )
           );
         } else if (snap === 'right') {
           setWindows((current) =>
@@ -1326,18 +1517,18 @@ export function OsShell({
                       width: Math.max(380, Math.round(vw / 2 - 14)),
                       height: Math.max(
                         300,
-                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16),
+                        Math.round(vh - DOCK_RESERVED_HEIGHT - 16)
                       ),
                     },
                   }
-                : w,
-            ),
+                : w
+            )
           );
         } else if (snap === 'top') {
           setWindows((current) =>
             current.map((w) =>
-              w.id === drag.id ? { ...w, isMaximized: true } : w,
-            ),
+              w.id === drag.id ? { ...w, isMaximized: true } : w
+            )
           );
         }
       }
@@ -1360,7 +1551,7 @@ export function OsShell({
   const startWindowResize = (
     id: OsAppId,
     dir: ResizeDir,
-    event: React.PointerEvent<HTMLDivElement>,
+    event: React.PointerEvent<HTMLDivElement>
   ) => {
     const win = windows.find((w) => w.id === id);
     if (!win || win.isMaximized || window.innerWidth < 768) return;
@@ -1389,10 +1580,16 @@ export function OsShell({
       let { x, y, width, height } = origFrame;
 
       if (dir.includes('e')) {
-        width = Math.max(minW, Math.min(origFrame.width + dx, vw - origFrame.x - 4));
+        width = Math.max(
+          minW,
+          Math.min(origFrame.width + dx, vw - origFrame.x - 4)
+        );
       }
       if (dir.includes('s')) {
-        height = Math.max(minH, Math.min(origFrame.height + dy, vh - origFrame.y - 4));
+        height = Math.max(
+          minH,
+          Math.min(origFrame.height + dy, vh - origFrame.y - 4)
+        );
       }
       if (dir.includes('w')) {
         const maxLeft = origFrame.x + origFrame.width - minW;
@@ -1419,8 +1616,8 @@ export function OsShell({
                   height: Math.round(height),
                 },
               }
-            : w,
-        ),
+            : w
+        )
       );
     };
 
@@ -1445,28 +1642,27 @@ export function OsShell({
     }
   };
 
-  const maximizedWindow = windows.find(
-    (w) => w.isMaximized && !w.isMinimized,
-  );
+  const maximizedWindow = windows.find((w) => w.isMaximized && !w.isMinimized);
 
   const focusedAppSpec = focusedId ? APP_SPECS[focusedId] : null;
-  const activeMenuAppName = focusedAppSpec?.name ?? (appName === 'Finder' ? 'Finder' : appName);
+  const activeMenuAppName =
+    focusedAppSpec?.name ?? (appName === 'Finder' ? 'Finder' : appName);
 
   const menus: MenuDef[] = [
     {
       id: 'apple',
       label: (
-        <span className="flex items-center gap-1.5">
-          <img
-            src="/brand-logo.svg"
-            alt="GanOS"
-            className="h-[16px] w-[16px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
-          />
-          <span className="text-[12.5px] font-bold tracking-tight">GanOS</span>
-        </span>
+        <img
+          src="/brand-logo.svg"
+          alt="Ghufron"
+          className="h-[16px] w-[16px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+        />
       ),
       entries: [
-        { label: 'About GanOS', onClick: () => openApp('settings', 'about') },
+        {
+          label: 'About This Portfolio',
+          onClick: () => openApp('settings', 'about'),
+        },
         { label: 'About Ghufron', onClick: () => openApp('about') },
         'separator',
         {
@@ -1487,7 +1683,7 @@ export function OsShell({
       label: <span className="font-bold">{activeMenuAppName}</span>,
       entries: [
         {
-          label: 'About GanOS',
+          label: 'About This Portfolio',
           onClick: () => openApp('settings', 'about'),
         },
         'separator',
@@ -1524,12 +1720,17 @@ export function OsShell({
       entries: [
         {
           label: 'Copy Email Address',
-          onClick: () => void navigator.clipboard?.writeText(profile.email),
+          onClick: () => {
+            playSuccessSound();
+            void navigator.clipboard?.writeText(profile.email);
+          },
         },
         {
           label: 'Copy Portfolio Link',
-          onClick: () =>
-            void navigator.clipboard?.writeText(window.location.href),
+          onClick: () => {
+            playSuccessSound();
+            void navigator.clipboard?.writeText(window.location.href);
+          },
         },
       ],
     },
@@ -1619,6 +1820,11 @@ export function OsShell({
       id: 'help',
       label: 'Help',
       entries: [
+        {
+          label: language === 'id' ? 'Panduan Singkat' : 'Quick Start Guide',
+          onClick: () => openQuickStart(false),
+        },
+        'separator',
         { label: 'Terminal Commands', onClick: () => openApp('terminal') },
         { label: 'Contact Ghufron…', onClick: () => openApp('mail') },
         'separator',
@@ -1628,7 +1834,7 @@ export function OsShell({
             window.open(
               'https://github.com/Ghufrnainun/My-Porto-Guwe',
               '_blank',
-              'noreferrer',
+              'noreferrer'
             ),
         },
       ],
@@ -1672,6 +1878,7 @@ export function OsShell({
     isRunning: launcherOpen,
     onClick: () => {
       setOpenMenu(null);
+      playPanelOpenSound(!launcherOpen);
       setLauncherOpen((v) => !v);
     },
   };
@@ -1704,7 +1911,7 @@ export function OsShell({
           window.open(
             'https://github.com/Ghufrnainun/My-Porto-Guwe',
             '_blank',
-            'noreferrer',
+            'noreferrer'
           ),
       },
       makeDockItem('settings'),
@@ -1716,22 +1923,24 @@ export function OsShell({
       ...minimizedItems,
       {
         key: 'trash',
-        title: 'Trash (Click to empty)',
+        title:
+          trashState.items.length > 0
+            ? language === 'id'
+              ? `Sampah (${trashState.items.length} item)`
+              : `Trash (${trashState.items.length} items)`
+            : language === 'id'
+              ? 'Sampah (Kosong)'
+              : 'Trash (Empty)',
         iconSrc: '/macos-icons/trash.png',
+        isRunning: trashOpen,
+        isDropTarget: trashDropActive,
+        badge:
+          trashState.items.filter((item) => item.kind !== 'easter-egg').length ||
+          null,
         onClick: () => {
-          playTrashEmptySound();
-          pushNotification({
-            appId: 'finder',
-            appName: 'Finder',
-            appIcon: '/macos-icons/trash.png',
-            title: language === 'id' ? 'Sampah Dikosongkan' : 'Trash Emptied',
-            body:
-              language === 'id'
-                ? 'Tempat sampah sudah bersih.'
-                : 'Recycle bin is clean and quiet.',
-            durationMs: 3200,
-            silent: true,
-          });
+          setOpenMenu(null);
+          playPanelOpenSound(!trashOpen);
+          setTrashOpen((open) => !open);
         },
       },
     ],
@@ -1767,6 +1976,17 @@ export function OsShell({
           setSpotlightOpen(false);
           setWidgetGalleryOpen(true);
         },
+      },
+      {
+        id: 'system:guide',
+        category: 'Applications',
+        title: language === 'id' ? 'Panduan Singkat' : 'Quick Start Guide',
+        subtitle:
+          language === 'id'
+            ? 'Akses cepat CV, proyek, profil & kontak'
+            : 'Recruiter & visitor quick shortcuts',
+        icon: '/macos-icons/finder.png',
+        action: () => openQuickStart(false),
       },
       {
         id: 'system:widgets',
@@ -1808,16 +2028,16 @@ export function OsShell({
     return all.filter((item) =>
       `${item.title} ${item.subtitle} ${item.category}`
         .toLowerCase()
-        .includes(q),
+        .includes(q)
     );
-  }, [openApp, setWidgetGalleryOpen, spotlightQuery]);
+  }, [language, openApp, openQuickStart, setWidgetGalleryOpen, spotlightQuery]);
 
   const musicPlaybackValue = useMemo(
     () => ({
       trackPlaybackSec,
       trackDurationSec,
     }),
-    [trackPlaybackSec, trackDurationSec],
+    [trackPlaybackSec, trackDurationSec]
   );
 
   const shellContextValue = useMemo(
@@ -1866,6 +2086,15 @@ export function OsShell({
       prevTrack,
       shuffleTrack,
       audioRef,
+      trashItems: trashState.items,
+      deletedDesktopSources: trashState.deletedDesktopSources,
+      trashDropActive,
+      setTrashDropActive,
+      moveToTrash,
+      restoreTrashItem,
+      restoreAllTrash,
+      restoreDesktopItems,
+      emptyTrash,
     }),
     [
       note,
@@ -1900,7 +2129,15 @@ export function OsShell({
       nextTrack,
       prevTrack,
       shuffleTrack,
-    ],
+      trashState.items,
+      trashState.deletedDesktopSources,
+      trashDropActive,
+      moveToTrash,
+      restoreTrashItem,
+      restoreAllTrash,
+      restoreDesktopItems,
+      emptyTrash,
+    ]
   );
 
   const launcherItems = useMemo(
@@ -1910,7 +2147,10 @@ export function OsShell({
         name: APP_SPECS[id].name,
         icon: APP_SPECS[id].icon,
         action: () => openApp(id),
-        keywords: [APP_SPECS[id].name.toLowerCase(), APP_SPECS[id].title.toLowerCase()],
+        keywords: [
+          APP_SPECS[id].name.toLowerCase(),
+          APP_SPECS[id].title.toLowerCase(),
+        ],
       })),
       {
         id: 'weather',
@@ -1920,7 +2160,14 @@ export function OsShell({
           setLauncherOpen(false);
           setWidgetGalleryOpen(true);
         },
-        keywords: ['weather', 'cuaca', 'semarang', 'temperature', 'suhu', 'forecast'],
+        keywords: [
+          'weather',
+          'cuaca',
+          'semarang',
+          'temperature',
+          'suhu',
+          'forecast',
+        ],
       },
       {
         id: 'widgets',
@@ -1930,10 +2177,18 @@ export function OsShell({
           setLauncherOpen(false);
           setWidgetGalleryOpen(true);
         },
-        keywords: ['widgets', 'widget', 'add', 'desktop', 'edit', 'customize', 'gallery'],
+        keywords: [
+          'widgets',
+          'widget',
+          'add',
+          'desktop',
+          'edit',
+          'customize',
+          'gallery',
+        ],
       },
     ],
-    [openApp, setWidgetGalleryOpen],
+    [openApp, setWidgetGalleryOpen]
   );
 
   const filteredLauncherItems = useMemo(() => {
@@ -1942,1037 +2197,1174 @@ export function OsShell({
     return launcherItems.filter(
       (item) =>
         item.name.toLowerCase().includes(q) ||
-        item.keywords?.some((k) => k.includes(q)),
+        item.keywords?.some((k) => k.includes(q))
     );
   }, [launcherItems, launcherQuery]);
 
   return (
     <OsShellContext.Provider value={shellContextValue}>
       <OsMusicPlaybackContext.Provider value={musicPlaybackValue}>
-      <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
-        {/* Wallpaper */}
-        <WallpaperStage
-          wallpaper={activeWallpaper}
-          animate={wallpaperMotion}
-          paused={power !== 'on'}
-        />
-
-        {/* Desktop surface (isolated in z-0 stacking context so windows always sit above desktop icons/widgets) */}
-        <div
-          className="absolute inset-x-0 bottom-0 z-0"
-          style={{ top: MENUBAR_HEIGHT }}
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) focusDesktop();
-          }}
-        >
-          {children}
-        </div>
-
-        {/* Window Snap Preview Ghost (macOS Sequoia / Windows Aero Snap) */}
-        <AnimatePresence>
-          {snapTarget && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
-              className={cn(
-                'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[left,top,width,height,opacity] duration-150',
-                snapTarget === 'left' &&
-                  'left-2 top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
-                snapTarget === 'right' &&
-                  'left-[calc(50vw+4px)] top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
-                snapTarget === 'top' &&
-                  'left-2 top-[36px] w-[calc(100vw-16px)] h-[calc(100svh-44px)]',
-              )}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Floating Windows */}
-        <AnimatePresence>
-          {windows.map((win) => {
-            if (win.isMinimized) return null;
-            const isFocused = focusedId === win.id;
-            const spec = APP_SPECS[win.id];
-            const style: React.CSSProperties = win.isMaximized
-              ? {
-                  left: 0,
-                  top: MENUBAR_HEIGHT,
-                  width: '100vw',
-                  height: `calc(100svh - ${MENUBAR_HEIGHT}px)`,
-                  zIndex: win.zIndex,
-                }
-              : {
-                  left: win.frame.x,
-                  top: win.frame.y + MENUBAR_HEIGHT,
-                  width: win.frame.width,
-                  height: win.frame.height,
-                  zIndex: win.zIndex,
-                };
-
-            return (
-              <motion.div
-                key={win.id}
-                role="dialog"
-                aria-label={spec.title}
-                style={style}
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={
-                  reduceMotion
-                    ? { opacity: 0, transition: { duration: 0.1 } }
-                    : {
-                        opacity: 0,
-                        scale: 0.95,
-                        y: 16,
-                        transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] },
-                      }
-                }
-                transition={{ type: 'spring', stiffness: 440, damping: 36 }}
-                onPointerDownCapture={() => {
-                  if (focusedId !== win.id) focusWindow(win.id);
-                }}
-                onPointerDown={(event) => startWindowDrag(win.id, event)}
-                onDoubleClick={(event) => {
-                  if (
-                    (event.target as HTMLElement).closest('.handle') &&
-                    !(event.target as HTMLElement).closest('button, input, a')
-                  ) {
-                    toggleMaximize(win.id);
-                  }
-                }}
-                className={cn(
-                  'absolute flex flex-col overflow-hidden transition-[border-radius,box-shadow] duration-200',
-                  !win.isMaximized && 'rounded-[26px]',
-                  !isFocused && 'inactive-window',
-                )}
-              >
-                <div
-                  className={cn(
-                    'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/80 text-[13px] text-black/85 ring-[0.5px] ring-black/40 dark:bg-[#3a3039]/75 dark:text-white/90',
-                    // the frosted glass is re-blurred whenever the window or what is under it changes: skip it while a
-                    // window is dragged or resized, when it fills the screen, and for the town, whose frame repaints every frame
-                    win.isMaximized || win.id === 'town' || isInteractingWindow
-                      ? 'bg-[#e8e6ea]/95 dark:bg-[#3a3039]/95'
-                      : 'backdrop-blur-xl backdrop-saturate-150',
-                    'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
-                    !win.isMaximized && 'rounded-[26px]',
-                    isFocused
-                      ? 'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_0_0.5px_rgba(0,0,0,0.6)]'
-                      : 'shadow-[0_14px_36px_rgba(0,0,0,0.35)]',
-                    win.isMaximized && 'rounded-none shadow-none ring-0',
-                  )}
-                >
-                  {/* Traffic light controls with extended non-overlapping hit areas */}
-                  <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
-                    <button
-                      type="button"
-                      aria-label="Close"
-                      onClick={() => closeWindow(win.id)}
-                      className={cn(
-                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
-                        isFocused
-                          ? 'bg-[#ff5f57]'
-                          : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20',
-                      )}
-                    >
-                      <X
-                        size={8}
-                        strokeWidth={3}
-                        className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Minimize"
-                      onClick={() => minimizeWindow(win.id)}
-                      className={cn(
-                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
-                        isFocused
-                          ? 'bg-[#febc2e]'
-                          : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20',
-                      )}
-                    >
-                      <Minus
-                        size={8}
-                        strokeWidth={3}
-                        className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
-                      onClick={() => toggleMaximize(win.id)}
-                      className={cn(
-                        'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
-                        isFocused
-                          ? 'bg-[#28c840]'
-                          : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20',
-                      )}
-                    >
-                      <Plus
-                        size={8}
-                        strokeWidth={3}
-                        className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
-                      />
-                    </button>
-                  </div>
-
-                  {/* Window body (shielded from iframe pointer capture while dragging/resizing) */}
-                  <div
-                    className={cn(
-                      'relative min-h-0 flex-grow',
-                      isInteractingWindow && 'pointer-events-none',
-                    )}
-                  >
-                    <WindowFocusContext.Provider value={isFocused}>
-                      <Suspense
-                        fallback={
-                          <div className="flex h-full w-full items-center justify-center text-[12px] text-black/45 dark:text-white/45">
-                            Opening {spec.name}…
-                          </div>
-                        }
-                      >
-                        {win.id === 'settings' ? (
-                          <SystemSettingsApp />
-                        ) : win.id === 'safari' ? (
-                          <SafariApp initialUrl={safariPayload} />
-                        ) : win.id === 'notes' ? (
-                          <NotesApp initialId={notesPayload} />
-                        ) : win.id === 'terminal' ? (
-                          <TerminalApp onClose={() => closeWindow('terminal')} />
-                        ) : win.id === 'mail' ? (
-                          <MailApp />
-                        ) : win.id === 'town' ? (
-                          // its own page in a frame: the town scrolls the window and fills the screen, which a GanOS window body cannot give it
-                          <iframe
-                            src="/town"
-                            title="Ghufron Town: a 3D tour of the projects"
-                            allow="fullscreen"
-                            className="block h-full w-full border-0 bg-[#1f3bff]"
-                          />
-                        ) : win.path && renderWindow ? (
-                          <div className="h-full w-full overflow-hidden">
-                            {renderWindow(win.path)}
-                          </div>
-                        ) : (
-                          <div className="h-full w-full overflow-hidden">
-                            {children}
-                          </div>
-                        )}
-                      </Suspense>
-                    </WindowFocusContext.Provider>
-                  </div>
-
-                  {/* 8-direction macOS window resize handles */}
-                  {!win.isMaximized &&
-                    RESIZE_HANDLES.map((handle) => (
-                      <div
-                        key={handle.dir}
-                        aria-hidden="true"
-                        onPointerDown={(event) =>
-                          startWindowResize(win.id, handle.dir, event)
-                        }
-                        className={cn(' absolute z-30', handle.className)}
-                      />
-                    ))}
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        {/* 3D Frosted Glass Dock */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-1.5 z-[26] flex justify-center [&>*]:pointer-events-auto">
-          <GlassDock3D
-            groups={dockGroups}
-            mobileItems={mobileDockItems}
-            activeKey={launcherOpen ? 'apps' : focusedId}
-            isHidden={Boolean(maximizedWindow) && !dockRevealed}
-            onRevealChange={setDockRevealed}
+        <main className="gh-os relative h-[100svh] w-screen overflow-hidden select-none text-[13px] antialiased">
+          {/* Wallpaper */}
+          <WallpaperStage
+            wallpaper={activeWallpaper}
+            animate={wallpaperMotion}
+            paused={power !== 'on'}
           />
-        </div>
 
-        {/* Apps Launcher */}
-        <AnimatePresence>
-          {launcherOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(event) => {
-                if (event.target === event.currentTarget)
-                  setLauncherOpen(false);
-              }}
-              className="absolute inset-0 z-[25] flex flex-col items-center bg-black/30 pt-[8vh] text-white backdrop-blur-3xl"
-            >
-              <div className="flex h-9 w-60 items-center gap-2 rounded-full bg-white/15 px-3 shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.25)]">
-                <Search size={14} className="opacity-70" />
-                <input
-                  autoFocus
-                  value={launcherQuery}
-                  onChange={(event) => setLauncherQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && filteredLauncherItems[0]) {
-                      setLauncherOpen(false);
-                      filteredLauncherItems[0].action();
+          {/* Desktop surface (isolated in z-0 stacking context so windows always sit above desktop icons/widgets) */}
+          <div
+            className="absolute inset-x-0 bottom-0 z-0"
+            style={{ top: MENUBAR_HEIGHT }}
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) focusDesktop();
+            }}
+          >
+            {children}
+          </div>
+
+          {/* Window Snap Preview Ghost (macOS Sequoia / Windows Aero Snap) */}
+          <AnimatePresence>
+            {snapTarget && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+                className={cn(
+                  'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[left,top,width,height,opacity] duration-150',
+                  snapTarget === 'left' &&
+                    'left-2 top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
+                  snapTarget === 'right' &&
+                    'left-[calc(50vw+4px)] top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
+                  snapTarget === 'top' &&
+                    'left-2 top-[36px] w-[calc(100vw-16px)] h-[calc(100svh-44px)]'
+                )}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Floating Windows */}
+          <AnimatePresence>
+            {windows.map((win) => {
+              if (win.isMinimized) return null;
+              const isFocused = focusedId === win.id;
+              const spec = APP_SPECS[win.id];
+              const style: React.CSSProperties = win.isMaximized
+                ? {
+                    left: 0,
+                    top: MENUBAR_HEIGHT,
+                    width: '100vw',
+                    height: `calc(100svh - ${MENUBAR_HEIGHT}px)`,
+                    zIndex: win.zIndex,
+                  }
+                : {
+                    left: win.frame.x,
+                    top: win.frame.y + MENUBAR_HEIGHT,
+                    width: win.frame.width,
+                    height: win.frame.height,
+                    zIndex: win.zIndex,
+                  };
+
+              return (
+                <motion.div
+                  key={win.id}
+                  role="dialog"
+                  aria-label={spec.title}
+                  style={style}
+                  initial={
+                    reduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }
+                  }
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={
+                    reduceMotion
+                      ? { opacity: 0, transition: { duration: 0.1 } }
+                      : {
+                          opacity: 0,
+                          scale: 0.95,
+                          y: 16,
+                          transition: {
+                            duration: 0.15,
+                            ease: [0.22, 1, 0.36, 1],
+                          },
+                        }
+                  }
+                  transition={{ type: 'spring', stiffness: 440, damping: 36 }}
+                  onPointerDownCapture={() => {
+                    if (focusedId !== win.id) focusWindow(win.id);
+                  }}
+                  onPointerDown={(event) => startWindowDrag(win.id, event)}
+                  onDoubleClick={(event) => {
+                    if (
+                      (event.target as HTMLElement).closest('.handle') &&
+                      !(event.target as HTMLElement).closest('button, input, a')
+                    ) {
+                      toggleMaximize(win.id);
                     }
                   }}
-                  placeholder="Search"
-                  className="flex-grow bg-transparent text-[14px] outline-none placeholder:text-white/60"
-                />
-              </div>
+                  className={cn(
+                    'absolute flex flex-col overflow-hidden transition-[border-radius,box-shadow] duration-200',
+                    !win.isMaximized && 'rounded-[26px]',
+                    !isFocused && 'inactive-window'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'relative flex h-full w-full flex-col overflow-hidden bg-[#e8e6ea]/80 text-[13px] text-black/85 ring-[0.5px] ring-black/40 dark:bg-[#3a3039]/75 dark:text-white/90',
+                      // the frosted glass is re-blurred whenever the window or what is under it changes: skip it while a
+                      // window is dragged or resized, when it fills the screen, and for the town, whose frame repaints every frame
+                      win.isMaximized ||
+                        win.id === 'town' ||
+                        isInteractingWindow
+                        ? 'bg-[#e8e6ea]/95 dark:bg-[#3a3039]/95'
+                        : 'backdrop-blur-xl backdrop-saturate-150',
+                      'after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] dark:after:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]',
+                      !win.isMaximized && 'rounded-[26px]',
+                      isFocused
+                        ? 'shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_0_0.5px_rgba(0,0,0,0.6)]'
+                        : 'shadow-[0_14px_36px_rgba(0,0,0,0.35)]',
+                      win.isMaximized && 'rounded-none shadow-none ring-0'
+                    )}
+                  >
+                    {/* Traffic light controls with extended non-overlapping hit areas */}
+                    <div className="window-controls group/lights absolute left-[19px] top-[19px] z-20 flex gap-[9px]">
+                      <button
+                        type="button"
+                        aria-label="Close"
+                        onClick={() => closeWindow(win.id)}
+                        className={cn(
+                          'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
+                          isFocused
+                            ? 'bg-[#ff5f57]'
+                            : 'bg-black/15 group-hover/lights:bg-[#ff5f57] dark:bg-white/20'
+                        )}
+                      >
+                        <X
+                          size={8}
+                          strokeWidth={3}
+                          className="text-[#4d0000] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Minimize"
+                        onClick={() => minimizeWindow(win.id)}
+                        className={cn(
+                          'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
+                          isFocused
+                            ? 'bg-[#febc2e]'
+                            : 'bg-black/15 group-hover/lights:bg-[#febc2e] dark:bg-white/20'
+                        )}
+                      >
+                        <Minus
+                          size={8}
+                          strokeWidth={3}
+                          className="text-[#985700] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={win.isMaximized ? 'Restore' : 'Maximize'}
+                        onClick={() => toggleMaximize(win.id)}
+                        className={cn(
+                          'relative flex h-[14px] w-[14px] items-center justify-center rounded-full ring-[0.5px] ring-inset ring-black/20 transition-transform duration-100 after:absolute after:-inset-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] enabled:active:brightness-75',
+                          isFocused
+                            ? 'bg-[#28c840]'
+                            : 'bg-black/15 group-hover/lights:bg-[#28c840] dark:bg-white/20'
+                        )}
+                      >
+                        <Plus
+                          size={8}
+                          strokeWidth={3}
+                          className="text-[#006500] opacity-0 transition-opacity group-hover/lights:opacity-100 [@media(hover:none)]:opacity-80"
+                        />
+                      </button>
+                    </div>
+
+                    {/* Window body (shielded from iframe pointer capture while dragging/resizing) */}
+                    <div
+                      className={cn(
+                        'relative min-h-0 flex-grow',
+                        isInteractingWindow && 'pointer-events-none'
+                      )}
+                    >
+                      <WindowFocusContext.Provider value={isFocused}>
+                        <Suspense
+                          fallback={
+                            <div className="flex h-full w-full items-center justify-center text-[12px] text-black/45 dark:text-white/45">
+                              Opening {spec.name}…
+                            </div>
+                          }
+                        >
+                          {win.id === 'settings' ? (
+                            <SystemSettingsApp />
+                          ) : win.id === 'safari' ? (
+                            <SafariApp initialUrl={safariPayload} />
+                          ) : win.id === 'notes' ? (
+                            <NotesApp initialId={notesPayload} />
+                          ) : win.id === 'terminal' ? (
+                            <TerminalApp
+                              onClose={() => closeWindow('terminal')}
+                            />
+                          ) : win.id === 'mail' ? (
+                            <MailApp />
+                          ) : win.id === 'town' ? (
+                            // its own page in a frame: the town scrolls the window and fills the screen, which a GanOS window body cannot give it
+                            <iframe
+                              src="/town"
+                              title="Ghufron Town: a 3D tour of the projects"
+                              allow="fullscreen"
+                              className="block h-full w-full border-0 bg-[#1f3bff]"
+                            />
+                          ) : win.path && renderWindow ? (
+                            <div className="h-full w-full overflow-hidden">
+                              {renderWindow(win.path)}
+                            </div>
+                          ) : (
+                            <div className="h-full w-full overflow-hidden">
+                              {children}
+                            </div>
+                          )}
+                        </Suspense>
+                      </WindowFocusContext.Provider>
+                    </div>
+
+                    {/* 8-direction macOS window resize handles */}
+                    {!win.isMaximized &&
+                      RESIZE_HANDLES.map((handle) => (
+                        <div
+                          key={handle.dir}
+                          aria-hidden="true"
+                          onPointerDown={(event) =>
+                            startWindowResize(win.id, handle.dir, event)
+                          }
+                          className={cn(' absolute z-30', handle.className)}
+                        />
+                      ))}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {/* 3D Frosted Glass Dock */}
+          <div
+            data-tour-target="dock"
+            className="pointer-events-none absolute inset-x-0 bottom-1.5 z-[26] flex justify-center [&>*]:pointer-events-auto"
+          >
+            <GlassDock3D
+              groups={dockGroups}
+              mobileItems={mobileDockItems}
+              activeKey={launcherOpen ? 'apps' : focusedId}
+              isHidden={Boolean(maximizedWindow) && !dockRevealed}
+              onRevealChange={setDockRevealed}
+            />
+          </div>
+
+          {/* Apps Launcher */}
+          <AnimatePresence>
+            {launcherOpen && (
               <motion.div
-                initial={{ scale: 1.06 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 1.06 }}
-                transition={{ duration: 0.22 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={(event) => {
                   if (event.target === event.currentTarget)
                     setLauncherOpen(false);
                 }}
-                className="mt-[8vh] grid w-full max-w-5xl grid-cols-[repeat(auto-fill,120px)] justify-center gap-x-8 gap-y-6 px-8"
+                className="absolute inset-0 z-[25] flex flex-col items-center bg-black/30 pt-[8vh] text-white backdrop-blur-3xl"
               >
-                {filteredLauncherItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setLauncherOpen(false);
-                      item.action();
+                <div className="flex h-9 w-60 items-center gap-2 rounded-full bg-white/15 px-3 shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.25)]">
+                  <Search size={14} className="opacity-70" />
+                  <input
+                    autoFocus
+                    value={launcherQuery}
+                    onChange={(event) => setLauncherQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && filteredLauncherItems[0]) {
+                        setLauncherOpen(false);
+                        filteredLauncherItems[0].action();
+                      }
                     }}
-                    className="group flex cursor-default flex-col items-center gap-2 transition-transform duration-150 active:scale-95"
-                  >
-                    <img
-                      src={item.icon}
-                      alt={item.name}
-                      className="h-24 w-24 object-contain transition-transform duration-200 group-hover:scale-105 active:brightness-75 drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
-                    />
-                    <span className="text-[13px] font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                      {item.name}
-                    </span>
-                  </button>
-                ))}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Top Menu Bar (32px, transparent over wallpaper) */}
-        <header className="pointer-events-none absolute inset-x-0 top-0 z-30 [&>*]:pointer-events-auto">
-          <DynamicIsland />
-          <nav
-            ref={menubarRef}
-            style={{ height: MENUBAR_HEIGHT }}
-            className={cn(
-              'relative flex items-center justify-between text-[13px] font-medium transition-colors',
-              maximizedWindow
-                ? 'text-black dark:text-white'
-                : activeWallpaper.isLight
-                  ? 'text-black'
-                  : 'text-white [text-shadow:0_0_8px_rgba(0,0,0,0.25)]',
-            )}
-          >
-            {maximizedWindow && (
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -z-10 bg-[#ececec]/90 backdrop-blur-2xl dark:bg-[#1e1e1e]/90"
-              />
-            )}
-            <div className="flex h-full items-center pl-2.5">
-              {menus.map((menu) => (
-                <div
-                  key={menu.id}
-                  className={cn(
-                    'relative',
-                    !['apple', 'app'].includes(menu.id) && 'hidden md:block',
-                  )}
+                    placeholder="Search"
+                    className="flex-grow bg-transparent text-[14px] outline-none placeholder:text-white/60"
+                  />
+                </div>
+                <motion.div
+                  initial={{ scale: 1.06 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 1.06 }}
+                  transition={{ duration: 0.22 }}
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget)
+                      setLauncherOpen(false);
+                  }}
+                  className="mt-[8vh] grid w-full max-w-5xl grid-cols-[repeat(auto-fill,120px)] justify-center gap-x-8 gap-y-6 px-8"
                 >
-                  <button
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={openMenu === menu.id}
-                    onClick={() =>
-                      setOpenMenu(openMenu === menu.id ? null : menu.id)
-                    }
-                    onMouseEnter={() => openMenu && setOpenMenu(menu.id)}
+                  {filteredLauncherItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setLauncherOpen(false);
+                        item.action();
+                      }}
+                      className="group flex cursor-default flex-col items-center gap-2 transition-transform duration-150 active:scale-95"
+                    >
+                      <img
+                        src={item.icon}
+                        alt={item.name}
+                        className="h-24 w-24 object-contain transition-transform duration-200 group-hover:scale-105 active:brightness-75 drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
+                      />
+                      <span className="text-[13px] font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+                        {item.name}
+                      </span>
+                    </button>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Top Menu Bar (32px, transparent over wallpaper) */}
+          <header className="pointer-events-none absolute inset-x-0 top-0 z-30 [&>*]:pointer-events-auto">
+            <DynamicIsland />
+            <nav
+              ref={menubarRef}
+              style={{ height: MENUBAR_HEIGHT }}
+              className={cn(
+                'relative flex items-center justify-between text-[13px] font-medium transition-colors',
+                maximizedWindow
+                  ? 'text-black dark:text-white'
+                  : activeWallpaper.isLight
+                  ? 'text-black'
+                  : 'text-white [text-shadow:0_0_8px_rgba(0,0,0,0.25)]'
+              )}
+            >
+              {maximizedWindow && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 -z-10 bg-[#ececec]/90 backdrop-blur-2xl dark:bg-[#1e1e1e]/90"
+                />
+              )}
+              <div className="flex h-full items-center pl-2.5">
+                {menus.map((menu) => (
+                  <div
+                    key={menu.id}
                     className={cn(
-                      'flex h-6 cursor-default items-center rounded-full px-2.5 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
-                      menu.id === 'apple' && 'px-3',
-                      openMenu === menu.id && 'bg-white/20',
+                      'relative',
+                      !['apple', 'app'].includes(menu.id) && 'hidden md:block'
                     )}
                   >
-                    {menu.label}
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenu === menu.id}
+                      onClick={() => {
+                        const opening = openMenu !== menu.id;
+                        if (opening) playSoftSelectSound();
+                        setOpenMenu(opening ? menu.id : null);
+                      }}
+                      onMouseEnter={() => openMenu && setOpenMenu(menu.id)}
+                      className={cn(
+                        'flex h-6 cursor-default items-center rounded-full px-2.5 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                        menu.id === 'apple' && 'px-3',
+                        openMenu === menu.id && 'bg-white/20'
+                      )}
+                    >
+                      {menu.label}
+                    </button>
+                    <AnimatePresence>
+                      {openMenu === menu.id && (
+                        <motion.div
+                          role="menu"
+                          initial={
+                            reduceMotion
+                              ? { opacity: 0 }
+                              : { opacity: 0, scale: 0.97, y: -2 }
+                          }
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={
+                            reduceMotion
+                              ? { opacity: 0 }
+                              : {
+                                  opacity: 0,
+                                  scale: 0.98,
+                                  y: -2,
+                                  transition: { duration: 0.09 },
+                                }
+                          }
+                          transition={{
+                            duration: 0.14,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                          style={{ transformOrigin: 'top left' }}
+                          className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/90 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/90 dark:text-white"
+                        >
+                          {menu.entries.map((entry, idx) =>
+                            entry === 'separator' ? (
+                              <div
+                                key={idx}
+                                role="separator"
+                                className="mx-2.5 my-[5px] h-px bg-black/10 dark:bg-white/10"
+                              />
+                            ) : (
+                              <button
+                                key={entry.label}
+                                type="button"
+                                role="menuitem"
+                                disabled={entry.disabled}
+                                onClick={() => {
+                                  setOpenMenu(null);
+                                  entry.onClick?.();
+                                }}
+                                className="flex h-[24px] w-full cursor-default items-center rounded-[7px] pl-1.5 pr-5 text-left transition-colors duration-75 hover:bg-[#0a84ff] hover:text-white focus-visible:bg-[#0a84ff] focus-visible:text-white focus-visible:outline-none disabled:opacity-30"
+                              >
+                                <span className="w-4 shrink-0">
+                                  {entry.checked && <Check size={11} />}
+                                </span>
+                                {entry.label}
+                              </button>
+                            )
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right Status Bar */}
+              <div className="mr-2.5 flex h-full items-center gap-0.5">
+                {/* Battery indicator matching R0shish */}
+                <div
+                  className="hidden h-6 items-center px-2 sm:flex"
+                  title="Battery 100%, charged"
+                >
+                  <div className="relative h-[12px] w-[25px] rounded-[4px] border border-current p-[1.5px] opacity-90">
+                    <div className="h-full w-full rounded-[2px] bg-current" />
+                    <div className="absolute -right-[3px] top-1/2 h-[4px] w-[2px] -translate-y-1/2 rounded-r-sm bg-current" />
+                  </div>
+                </div>
+
+                <div
+                  data-tour-target="menubar-controls"
+                  className="flex items-center gap-0.5"
+                >
+                  <button
+                    ref={quickStartTriggerRef}
+                    type="button"
+                    aria-label={
+                      language === 'id'
+                        ? 'Panduan Singkat'
+                        : 'Quick Start Guide'
+                    }
+                    aria-expanded={quickStartOpen}
+                    title={
+                      language === 'id'
+                        ? 'Panduan Singkat'
+                        : 'Quick Start Guide'
+                    }
+                    onClick={() => {
+                      if (quickStartOpen) {
+                        closeQuickStart();
+                      } else {
+                        openQuickStart(true);
+                      }
+                    }}
+                    className={cn(
+                      'flex h-6 cursor-default items-center rounded-full px-2 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                      quickStartOpen && 'bg-white/20'
+                    )}
+                  >
+                    <HelpCircle size={14} />
                   </button>
+
+                  <button
+                    type="button"
+                    aria-label="Spotlight Search"
+                    onClick={() => {
+                      setOpenMenu(null);
+                      playPanelOpenSound(true);
+                      setSpotlightOpen(true);
+                    }}
+                    className="flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15"
+                  >
+                    <Search size={14} />
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="Control Center"
+                    aria-expanded={openMenu === 'control-center'}
+                    onClick={() => {
+                      const opening = openMenu !== 'control-center';
+                      playPanelOpenSound(opening);
+                      setOpenMenu(opening ? 'control-center' : null);
+                    }}
+                    onMouseEnter={() =>
+                      openMenu && setOpenMenu('control-center')
+                    }
+                    className={cn(
+                      'flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15',
+                      openMenu === 'control-center' && 'bg-white/20'
+                    )}
+                  >
+                    <SlidersHorizontal size={14} />
+                  </button>
+
                   <AnimatePresence>
-                    {openMenu === menu.id && (
+                    {openMenu === 'control-center' && (
                       <motion.div
-                        role="menu"
-                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -2 }}
+                        initial={
+                          reduceMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, scale: 0.96, y: -4 }
+                        }
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: -2, transition: { duration: 0.09 } }}
-                        transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
-                        style={{ transformOrigin: 'top left' }}
-                        className="absolute left-0 top-full z-50 mt-1 min-w-[230px] rounded-[13px] bg-[#f4f2f5]/90 p-[5px] text-[13px] font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] ring-[0.5px] ring-black/30 backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/90 dark:text-white"
+                        exit={
+                          reduceMotion
+                            ? { opacity: 0 }
+                            : {
+                                opacity: 0,
+                                scale: 0.97,
+                                y: -3,
+                                transition: {
+                                  duration: 0.12,
+                                  ease: [0.22, 1, 0.36, 1],
+                                },
+                              }
+                        }
+                        transition={{
+                          duration: 0.16,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        style={{ transformOrigin: 'top right' }}
+                        className="absolute right-0 top-full z-50 mt-1 w-80 max-w-[calc(100vw-1rem)] space-y-2.5 rounded-[24px] bg-[#f4f2f5]/85 p-3 font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/80 dark:text-white"
                       >
-                        {menu.entries.map((entry, idx) =>
-                          entry === 'separator' ? (
-                            <div
-                              key={idx}
-                              role="separator"
-                              className="mx-2.5 my-[5px] h-px bg-black/10 dark:bg-white/10"
-                            />
-                          ) : (
-                            <button
-                              key={entry.label}
-                              type="button"
-                              role="menuitem"
-                              disabled={entry.disabled}
-                              onClick={() => {
-                                setOpenMenu(null);
-                                entry.onClick?.();
-                              }}
-                              className="flex h-[24px] w-full cursor-default items-center rounded-[7px] pl-1.5 pr-5 text-left transition-colors duration-75 hover:bg-[#0a84ff] hover:text-white focus-visible:bg-[#0a84ff] focus-visible:text-white focus-visible:outline-none disabled:opacity-30"
-                            >
-                              <span className="w-4 shrink-0">
-                                {entry.checked && <Check size={11} />}
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="flex flex-col rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                            <div className="flex items-center gap-2 rounded-[9px] p-1.5 text-left">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
+                                <Wifi size={14} />
                               </span>
-                              {entry.label}
+                              <span className="min-w-0">
+                                <span className="block text-[12px] font-semibold leading-tight">
+                                  Wi-Fi
+                                </span>
+                                <span className="block truncate text-[11px] leading-tight opacity-60">
+                                  Connected
+                                </span>
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                playToggleSound(!isDark);
+                                setAppearance(isDark ? 'light' : 'dark');
+                              }}
+                              className="flex cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                            >
+                              <span
+                                className={cn(
+                                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                  isDark
+                                    ? 'bg-[#0a84ff] text-white'
+                                    : 'bg-black/10 dark:bg-white/15'
+                                )}
+                              >
+                                {isDark ? (
+                                  <Moon size={14} />
+                                ) : (
+                                  <Sun size={14} />
+                                )}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[12px] font-semibold leading-tight">
+                                  Dark Mode
+                                </span>
+                                <span className="block truncate text-[11px] leading-tight opacity-60">
+                                  {isDark ? 'On' : 'Off'}
+                                </span>
+                              </span>
                             </button>
-                          ),
-                        )}
+                          </div>
+
+                          <div className="flex flex-col gap-2.5">
+                            <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                              <button
+                                type="button"
+                                onClick={toggleBrowserFullscreen}
+                                className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                              >
+                                <span
+                                  className={cn(
+                                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                    isFullscreen
+                                      ? 'bg-[#0a84ff] text-white'
+                                      : 'bg-black/10 dark:bg-white/15'
+                                  )}
+                                >
+                                  {isFullscreen ? (
+                                    <Minimize2 size={14} />
+                                  ) : (
+                                    <Maximize2 size={14} />
+                                  )}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-[12px] font-semibold leading-tight">
+                                    Full Screen
+                                  </span>
+                                  <span className="block truncate text-[11px] leading-tight opacity-60">
+                                    {isFullscreen ? 'On' : 'Off'}
+                                  </span>
+                                </span>
+                              </button>
+                            </div>
+                            <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  openApp('settings', 'wallpaper');
+                                  setOpenMenu(null);
+                                }}
+                                className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                              >
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 dark:bg-white/15">
+                                  <ImageIcon size={14} />
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-[12px] font-semibold leading-tight">
+                                    Wallpaper
+                                  </span>
+                                  <span className="block truncate text-[11px] leading-tight opacity-60">
+                                    {activeWallpaper.label}
+                                  </span>
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenu(null);
+                              if (routePath !== '/') navigate('/');
+                              setFocusedId(null);
+                              setWidgetGalleryOpen((v) => !v);
+                            }}
+                            className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                          >
+                            <span className="text-[12px] font-semibold">
+                              Desktop Widgets
+                            </span>
+                            <span className="rounded-full bg-[#0a84ff] px-2.5 py-0.5 text-[11px] font-medium text-white">
+                              {widgetGalleryOpen ? 'Done' : 'Add / Remove'}
+                            </span>
+                          </button>
+                        </div>
+
+                        <div className="rounded-[12px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
+                          <div className="mb-1.5 text-[12px] font-semibold">
+                            Display
+                          </div>
+                          <div className="relative h-6 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                            <div
+                              className="absolute inset-y-0 left-0 bg-white dark:bg-neutral-200"
+                              style={{
+                                width: `${((brightness - 0.35) / 0.65) * 100}%`,
+                              }}
+                            />
+                            <Sun
+                              size={13}
+                              className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                            />
+                            <input
+                              type="range"
+                              min={0.35}
+                              max={1}
+                              step={0.01}
+                              value={brightness}
+                              onChange={(event) =>
+                                setBrightness(Number(event.target.value))
+                              }
+                              aria-label="Display brightness"
+                              className="absolute inset-0 w-full cursor-default opacity-0"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Focus Mode & Sound Effects */}
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = !isFocusMode;
+                                playToggleSound(next);
+                                setIsFocusMode(next);
+                              }}
+                              className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                            >
+                              <span
+                                className={cn(
+                                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                  isFocusMode
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-black/10 dark:bg-white/15'
+                                )}
+                              >
+                                <Moon size={14} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[12px] font-semibold leading-tight">
+                                  {language === 'id' ? 'Fokus' : 'Focus'}
+                                </span>
+                                <span className="block truncate text-[11px] leading-tight opacity-60">
+                                  {isFocusMode
+                                    ? language === 'id'
+                                      ? 'Jangan Ganggu'
+                                      : 'Do Not Disturb'
+                                    : language === 'id'
+                                    ? 'Mati'
+                                    : 'Off'}
+                                </span>
+                              </span>
+                            </button>
+                          </div>
+
+                          <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = !soundEnabled;
+                                setSoundEnabled(next);
+                                if (next) playToggleSound(true);
+                              }}
+                              className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                            >
+                              <span
+                                className={cn(
+                                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                                  soundEnabled
+                                    ? 'bg-[#0a84ff] text-white'
+                                    : 'bg-black/10 dark:bg-white/15'
+                                )}
+                              >
+                                {soundEnabled ? (
+                                  <Volume2 size={14} />
+                                ) : (
+                                  <VolumeX size={14} />
+                                )}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[12px] font-semibold leading-tight">
+                                  {language === 'id' ? 'Efek Suara' : 'Sound'}
+                                </span>
+                                <span className="block truncate text-[11px] leading-tight opacity-60">
+                                  {soundEnabled
+                                    ? language === 'id'
+                                      ? 'Aktif'
+                                      : 'On'
+                                    : language === 'id'
+                                    ? 'Bisu'
+                                    : 'Muted'}
+                                </span>
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Language Switcher Tile */}
+                        <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = language === 'en' ? 'id' : 'en';
+                              playToggleSound(next === 'id');
+                              setLanguage(next);
+                              pushNotification({
+                                appId: 'settings',
+                                appName: 'System',
+                                appIcon: '/macos-icons/settings.png',
+                                title:
+                                  next === 'id'
+                                    ? '🇮🇩 Bahasa Indonesia'
+                                    : '🇬🇧 English',
+                                body:
+                                  next === 'id'
+                                    ? 'Bahasa sistem diubah ke Bahasa Indonesia.'
+                                    : 'System language changed to English.',
+                                silent: true,
+                              });
+                            }}
+                            className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
+                                <Globe size={14} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[12px] font-semibold leading-tight">
+                                  {language === 'id'
+                                    ? 'Bahasa Sistem'
+                                    : 'System Language'}
+                                </span>
+                                <span className="block truncate text-[11px] leading-tight opacity-60">
+                                  {language === 'id'
+                                    ? 'Bahasa Indonesia (ID)'
+                                    : 'English (EN)'}
+                                </span>
+                              </span>
+                            </div>
+                            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[10.5px] font-semibold text-neutral-800 dark:bg-white/15 dark:text-neutral-200">
+                              {language === 'id' ? 'Ganti / Switch' : 'Switch'}
+                            </span>
+                          </button>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-              ))}
-            </div>
 
-            {/* Right Status Bar */}
-            <div className="mr-2.5 flex h-full items-center gap-0.5">
-              {/* Battery indicator matching R0shish */}
-              <div
-                className="hidden h-6 items-center px-2 sm:flex"
-                title="Battery 100%, charged"
-              >
-                <div className="relative h-[12px] w-[25px] rounded-[4px] border border-current p-[1.5px] opacity-90">
-                  <div className="h-full w-full rounded-[2px] bg-current" />
-                  <div className="absolute -right-[3px] top-1/2 h-[4px] w-[2px] -translate-y-1/2 rounded-r-sm bg-current" />
-                </div>
-              </div>
+                {isFocusMode && (
+                  <div
+                    title="Do Not Disturb is active"
+                    className="flex h-6 items-center px-1 text-purple-300"
+                  >
+                    <Moon size={13} />
+                  </div>
+                )}
 
-              <button
-                type="button"
-                aria-label="Spotlight Search"
-                onClick={() => {
-                  setOpenMenu(null);
-                  setSpotlightOpen(true);
-                }}
-                className="flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15"
-              >
-                <Search size={14} />
-              </button>
-
-              <div className="relative">
                 <button
                   type="button"
-                  aria-label="Control Center"
-                  aria-expanded={openMenu === 'control-center'}
-                  onClick={() =>
-                    setOpenMenu(
-                      openMenu === 'control-center' ? null : 'control-center',
-                    )
-                  }
-                  onMouseEnter={() =>
-                    openMenu && setOpenMenu('control-center')
-                  }
+                  data-notification-toggle="true"
+                  aria-label="Notification Center"
+                  aria-expanded={isCenterOpen}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    playPanelOpenSound(!isCenterOpen);
+                    setIsCenterOpen((v) => !v);
+                  }}
                   className={cn(
-                    'flex h-6 cursor-default items-center rounded-full px-2 hover:bg-white/15',
-                    openMenu === 'control-center' && 'bg-white/20',
+                    'flex h-6 cursor-default items-center gap-1.5 rounded-full px-2.5 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+                    isCenterOpen && 'bg-white/20'
                   )}
                 >
-                  <SlidersHorizontal size={14} />
+                  <MenuBarClock language={language} />
+                  {unreadCount > 0 && !isCenterOpen && (
+                    <span
+                      aria-label={`${unreadCount} unread notifications`}
+                      className="h-1.5 w-1.5 rounded-full bg-[#0a84ff]"
+                    />
+                  )}
                 </button>
-
-                <AnimatePresence>
-                {openMenu === 'control-center' && (
-                  <motion.div
-                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -3, transition: { duration: 0.12, ease: [0.22, 1, 0.36, 1] } }}
-                    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ transformOrigin: 'top right' }}
-                    className="absolute right-0 top-full z-50 mt-1 w-80 max-w-[calc(100vw-1rem)] space-y-2.5 rounded-[24px] bg-[#f4f2f5]/85 p-3 font-normal text-black shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 [text-shadow:none] dark:bg-[#2a2429]/80 dark:text-white"
-                  >
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="flex flex-col rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                        <div className="flex items-center gap-2 rounded-[9px] p-1.5 text-left">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
-                            <Wifi size={14} />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[12px] font-semibold leading-tight">
-                              Wi-Fi
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight opacity-60">
-                              Connected
-                            </span>
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setAppearance(isDark ? 'light' : 'dark')
-                          }
-                          className="flex cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                        >
-                          <span
-                            className={cn(
-                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                              isDark
-                                ? 'bg-[#0a84ff] text-white'
-                                : 'bg-black/10 dark:bg-white/15',
-                            )}
-                          >
-                            {isDark ? <Moon size={14} /> : <Sun size={14} />}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[12px] font-semibold leading-tight">
-                              Dark Mode
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight opacity-60">
-                              {isDark ? 'On' : 'Off'}
-                            </span>
-                          </span>
-                        </button>
-                      </div>
-
-                      <div className="flex flex-col gap-2.5">
-                        <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                          <button
-                            type="button"
-                            onClick={toggleBrowserFullscreen}
-                            className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                          >
-                            <span
-                              className={cn(
-                                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                                isFullscreen
-                                  ? 'bg-[#0a84ff] text-white'
-                                  : 'bg-black/10 dark:bg-white/15',
-                              )}
-                            >
-                              {isFullscreen ? (
-                                <Minimize2 size={14} />
-                              ) : (
-                                <Maximize2 size={14} />
-                              )}
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block text-[12px] font-semibold leading-tight">
-                                Full Screen
-                              </span>
-                              <span className="block truncate text-[11px] leading-tight opacity-60">
-                                {isFullscreen ? 'On' : 'Off'}
-                              </span>
-                            </span>
-                          </button>
-                        </div>
-                        <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              openApp('settings', 'wallpaper');
-                              setOpenMenu(null);
-                            }}
-                            className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                          >
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/10 dark:bg-white/15">
-                              <ImageIcon size={14} />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block text-[12px] font-semibold leading-tight">
-                                Wallpaper
-                              </span>
-                              <span className="block truncate text-[11px] leading-tight opacity-60">
-                                {activeWallpaper.label}
-                              </span>
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOpenMenu(null);
-                          if (routePath !== '/') navigate('/');
-                          setFocusedId(null);
-                          setWidgetGalleryOpen((v) => !v);
-                        }}
-                        className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                      >
-                        <span className="text-[12px] font-semibold">
-                          Desktop Widgets
-                        </span>
-                        <span className="rounded-full bg-[#0a84ff] px-2.5 py-0.5 text-[11px] font-medium text-white">
-                          {widgetGalleryOpen ? 'Done' : 'Add / Remove'}
-                        </span>
-                      </button>
-                    </div>
-
-                    <div className="rounded-[12px] bg-white/50 px-3 py-2 dark:bg-white/[0.08]">
-                      <div className="mb-1.5 text-[12px] font-semibold">
-                        Display
-                      </div>
-                      <div className="relative h-6 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-white dark:bg-neutral-200"
-                          style={{
-                            width: `${((brightness - 0.35) / 0.65) * 100}%`,
-                          }}
-                        />
-                        <Sun
-                          size={13}
-                          className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500"
-                        />
-                        <input
-                          type="range"
-                          min={0.35}
-                          max={1}
-                          step={0.01}
-                          value={brightness}
-                          onChange={(event) =>
-                            setBrightness(Number(event.target.value))
-                          }
-                          aria-label="Display brightness"
-                          className="absolute inset-0 w-full cursor-default opacity-0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Focus Mode & Sound Effects */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                        <button
-                          type="button"
-                          onClick={() => setIsFocusMode((v) => !v)}
-                          className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                        >
-                          <span
-                            className={cn(
-                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                              isFocusMode
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-black/10 dark:bg-white/15',
-                            )}
-                          >
-                            <Moon size={14} />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[12px] font-semibold leading-tight">
-                              {language === 'id' ? 'Fokus' : 'Focus'}
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight opacity-60">
-                              {isFocusMode
-                                ? language === 'id'
-                                  ? 'Jangan Ganggu'
-                                  : 'Do Not Disturb'
-                                : language === 'id'
-                                  ? 'Mati'
-                                  : 'Off'}
-                            </span>
-                          </span>
-                        </button>
-                      </div>
-
-                      <div className="flex flex-grow rounded-[12px] bg-white/50 p-1 dark:bg-white/[0.08]">
-                        <button
-                          type="button"
-                          onClick={() => setSoundEnabled((v) => !v)}
-                          className="flex w-full cursor-default items-center gap-2 rounded-[9px] p-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                        >
-                          <span
-                            className={cn(
-                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                              soundEnabled
-                                ? 'bg-[#0a84ff] text-white'
-                                : 'bg-black/10 dark:bg-white/15',
-                            )}
-                          >
-                            {soundEnabled ? (
-                              <Volume2 size={14} />
-                            ) : (
-                              <VolumeX size={14} />
-                            )}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[12px] font-semibold leading-tight">
-                              {language === 'id' ? 'Efek Suara' : 'Sound'}
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight opacity-60">
-                              {soundEnabled
-                                ? language === 'id'
-                                  ? 'Aktif'
-                                  : 'On'
-                                : language === 'id'
-                                  ? 'Bisu'
-                                  : 'Muted'}
-                            </span>
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Language Switcher Tile */}
-                    <div className="rounded-[12px] bg-white/50 p-1.5 dark:bg-white/[0.08]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = language === 'en' ? 'id' : 'en';
-                          setLanguage(next);
-                          pushNotification({
-                            appId: 'settings',
-                            appName: 'GanOS System',
-                            appIcon: '/macos-icons/settings.png',
-                            title:
-                              next === 'id'
-                                ? '🇮🇩 Bahasa Indonesia'
-                                : '🇬🇧 English',
-                            body:
-                              next === 'id'
-                                ? 'Bahasa sistem diubah ke Bahasa Indonesia.'
-                                : 'System language changed to English.',
-                            silent: true,
-                          });
-                        }}
-                        className="flex w-full cursor-default items-center justify-between rounded-[9px] px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-smooth-out hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.97] dark:hover:bg-white/5"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0a84ff] text-white">
-                            <Globe size={14} />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-[12px] font-semibold leading-tight">
-                              {language === 'id'
-                                ? 'Bahasa Sistem'
-                                : 'System Language'}
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight opacity-60">
-                              {language === 'id'
-                                ? 'Bahasa Indonesia (ID)'
-                                : 'English (EN)'}
-                            </span>
-                          </span>
-                        </div>
-                        <span className="rounded-full bg-black/10 px-2 py-0.5 text-[10.5px] font-semibold text-neutral-800 dark:bg-white/15 dark:text-neutral-200">
-                          {language === 'id' ? 'Ganti / Switch' : 'Switch'}
-                        </span>
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-                </AnimatePresence>
               </div>
+            </nav>
+          </header>
 
-              {isFocusMode && (
-                <div
-                  title="Do Not Disturb is active"
-                  className="flex h-6 items-center px-1 text-purple-300"
-                >
-                  <Moon size={13} />
-                </div>
-              )}
+          {/* Interactive Dock Trash Popover (Dragged items + Dev Easter Eggs) */}
+          <TrashPopover
+            isOpen={trashOpen && power === 'on'}
+            language={language}
+            items={trashState.items}
+            hasDeletedDesktopItems={trashState.deletedDesktopSources.length > 0}
+            onRestoreItem={restoreTrashItem}
+            onRestoreAll={restoreAllTrash}
+            onRestoreDesktopItems={restoreDesktopItems}
+            onEmptyTrash={emptyTrash}
+            onOpenApp={openApp}
+            onClose={() => setTrashOpen(false)}
+          />
 
-              <button
-                type="button"
-                data-notification-toggle="true"
-                aria-label="Notification Center"
-                aria-expanded={isCenterOpen}
-                onClick={() => {
-                  setOpenMenu(null);
-                  setIsCenterOpen((v) => !v);
+          {/* Recruiter & First-Visit 3-Step Anchored Mini Tour */}
+          <QuickStartGuide
+            isOpen={quickStartOpen && power === 'on'}
+            language={language}
+            onLanguageChange={setLanguage}
+            onOpenApp={openApp}
+            onOpenSpotlight={() => setSpotlightOpen(true)}
+            onClose={() => {
+              const wasFromMenubar = quickStartOpenedFromMenubarRef.current;
+              closeQuickStart();
+              if (wasFromMenubar) {
+                window.requestAnimationFrame(() => {
+                  quickStartTriggerRef.current?.focus();
+                });
+              }
+            }}
+          />
+
+          {/* Spotlight Modal (⌘K) — Instant keyboard response (Raycast/Emil principle) */}
+          <AnimatePresence>
+            {spotlightOpen && (
+              <motion.div
+                className="absolute inset-0 z-40"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.06 }}
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget)
+                    setSpotlightOpen(false);
                 }}
-                className={cn(
-                  'flex h-6 cursor-default items-center gap-1.5 rounded-full px-2.5 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
-                  isCenterOpen && 'bg-white/20',
-                )}
               >
-                <MenuBarClock language={language} />
-                {unreadCount > 0 && !isCenterOpen && (
-                  <span
-                    aria-label={`${unreadCount} unread notifications`}
-                    className="h-1.5 w-1.5 rounded-full bg-[#0a84ff]"
-                  />
-                )}
-              </button>
-            </div>
-          </nav>
-        </header>
+                <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
+                  <div className="overflow-hidden rounded-[26px] bg-[#f4f2f5]/90 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/85 dark:text-white">
+                    <div className="flex h-14 items-center gap-3 px-4">
+                      <Search size={20} className="opacity-50" />
+                      <input
+                        autoFocus
+                        value={spotlightQuery}
+                        onChange={(event) => {
+                          setSpotlightQuery(event.target.value);
+                          setSpotlightIndex(0);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') setSpotlightOpen(false);
+                          if (
+                            event.key === 'Enter' &&
+                            spotlightResults[spotlightIndex]
+                          ) {
+                            spotlightResults[spotlightIndex].action();
+                            setSpotlightOpen(false);
+                          }
+                          if (
+                            event.key === 'ArrowDown' ||
+                            event.key === 'ArrowUp'
+                          ) {
+                            event.preventDefault();
+                            const dir = event.key === 'ArrowDown' ? 1 : -1;
+                            setSpotlightIndex((curr) =>
+                              Math.min(
+                                Math.max(curr + dir, 0),
+                                Math.max(0, spotlightResults.length - 1)
+                              )
+                            );
+                          }
+                        }}
+                        placeholder="Spotlight Search"
+                        className="flex-grow bg-transparent text-[20px] outline-none placeholder:text-neutral-400"
+                      />
+                    </div>
+                    {spotlightQuery.trim() && (
+                      <div className="max-h-80 overflow-y-auto border-t border-black/10 p-2 dark:border-white/10">
+                        {spotlightResults.length === 0 ? (
+                          <div className="py-6 text-center text-[14px] text-neutral-400">
+                            No Results
+                          </div>
+                        ) : (
+                          spotlightResults.map((result, idx) => (
+                            <React.Fragment key={result.id}>
+                              {result.category !==
+                                spotlightResults[idx - 1]?.category && (
+                                <div className="px-2 pb-1 pt-2 text-[11px] font-semibold text-neutral-400">
+                                  {result.category}
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onMouseMove={() => setSpotlightIndex(idx)}
+                                onClick={() => {
+                                  result.action();
+                                  setSpotlightOpen(false);
+                                }}
+                                className={cn(
+                                  'flex w-full cursor-default items-center gap-3 rounded-[10px] px-2 py-1.5 text-left',
+                                  idx === spotlightIndex &&
+                                    'bg-[#0a84ff] text-white'
+                                )}
+                              >
+                                <img
+                                  src={result.icon}
+                                  alt=""
+                                  className="h-7 w-7 shrink-0 object-contain"
+                                />
+                                <div className="min-w-0">
+                                  <div className="truncate text-[14px]">
+                                    {result.title}
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      'truncate text-[12px]',
+                                      idx === spotlightIndex
+                                        ? 'text-white/75'
+                                        : 'text-neutral-400'
+                                    )}
+                                  >
+                                    {result.subtitle}
+                                  </div>
+                                </div>
+                              </button>
+                            </React.Fragment>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Spotlight Modal (⌘K) — Instant keyboard response (Raycast/Emil principle) */}
-        <AnimatePresence>
-          {spotlightOpen && (
-            <motion.div
-              className="absolute inset-0 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.06 }}
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget)
-                  setSpotlightOpen(false);
-              }}
-            >
-              <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
-                <div className="overflow-hidden rounded-[26px] bg-[#f4f2f5]/90 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/85 dark:text-white">
-                  <div className="flex h-14 items-center gap-3 px-4">
-                    <Search size={20} className="opacity-50" />
-                    <input
-                      autoFocus
-                      value={spotlightQuery}
-                      onChange={(event) => {
-                        setSpotlightQuery(event.target.value);
-                        setSpotlightIndex(0);
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Escape') setSpotlightOpen(false);
-                        if (
-                          event.key === 'Enter' &&
-                          spotlightResults[spotlightIndex]
-                        ) {
-                          spotlightResults[spotlightIndex].action();
-                          setSpotlightOpen(false);
-                        }
-                        if (
-                          event.key === 'ArrowDown' ||
-                          event.key === 'ArrowUp'
-                        ) {
-                          event.preventDefault();
-                          const dir = event.key === 'ArrowDown' ? 1 : -1;
-                          setSpotlightIndex((curr) =>
-                            Math.min(
-                              Math.max(curr + dir, 0),
-                              Math.max(0, spotlightResults.length - 1),
-                            ),
-                          );
-                        }
-                      }}
-                      placeholder="Spotlight Search"
-                      className="flex-grow bg-transparent text-[20px] outline-none placeholder:text-neutral-400"
+          {/* Brightness Overlay */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 z-50 bg-black"
+            style={{ opacity: (1 - brightness) * 0.75 }}
+          />
+
+          {/* Initial & On-Demand Lock Screen with Wallpaper + User Brand Logo */}
+          <AnimatePresence>
+            {power === 'locked' && (
+              <motion.div
+                role="button"
+                tabIndex={0}
+                aria-label="Unlock desktop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, scale: 1.03 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => {
+                  try {
+                    window.sessionStorage.setItem('ganos_unlocked', 'true');
+                  } catch {
+                    /* ignore */
+                  }
+                  playUnlockSound();
+                  setPower('on');
+                }}
+                onKeyDown={() => {
+                  try {
+                    window.sessionStorage.setItem('ganos_unlocked', 'true');
+                  } catch {
+                    /* ignore */
+                  }
+                  playUnlockSound();
+                  setPower('on');
+                }}
+                className="absolute inset-0 z-[60] flex cursor-pointer flex-col items-center justify-between overflow-hidden py-[9vh] text-white focus:outline-none"
+                style={{ background: activeWallpaper.background }}
+              >
+                <WallpaperStage
+                  wallpaper={activeWallpaper}
+                  animate={wallpaperMotion}
+                  paused={false}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
+
+                {/* Top Date & Time (isolated clock ticker with tabular numerals) */}
+                <LockScreenClock />
+
+                {/* Bottom Brand Logo Avatar & Unlock Prompt */}
+                <div className="relative flex flex-col items-center gap-2.5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.35)] ring-1 ring-white/35 backdrop-blur-md transition-transform hover:scale-105">
+                    <img
+                      src="/brand-logo.svg"
+                      alt="Ghufron Logo"
+                      className="h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
                     />
                   </div>
-                  {spotlightQuery.trim() && (
-                    <div className="max-h-80 overflow-y-auto border-t border-black/10 p-2 dark:border-white/10">
-                      {spotlightResults.length === 0 ? (
-                        <div className="py-6 text-center text-[14px] text-neutral-400">
-                          No Results
-                        </div>
-                      ) : (
-                        spotlightResults.map((result, idx) => (
-                          <React.Fragment key={result.id}>
-                            {result.category !==
-                              spotlightResults[idx - 1]?.category && (
-                              <div className="px-2 pb-1 pt-2 text-[11px] font-semibold text-neutral-400">
-                                {result.category}
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onMouseMove={() => setSpotlightIndex(idx)}
-                              onClick={() => {
-                                result.action();
-                                setSpotlightOpen(false);
-                              }}
-                              className={cn(
-                                'flex w-full cursor-default items-center gap-3 rounded-[10px] px-2 py-1.5 text-left',
-                                idx === spotlightIndex &&
-                                  'bg-[#0a84ff] text-white',
-                              )}
-                            >
-                              <img
-                                src={result.icon}
-                                alt=""
-                                className="h-7 w-7 shrink-0 object-contain"
-                              />
-                              <div className="min-w-0">
-                                <div className="truncate text-[14px]">
-                                  {result.title}
-                                </div>
-                                <div
-                                  className={cn(
-                                    'truncate text-[12px]',
-                                    idx === spotlightIndex
-                                      ? 'text-white/75'
-                                      : 'text-neutral-400',
-                                  )}
-                                >
-                                  {result.subtitle}
-                                </div>
-                              </div>
-                            </button>
-                          </React.Fragment>
-                        ))
-                      )}
-                    </div>
-                  )}
+                  <div className="text-[14px] font-semibold tracking-tight text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+                    {profile.name}
+                  </div>
+                  <div className="rounded-full bg-black/25 px-3 py-0.5 text-[11.5px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur-md">
+                    Click or press any key to unlock
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Brightness Overlay */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-50 bg-black"
-          style={{ opacity: (1 - brightness) * 0.75 }}
-        />
-
-        {/* Initial & On-Demand Lock Screen with Wallpaper + User Brand Logo */}
-        <AnimatePresence>
-          {power === 'locked' && (
-            <motion.div
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {power === 'sleeping' && (
+            <div
               role="button"
               tabIndex={0}
-              aria-label="Unlock GanOS"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 1.03 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => {
-                try {
-                  window.sessionStorage.setItem('ganos_unlocked', 'true');
-                } catch {
-                  /* ignore */
-                }
-                setPower('on');
-              }}
-              onKeyDown={() => {
-                try {
-                  window.sessionStorage.setItem('ganos_unlocked', 'true');
-                } catch {
-                  /* ignore */
-                }
-                setPower('on');
-              }}
-              className="absolute inset-0 z-[60] flex cursor-pointer flex-col items-center justify-between overflow-hidden py-[9vh] text-white focus:outline-none"
-              style={{ background: activeWallpaper.background }}
-            >
-              <WallpaperStage
-                wallpaper={activeWallpaper}
-                animate={wallpaperMotion}
-                paused={false}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
-
-              {/* Top Date & Time (isolated clock ticker with tabular numerals) */}
-              <LockScreenClock />
-
-              {/* Bottom Brand Logo Avatar & Unlock Prompt */}
-              <div className="relative flex flex-col items-center gap-2.5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.35)] ring-1 ring-white/35 backdrop-blur-md transition-transform hover:scale-105">
-                  <img
-                    src="/brand-logo.svg"
-                    alt="GanOS Logo"
-                    className="h-full w-full object-contain drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
-                  />
-                </div>
-                <div className="text-[14px] font-semibold tracking-tight text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
-                  {profile.name}
-                </div>
-                <div className="rounded-full bg-black/25 px-3 py-0.5 text-[11.5px] font-medium text-white/85 ring-1 ring-white/15 backdrop-blur-md">
-                  Click or press any key to unlock
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {power === 'sleeping' && (
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label="Wake display"
-            onClick={() => setPower('locked')}
-            onKeyDown={() => setPower('locked')}
-            className="absolute inset-0 z-[60] bg-black"
-          />
-        )}
-
-        {/* Camera Shutter Flash Effect */}
-        <AnimatePresence>
-          {isTakingScreenshot && (
-            <motion.div
-              initial={{ opacity: 0.85 }}
-              animate={{ opacity: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="pointer-events-none fixed inset-0 z-[100] bg-white"
+              aria-label="Wake display"
+              onClick={() => setPower('locked')}
+              onKeyDown={() => setPower('locked')}
+              className="absolute inset-0 z-[60] bg-black"
             />
           )}
-        </AnimatePresence>
 
-        {/* GanOS Notification System */}
-        <OsNotificationBannerContainer />
-        <OsNotificationCenter />
+          {/* Camera Shutter Flash Effect */}
+          <AnimatePresence>
+            {isTakingScreenshot && (
+              <motion.div
+                initial={{ opacity: 0.85 }}
+                animate={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="pointer-events-none fixed inset-0 z-[100] bg-white"
+              />
+            )}
+          </AnimatePresence>
 
-        {/* macOS / Windows App Switcher HUD (⌘Tab / Ctrl+Tab) */}
-        <AppSwitcherHUD
-          isOpen={isSwitcherOpen}
-          apps={switcherApps}
-          selectedIndex={switcherIndex}
-        />
+          {/* GanOS Notification System */}
+          <OsNotificationBannerContainer />
+          <OsNotificationCenter />
 
-        {/* Global background audio element for Music / Dynamic Island */}
-        <audio
-          ref={audioRef}
-          preload="none"
-          className="hidden"
-          onPlay={() => setIsPlayingTrack(true)}
-          onPause={() => setIsPlayingTrack(false)}
-          onTimeUpdate={(e) => {
-            const nextSec = Math.floor(e.currentTarget.currentTime);
-            setTrackPlaybackSec((prev) => (prev === nextSec ? prev : nextSec));
-            const dur = e.currentTarget.duration;
-            if (dur && !isNaN(dur) && dur > 0) {
-              const nextDur = Math.floor(dur);
-              setTrackDurationSec((prev) => (prev === nextDur ? prev : nextDur));
-            }
-          }}
-          onLoadedMetadata={(e) => {
-            const dur = e.currentTarget.duration;
-            if (dur && !isNaN(dur) && dur > 0) {
-              setTrackDurationSec(Math.floor(dur));
-            }
-          }}
-          onEnded={() => {
-            setTrackPlaybackSec(0);
-            if (isLooping) {
-              const audio = audioRef.current;
-              if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
+          {/* macOS / Windows App Switcher HUD (⌘Tab / Ctrl+Tab) */}
+          <AppSwitcherHUD
+            isOpen={isSwitcherOpen}
+            apps={switcherApps}
+            selectedIndex={switcherIndex}
+          />
+
+          {/* Global background audio element for Music / Dynamic Island */}
+          <audio
+            ref={audioRef}
+            preload="none"
+            className="hidden"
+            onPlay={() => setIsPlayingTrack(true)}
+            onPause={() => setIsPlayingTrack(false)}
+            onTimeUpdate={(e) => {
+              const nextSec = Math.floor(e.currentTarget.currentTime);
+              setTrackPlaybackSec((prev) =>
+                prev === nextSec ? prev : nextSec
+              );
+              const dur = e.currentTarget.duration;
+              if (dur && !isNaN(dur) && dur > 0) {
+                const nextDur = Math.floor(dur);
+                setTrackDurationSec((prev) =>
+                  prev === nextDur ? prev : nextDur
+                );
               }
-            } else {
-              nextTrack();
-            }
-          }}
-          onError={(e) => {
-            console.warn('Audio playback error:', e);
-            setIsPlayingTrack(false);
-            setTrackPlaybackSec(0);
-          }}
-        />
+            }}
+            onLoadedMetadata={(e) => {
+              const dur = e.currentTarget.duration;
+              if (dur && !isNaN(dur) && dur > 0) {
+                setTrackDurationSec(Math.floor(dur));
+              }
+            }}
+            onEnded={() => {
+              setTrackPlaybackSec(0);
+              if (isLooping) {
+                const audio = audioRef.current;
+                if (audio) {
+                  audio.currentTime = 0;
+                  audio.play().catch(() => {});
+                }
+              } else {
+                nextTrack();
+              }
+            }}
+            onError={(e) => {
+              console.warn('Audio playback error:', e);
+              setIsPlayingTrack(false);
+              setTrackPlaybackSec(0);
+            }}
+          />
 
-        <style>{`
+          <style>{`
           html:has(.gh-os),body:has(.gh-os){height:100%;overflow:hidden;overscroll-behavior:none}
           .inactive-window ::selection{background:rgba(128,128,128,0.3)}
         `}</style>
-      </main>
+        </main>
       </OsMusicPlaybackContext.Provider>
     </OsShellContext.Provider>
   );

@@ -55,7 +55,7 @@ const getInitialNotifications = (): OsNotification[] => [
     appName: 'Mail',
     appIcon: '/macos-icons/mail.png',
     title: 'Ghufron Ainun Najib',
-    body: 'Welcome to my GanOS portfolio! Feel free to explore the projects or send an inquiry.',
+    body: 'Welcome to my portfolio! Feel free to explore the projects or send an inquiry.',
     timestamp: new Date(Date.now() - 15 * 60 * 1000),
     unread: true,
     actionLabel: 'Open Mail',
@@ -66,7 +66,7 @@ const getInitialNotifications = (): OsNotification[] => [
     appName: 'GitHub',
     appIcon: '/macos-icons/finder.png',
     title: 'ghufrnainun pushed to main',
-    body: "Repository 'My-Porto-Guwe': 'feat: integrate GanOS Notification Center & audio haptics'",
+    body: "Repository 'My-Porto-Guwe': 'feat: integrate Notification Center & audio haptics'",
     timestamp: new Date(Date.now() - 32 * 60 * 1000),
     unread: false,
     actionLabel: 'View Commit',
@@ -76,9 +76,9 @@ const getInitialNotifications = (): OsNotification[] => [
   {
     id: 'init-sys-1',
     appId: 'settings',
-    appName: 'GanOS System',
+    appName: 'System',
     appIcon: '/macos-icons/settings.png',
-    title: `GanOS ${GANOS_VERSION} (Sonoma Edition)`,
+    title: `Desktop Portfolio v${GANOS_VERSION}`,
     body: 'Interactive desktop widgets, Spotlight (⌘K), and Web Audio haptics are ready.',
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
     unread: false,
@@ -144,11 +144,11 @@ export const OsNotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const setSoundEnabled = useCallback(
     (action: React.SetStateAction<boolean>) => {
-      setSoundEnabledState((prev) => {
-        const next = typeof action === 'function' ? action(prev) : action;
-        persistSoundEnabled(next);
-        return next;
-      });
+      const next =
+        typeof action === 'function' ? action(soundEnabledRef.current) : action;
+      soundEnabledRef.current = next;
+      persistSoundEnabled(next);
+      setSoundEnabledState(next);
     },
     [],
   );

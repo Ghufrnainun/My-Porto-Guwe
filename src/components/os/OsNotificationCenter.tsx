@@ -70,9 +70,9 @@ const createSampleNotifications = (
   },
   {
     appId: 'settings',
-    appName: 'GanOS System',
+    appName: 'System',
     appIcon: '/macos-icons/settings.png',
-    title: `GanOS ${GANOS_VERSION}`,
+    title: `Desktop Portfolio v${GANOS_VERSION}`,
     body: 'Switch wallpapers, appearance, and system fonts in Settings.',
     actionLabel: 'Open Settings',
     onAction: () => openApp?.('settings', 'appearance'),

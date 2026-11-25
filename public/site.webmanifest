@@ -1,7 +1,7 @@
 {
-  "name": "Ghufron Ainun Najib — GanOS Portfolio",
-  "short_name": "GanOS",
-  "description": "Full-stack & mobile developer in Semarang, Indonesia. Explore GanOS — an interactive desktop portfolio with TypeScript, React, Flutter & Cloudflare projects.",
+  "name": "Ghufron Ainun Najib — Portfolio",
+  "short_name": "Ghufron",
+  "description": "Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio featuring TypeScript, React, Flutter & Cloudflare projects.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#070709",
