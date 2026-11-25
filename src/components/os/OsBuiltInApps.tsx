@@ -50,7 +50,11 @@ import {
   type SettingsPaneId,
   type SystemFontId,
 } from '@/components/os/OsShellContext';
-import { playToggleSound } from '@/lib/soundEffects';
+import {
+  playSoftSelectSound,
+  playToggleSound,
+  SOUND_PREVIEW_ITEMS,
+} from '@/lib/soundEffects';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
 import {
   Avatar,
@@ -1126,7 +1130,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
                     <kbd className="rounded bg-black/10 px-1.5 py-0.5 font-mono text-[10.5px] dark:bg-white/10">
                       Enter
                     </kbd>{' '}
-                    to open outside GanOS Sandbox
+                    to open in a new browser tab
                   </div>
                 )}
               </div>
@@ -1572,7 +1576,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
 
               <h2 className="text-[17px] font-semibold tracking-tight text-black dark:text-white">
                 {blockedInfo?.kind === 'url'
-                  ? `${blockedInfo.hostname} can’t open inside GanOS Safari`
+                  ? `${blockedInfo.hostname} can’t open inside embedded Safari`
                   : blockedInfo?.kind === 'query'
                     ? `No portfolio page matches “${blockedInfo.query}”`
                     : 'This address isn’t available in sandbox mode'}
@@ -1581,7 +1585,7 @@ export const SafariApp: React.FC<{ initialUrl?: string }> = ({
               <p className="mt-2 text-[13px] leading-relaxed text-black/55 dark:text-white/50">
                 {blockedInfo?.kind === 'url'
                   ? 'Most external websites block embedded frames. Open it directly in your browser tab or return to curated portfolio pages.'
-                  : 'GanOS Safari only embeds Ghufron’s portfolio routes and curated media. You can run this search in a real browser tab instead.'}
+                  : 'This preview browser only embeds Ghufron’s portfolio routes and curated media. You can run this search in a real browser tab instead.'}
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
@@ -1725,11 +1729,17 @@ export const SystemSettingsApp: React.FC = () => {
     <div className="flex h-full">
       <Sidebar
         selectedId={currentPane.id}
-        onSelect={(id) => setSettingsPane(id as SettingsPaneId)}
+        onSelect={(id) => {
+          if (id !== currentPane.id) playSoftSelectSound();
+          setSettingsPane(id as SettingsPaneId);
+        }}
         header={
           <button
             type="button"
-            onClick={() => setSettingsPane('about')}
+            onClick={() => {
+              if (currentPane.id !== 'about') playSoftSelectSound();
+              setSettingsPane('about');
+            }}
             className="mx-2.5 mb-3 flex cursor-default items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-black/5 dark:hover:bg-white/5"
           >
             <Avatar className="h-9 w-9 text-[13px]" />
@@ -1775,7 +1785,10 @@ export const SystemSettingsApp: React.FC = () => {
                       <button
                         key={option.id}
                         type="button"
-                        onClick={() => setAppearance(option.id)}
+                        onClick={() => {
+                          if (appearance !== option.id) playSoftSelectSound();
+                          setAppearance(option.id);
+                        }}
                         className="flex cursor-default flex-col items-center gap-1.5"
                       >
                         <div
@@ -1804,9 +1817,11 @@ export const SystemSettingsApp: React.FC = () => {
                     type="button"
                     role="switch"
                     aria-checked={autoRotateWallpaper}
-                    onClick={() =>
-                      setAutoRotateWallpaper((current) => !current)
-                    }
+                    onClick={() => {
+                      const next = !autoRotateWallpaper;
+                      setAutoRotateWallpaper(next);
+                      playToggleSound(next);
+                    }}
                     className={cn(
                     'relative h-6 w-11 rounded-full transition-colors',
                       autoRotateWallpaper
@@ -1828,7 +1843,10 @@ export const SystemSettingsApp: React.FC = () => {
                       <button
                         key={font.id}
                         type="button"
-                        onClick={() => setSystemFont(font.id)}
+                        onClick={() => {
+                          if (systemFont !== font.id) playSoftSelectSound();
+                          setSystemFont(font.id);
+                        }}
                         className={cn(
                           'rounded-lg px-2.5 py-1 text-[12px] transition-[background-color,color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96]',
                           font.specimenClass,
@@ -1850,7 +1868,7 @@ export const SystemSettingsApp: React.FC = () => {
                     onClick={() => {
                       const next = !soundActive;
                       setSoundEnabled(next);
-                      if (next) playToggleSound();
+                      if (next) playToggleSound(true);
                     }}
                     className={cn(
                       'relative h-6 w-11 rounded-full transition-colors active:scale-[0.96]',
@@ -1867,6 +1885,22 @@ export const SystemSettingsApp: React.FC = () => {
                     />
                   </button>
                 </SettingsRow>
+                {soundActive && (
+                  <SettingsRow label="Sound palette">
+                    <div className="flex flex-wrap justify-end gap-1.5 py-1">
+                      {SOUND_PREVIEW_ITEMS.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={item.play}
+                          className="rounded-lg bg-black/[0.06] px-2.5 py-1 text-[11.5px] font-medium text-black/75 transition-[background-color,color,transform] duration-150 ease-smooth-out hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.95] dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/15"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </SettingsRow>
+                )}
               </SettingsGroup>
             </>
           )}
@@ -1901,7 +1935,11 @@ export const SystemSettingsApp: React.FC = () => {
                     type="button"
                     role="switch"
                     aria-checked={wallpaperMotion}
-                    onClick={() => setWallpaperMotion((current) => !current)}
+                    onClick={() => {
+                      const next = !wallpaperMotion;
+                      setWallpaperMotion(next);
+                      playToggleSound(next);
+                    }}
                     className={cn(
                       'relative h-6 w-11 rounded-full transition-[background-color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97]',
                       wallpaperMotion
@@ -1922,9 +1960,11 @@ export const SystemSettingsApp: React.FC = () => {
                     type="button"
                     role="switch"
                     aria-checked={autoRotateWallpaper}
-                    onClick={() =>
-                      setAutoRotateWallpaper((current) => !current)
-                    }
+                    onClick={() => {
+                      const next = !autoRotateWallpaper;
+                      setAutoRotateWallpaper(next);
+                      playToggleSound(next);
+                    }}
                     className={cn(
                       'relative h-6 w-11 rounded-full transition-[background-color,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97]',
                       autoRotateWallpaper
@@ -1965,7 +2005,10 @@ export const SystemSettingsApp: React.FC = () => {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setWallpaperId(item.id)}
+                        onClick={() => {
+                          if (wallpaperId !== item.id) playSoftSelectSound();
+                          setWallpaperId(item.id);
+                        }}
                         aria-label={`Select wallpaper ${item.label}`}
                         aria-pressed={wallpaperId === item.id}
                         className={cn(
@@ -2018,19 +2061,19 @@ export const SystemSettingsApp: React.FC = () => {
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-black/[0.04] p-3 ring-1 ring-black/10 dark:bg-white/[0.06] dark:ring-white/10">
                   <img
                     src="/brand-logo.svg"
-                    alt="GanOS"
+                    alt={profile.name}
                     className="h-full w-full object-contain"
                   />
                 </div>
-                <div className="text-[20px] font-bold">GanOS</div>
+                <div className="text-[20px] font-bold">{profile.name}</div>
                 <div className="text-black/50 dark:text-white/50">
-                  {profile.name} · {profile.email}
+                  {profile.email}
                 </div>
               </div>
               <SettingsGroup>
                 <SettingsRow label="System">
                   <span className="text-black/50 dark:text-white/50">
-                    GanOS {GANOS_VERSION} · Ghufron&apos;s Portfolio OS
+                    Desktop Portfolio v{GANOS_VERSION}
                   </span>
                 </SettingsRow>
                 <SettingsRow label="Built with">
@@ -2407,7 +2450,7 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <span className="text-cyan-400">open &lt;app&gt;</span>
           <span>open an app (projects, about, cv, notes, mail, settings)</span>
           <span className="text-cyan-400">notify &lt;msg&gt;</span>
-          <span>send a GanOS system notification</span>
+          <span>send a desktop notification</span>
           <span className="text-cyan-400">ls / cat</span>
           <span>list or inspect files</span>
           <span className="text-cyan-400">neofetch</span>
@@ -2477,7 +2520,7 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       );
     }
     if (name === 'notify' || name === 'alert') {
-      const messageText = args.join(' ') || 'Hello from GanOS Terminal!';
+      const messageText = args.join(' ') || 'Hello from Terminal!';
       pushNotification({
         appId: 'terminal',
         appName: 'Terminal',
@@ -2485,7 +2528,7 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         title: 'Terminal Notification',
         body: messageText,
       });
-      return `Notification sent to GanOS Notification Center: "${messageText}"`;
+      return `Notification sent to Notification Center: "${messageText}"`;
     }
     if (name === 'open') {
       const targetKey = (args[0] ?? '').toLowerCase();
@@ -2544,11 +2587,11 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <div className="space-y-0.5 leading-relaxed">
             <div>
               <span className="font-bold text-cyan-400">ghufron</span>@
-              <span className="font-bold text-cyan-400">ganos-sonoma</span>
+              <span className="font-bold text-cyan-400">ghufronainun.tech</span>
             </div>
             <div className="text-white/30">---------------------------</div>
             <div>
-              <span className="font-semibold text-amber-400">OS:</span> GanOS {GANOS_VERSION} (Sonoma Edition)
+              <span className="font-semibold text-amber-400">OS:</span> Desktop Portfolio v{GANOS_VERSION}
             </div>
             <div>
               <span className="font-semibold text-amber-400">Host:</span> {profile.name} · Full-Stack Developer
@@ -2563,7 +2606,7 @@ export const TerminalApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <span className="font-semibold text-amber-400">Uptime:</span> {uptimeLabel}
             </div>
             <div>
-              <span className="font-semibold text-amber-400">Shell:</span> ganos-zsh (browser sandbox)
+              <span className="font-semibold text-amber-400">Shell:</span> zsh (browser sandbox)
             </div>
             <div>
               <span className="font-semibold text-amber-400">Font:</span> {fontLabel}

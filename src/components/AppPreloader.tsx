@@ -9,17 +9,37 @@ type AppPreloaderProps = {
 };
 
 const BOOT_STORAGE_KEY = 'portfolio_booted';
+const VISITOR_CITY_STORAGE_KEY = 'ganos_visitor_city';
 const BOOT_SPLASH_ID = 'boot-splash';
-const BOOT_BAR_ID = 'boot-splash-bar';
-const easeOutQuint = [0.22, 1, 0.36, 1] as const;
+const easeOutExpo = [0.23, 1, 0.32, 1] as const;
 
-function readCurrentScaleX(el: HTMLElement): number {
-  const transform = window.getComputedStyle(el).transform;
-  if (!transform || transform === 'none') return 0.35;
-  const match = transform.match(/^matrix\(([^,]+),/);
-  const parsed = match ? Number.parseFloat(match[1]) : 0.35;
-  if (!Number.isFinite(parsed)) return 0.35;
-  return Math.min(0.95, Math.max(0.08, parsed));
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getTimezoneFallbackCity(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const parts = tz.split('/');
+    if (parts.length >= 2 && parts[0] !== 'Etc') {
+      return parts[parts.length - 1].replace(/_/g, ' ');
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
+}
+
+function readCachedVisitorCity(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return sessionStorage.getItem(VISITOR_CITY_STORAGE_KEY)?.trim() ?? '';
+  } catch {
+    return '';
+  }
 }
 
 function hasBootedSession(): boolean {
@@ -45,6 +65,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
   const [showReactPreloader, setShowReactPreloader] = useState(() => {
     if (typeof window === 'undefined') return false;
     if (forceShow) return true;
+    if (/^\/town(\/|$)/.test(window.location.pathname)) return false;
     // When the unified inline #boot-splash is already on screen, drive it directly
     // instead of mounting a second overlay (zero jump, single state).
     if (document.getElementById(BOOT_SPLASH_ID)) return false;
@@ -54,9 +75,54 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
   const [isReady, setIsReady] = useState(() => {
     if (typeof window === 'undefined') return true;
     if (forceShow) return false;
+    if (/^\/town(\/|$)/.test(window.location.pathname)) return true;
     if (document.getElementById(BOOT_SPLASH_ID)) return false;
     return hasBootedSession();
   });
+
+  const [greeting] = useState(() => getTimeGreeting());
+  const [visitorCity, setVisitorCity] = useState(() => readCachedVisitorCity());
+
+  // Resolve visitor city cleanly for the React fallback / preview route
+  useEffect(() => {
+    if (!showReactPreloader || visitorCity) return;
+
+    let cancelled = false;
+    const tzCity = getTimezoneFallbackCity();
+    const fallbackTimer = window.setTimeout(() => {
+      if (!cancelled && tzCity) {
+        setVisitorCity((curr) => curr || tzCity);
+      }
+    }, 340);
+
+    const controller = new AbortController();
+    const abortTimer = window.setTimeout(() => controller.abort(), 650);
+
+    fetch('https://get.geojs.io/v1/ip/geo.json', { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { city?: unknown } | null) => {
+        const city = typeof data?.city === 'string' ? data.city.trim() : '';
+        if (!cancelled && city) {
+          window.clearTimeout(fallbackTimer);
+          try {
+            sessionStorage.setItem(VISITOR_CITY_STORAGE_KEY, city);
+          } catch {
+            /* ignore */
+          }
+          setVisitorCity(city);
+        }
+      })
+      .catch(() => {
+        /* Fallback timer handles timezone city silently */
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallbackTimer);
+      window.clearTimeout(abortTimer);
+      controller.abort();
+    };
+  }, [showReactPreloader, visitorCity]);
 
   useEffect(() => {
     const splash = document.getElementById(BOOT_SPLASH_ID);
@@ -68,35 +134,25 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
 
     // Path 1: Seamless handoff from the single inline #boot-splash rendered at t=0ms.
     if (!forceShow && splash) {
-      const bar = document.getElementById(BOOT_BAR_ID);
       const elapsed = typeof performance !== 'undefined' ? performance.now() : 0;
-      const fillDuration = shouldReduceMotion ? 80 : Math.max(360, Math.round(760 - elapsed));
-      const holdDuration = shouldReduceMotion ? 40 : 120;
-      const exitDuration = shouldReduceMotion ? 120 : 400;
-
-      if (bar) {
-        const currentScale = readCurrentScaleX(bar);
-        bar.style.animation = 'none';
-        bar.style.transform = `scaleX(${currentScale})`;
-        // Commit start scale before transitioning to 100%.
-        void bar.offsetWidth;
-        bar.style.transition = `transform ${fillDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-        bar.style.transform = 'scaleX(1)';
-      }
+      const minTotalMs = shouldReduceMotion ? 220 : 1080;
+      const holdDuration = Math.max(shouldReduceMotion ? 120 : 480, Math.round(minTotalMs - elapsed));
+      const exitDuration = shouldReduceMotion ? 140 : 340;
 
       let removeTimer: number | undefined;
       const exitTimer = window.setTimeout(() => {
         setIsReady(true);
         markBootedSession();
+        splash.classList.add('is-exiting');
         splash.style.pointerEvents = 'none';
         splash.style.opacity = '0';
         if (!shouldReduceMotion) {
-          splash.style.transform = 'scale(1.025)';
+          splash.style.transform = 'scale(1.015)';
         }
         removeTimer = window.setTimeout(() => {
           splash.remove();
         }, exitDuration);
-      }, fillDuration + holdDuration);
+      }, holdDuration);
 
       return () => {
         window.clearTimeout(exitTimer);
@@ -113,7 +169,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
     }
 
     // Path 3: Preview route (/preview-preloader-boot) or fallback when #boot-splash isn't present.
-    const delay = shouldReduceMotion ? 140 : 920;
+    const delay = shouldReduceMotion ? 220 : 1120;
     const timer = window.setTimeout(() => {
       setShowReactPreloader(false);
       setIsReady(true);
@@ -131,127 +187,88 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
       <AnimatePresence mode="wait">
         {showReactPreloader && (
           <motion.div
-            className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-[#070709] select-none pointer-events-auto"
+            className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-[#09090b] text-[#f5f5f7] select-none pointer-events-auto"
             initial={{ opacity: 1 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.025 }}
-            transition={{ duration: shouldReduceMotion ? 0.12 : 0.4, ease: easeOutQuint }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.015 }}
+            transition={{ duration: shouldReduceMotion ? 0.14 : 0.34, ease: easeOutExpo }}
             role="status"
             aria-live="polite"
-            aria-label="Starting GanOS"
+            aria-label="Loading portfolio"
           >
-            {/* Atmospheric Warm Spotlight & Edge Vignette */}
+            {/* Subtle overhead ambient falloff */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  'radial-gradient(ellipse 460px 340px at 50% 46%, rgba(217, 119, 54, 0.14) 0%, rgba(217, 119, 54, 0.04) 45%, transparent 72%)',
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  'radial-gradient(ellipse 80% 75% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.58) 100%)',
+                  'radial-gradient(ellipse 540px 360px at 50% 44%, rgba(255, 255, 255, 0.035) 0%, transparent 70%)',
               }}
               aria-hidden="true"
             />
 
-            {/* Unified Center Stack */}
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="relative flex items-center justify-center">
-                <div
-                  className="pointer-events-none absolute h-[112px] w-[148px] rounded-full blur-[20px]"
-                  style={{
-                    background:
-                      'radial-gradient(circle, rgba(217, 119, 54, 0.24) 0%, transparent 70%)',
-                  }}
-                  aria-hidden="true"
-                />
-                <svg
-                  className="relative h-[63px] w-[78px]"
-                  style={{
-                    filter:
-                      'drop-shadow(0 0 22px rgba(217, 119, 54, 0.28)) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55))',
-                  }}
-                  viewBox={BRAND_LOGO_VIEWBOX}
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <linearGradient id="gn-react-boot-grad" x1="15%" y1="5%" x2="85%" y2="95%">
-                      <stop offset="0%" stopColor="#f4b782" />
-                      <stop offset="48%" stopColor="#d97736" />
-                      <stop offset="100%" stopColor="#a8501c" />
-                    </linearGradient>
-                    <linearGradient id="gn-react-boot-sheen" x1="0%" y1="0%" x2="100%" y2="25%">
-                      <stop offset="0%" stopColor="#fff4e8" stopOpacity="0" />
-                      <stop offset="40%" stopColor="#fff4e8" stopOpacity="0" />
-                      <stop offset="50%" stopColor="#fff4e8" stopOpacity="0.58" />
-                      <stop offset="60%" stopColor="#fff4e8" stopOpacity="0" />
-                      <stop offset="100%" stopColor="#fff4e8" stopOpacity="0" />
-                    </linearGradient>
-                    <path id="gn-react-boot-path" fillRule="evenodd" d={BRAND_LOGO_PATH} />
-                    <mask
-                      id="gn-react-boot-mask"
-                      maskUnits="userSpaceOnUse"
-                      x="207"
-                      y="223"
-                      width="2243"
-                      height="1811"
-                    >
-                      <use href="#gn-react-boot-path" fill="#ffffff" />
-                    </mask>
-                  </defs>
-                  <use href="#gn-react-boot-path" fill="url(#gn-react-boot-grad)" />
-                  {!shouldReduceMotion && (
-                    <g mask="url(#gn-react-boot-mask)">
-                      <motion.rect
-                        x="207"
-                        y="223"
-                        width="2243"
-                        height="1811"
-                        fill="url(#gn-react-boot-sheen)"
-                        initial={{ x: -2400 }}
-                        animate={{ x: 2400 }}
-                        transition={{
-                          duration: 1.4,
-                          ease: [0.4, 0, 0.2, 1],
-                          repeat: Infinity,
-                          repeatDelay: 0.7,
-                        }}
-                      />
-                    </g>
-                  )}
-                </svg>
-              </div>
-
-              {/* Sleek macOS-style horizontal boot bar */}
-              <div
-                className="mt-[30px] h-[4px] w-[176px] overflow-hidden rounded-full bg-white/[0.09] shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.08)]"
+            {/* Minimal Editorial Center Stack */}
+            <motion.div
+              className="relative z-10 flex flex-col items-center px-6 text-center"
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -5 }}
+              transition={{ duration: shouldReduceMotion ? 0.1 : 0.2, ease: easeOutExpo }}
+            >
+              <motion.svg
+                className="h-[23px] w-[28px]"
+                viewBox={BRAND_LOGO_VIEWBOX}
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
+                initial={shouldReduceMotion ? { opacity: 0.78 } : { opacity: 0, y: 4 }}
+                animate={{ opacity: 0.78, y: 0 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.32, ease: easeOutExpo }}
               >
-                <motion.div
-                  className="h-full w-full origin-left rounded-full shadow-[0_0_12px_rgba(217,119,54,0.55)]"
-                  style={{
-                    background:
-                      'linear-gradient(90deg, #b55920 0%, #d97736 58%, #f6c08f 100%)',
-                  }}
-                  initial={{ scaleX: shouldReduceMotion ? 0.65 : 0.06 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{
-                    duration: shouldReduceMotion ? 0.1 : 0.8,
-                    ease: easeOutQuint,
-                  }}
-                />
-              </div>
+                <defs>
+                  <linearGradient id="gn-react-boot-grad" x1="18%" y1="0%" x2="82%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="100%" stopColor="#a1a1aa" />
+                  </linearGradient>
+                </defs>
+                <path fillRule="evenodd" d={BRAND_LOGO_PATH} fill="url(#gn-react-boot-grad)" />
+              </motion.svg>
 
-              {/* Understated GanOS wordmark */}
-              <span className="mt-4 pl-[0.28em] font-sans text-[11px] font-medium tracking-[0.28em] text-white/[0.38] uppercase">
-                GanOS
-              </span>
-            </div>
+              <motion.p
+                className="mt-4 text-[clamp(22px,3.2vw,30px)] font-[450] leading-[1.25] tracking-[-0.025em] text-[#f5f5f7]/[0.94]"
+                initial={
+                  shouldReduceMotion
+                    ? { opacity: 1 }
+                    : { opacity: 0, y: 6, filter: 'blur(4px)' }
+                }
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.4,
+                  delay: shouldReduceMotion ? 0 : 0.07,
+                  ease: easeOutExpo,
+                }}
+              >
+                <span>{greeting}</span>
+                {visitorCity && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.28, ease: easeOutExpo }}
+                  >
+                    {` in ${visitorCity}`}
+                  </motion.span>
+                )}
+              </motion.p>
+
+              <motion.p
+                className="mt-2.5 text-[12px] font-normal tracking-[0.01em] text-[#f5f5f7]/[0.38]"
+                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.36,
+                  delay: shouldReduceMotion ? 0 : 0.15,
+                  ease: easeOutExpo,
+                }}
+              >
+                Ghufron Ainun Najib
+              </motion.p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

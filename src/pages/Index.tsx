@@ -195,7 +195,7 @@ const WIDGET_CATALOG: SonomaWidgetSpec[] = [
   {
     id: 'memo',
     title: 'Quick Memo',
-    subtitle: 'Ruled Notes stationery synced with GanOS Notes',
+    subtitle: 'Ruled Notes stationery synced with Notes',
     size: { width: 368, height: 154 },
     minSize: { width: 250, height: 126 },
     maxSize: { width: 540, height: 280 },
@@ -310,9 +310,9 @@ function readStoredWidgets(): {
 
 export default function Index() {
   usePageMeta({
-    title: `${profile.name} | GanOS — Full-Stack Developer Portfolio`,
+    title: `${profile.name} — Full-Stack Developer`,
     description:
-      'Full-stack & mobile developer in Semarang, Indonesia. Explore GanOS — an interactive desktop portfolio with TypeScript, React, Flutter & Cloudflare projects.',
+      'Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio featuring TypeScript, React, Flutter & Cloudflare projects.',
     canonicalPath: '/',
     jsonLd: {
       '@context': 'https://schema.org',
@@ -356,35 +356,6 @@ export default function Index() {
   } = useOsNote();
   const reduceMotion = useReducedMotion();
 
-  // First-visit hint: shown once per browser, gone at the first click or key press
-  const [showHint, setShowHint] = useState(false);
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem('ganos-hint-seen')) return;
-    } catch {
-      return;
-    }
-    const dismiss = () => {
-      setShowHint(false);
-      try {
-        window.localStorage.setItem('ganos-hint-seen', '1');
-      } catch {
-        // private mode: the hint just comes back next visit
-      }
-    };
-    // wait out the boot screen before showing it
-    const timer = window.setTimeout(() => {
-      setShowHint(true);
-      window.addEventListener('pointerdown', dismiss, { once: true });
-      window.addEventListener('keydown', dismiss, { once: true });
-    }, 2400);
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('pointerdown', dismiss);
-      window.removeEventListener('keydown', dismiss);
-    };
-  }, []);
-
   const { pushNotification } = useOsNotification();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -411,7 +382,10 @@ export default function Index() {
   >(() => readStoredWidgets().sizes);
   const [desktopBounds, setDesktopBounds] = useState<DesktopBounds>(() => ({
     width: typeof window !== 'undefined' ? window.innerWidth : 1280,
-    height: typeof window !== 'undefined' ? Math.max(360, window.innerHeight - 32) : 720,
+    height:
+      typeof window !== 'undefined'
+        ? Math.max(360, window.innerHeight - 32)
+        : 720,
   }));
   const [now, setNow] = useState(() => new Date());
   const [weatherUnit, setWeatherUnit] = useState<'C' | 'F'>('C');
@@ -483,16 +457,21 @@ export default function Index() {
                 count: item.count || 0,
                 level:
                   typeof item.level === 'number'
-                    ? (Math.max(0, Math.min(4, item.level)) as 0 | 1 | 2 | 3 | 4)
+                    ? (Math.max(0, Math.min(4, item.level)) as
+                        | 0
+                        | 1
+                        | 2
+                        | 3
+                        | 4)
                     : item.count === 0
-                      ? 0
-                      : item.count < 4
-                        ? 1
-                        : item.count < 10
-                          ? 2
-                          : item.count < 20
-                            ? 3
-                            : 4,
+                    ? 0
+                    : item.count < 4
+                    ? 1
+                    : item.count < 10
+                    ? 2
+                    : item.count < 20
+                    ? 3
+                    : 4,
               }))
             );
           }
@@ -666,7 +645,9 @@ export default function Index() {
     Math.floor(Math.random() * RECENT_TRACKS.length)
   );
   const [ytEmbedTrack, setYtEmbedTrack] = useState<ListeningTrack | null>(null);
-  const [musicViewMode, setMusicViewMode] = useState<'grid' | 'player'>('player');
+  const [musicViewMode, setMusicViewMode] = useState<'grid' | 'player'>(
+    'player'
+  );
 
   const visibleTracks = [0, 1, 2, 3].map(
     (i) => RECENT_TRACKS[(trackOffset + i) % RECENT_TRACKS.length]
@@ -760,17 +741,19 @@ export default function Index() {
   const buildArrangedWidgetPositions = useCallback(
     (
       ids: readonly SonomaWidgetId[],
-      sizesMap: Partial<Record<SonomaWidgetId, { width: number; height: number }>>,
+      sizesMap: Partial<
+        Record<SonomaWidgetId, { width: number; height: number }>
+      >,
       bounds: DesktopBounds
     ) => {
       const enabledSet = new Set(ids);
-      const specs = WIDGET_CATALOG.filter((spec) => enabledSet.has(spec.id)).sort(
-        (a, b) => {
-          const aWide = a.size.width >= 300 ? 1 : 0;
-          const bWide = b.size.width >= 300 ? 1 : 0;
-          return aWide - bWide;
-        }
-      );
+      const specs = WIDGET_CATALOG.filter((spec) =>
+        enabledSet.has(spec.id)
+      ).sort((a, b) => {
+        const aWide = a.size.width >= 300 ? 1 : 0;
+        const bWide = b.size.width >= 300 ? 1 : 0;
+        return aWide - bWide;
+      });
       return arrangeDesktopWidgets(
         specs.map((spec) => {
           const size = sizesMap[spec.id] ?? spec.size;
@@ -1306,7 +1289,7 @@ export default function Index() {
       onPointerCancel={handleDesktopPointerUp}
       onContextMenu={(e) => openContextMenuAt(e)}
       className="relative h-full w-full select-none overflow-hidden"
-      aria-label="ganOS Desktop"
+      aria-label="Portfolio Desktop"
     >
       {/* Marquee rubber-band selection box */}
       {marqueeStyle && (marqueeStyle.width > 3 || marqueeStyle.height > 3) && (
@@ -1316,28 +1299,6 @@ export default function Index() {
           style={marqueeStyle}
         />
       )}
-
-      <AnimatePresence>
-        {showHint && (
-          <motion.div
-            role="status"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="pointer-events-none absolute inset-x-4 bottom-[76px] z-30 mx-auto w-fit max-w-full rounded-full bg-black/60 px-4 py-2 text-center text-[13px] font-medium text-white shadow-lg backdrop-blur-md sm:bottom-[92px]"
-          >
-            <span className="sm:hidden">
-              {language === 'id' ? 'Ketuk app buat buka' : 'Tap an app to open it'}
-            </span>
-            <span className="hidden sm:inline">
-              {language === 'id'
-                ? 'Klik dua kali ikon atau pilih app di dock · ⌘K buat cari'
-                : 'Double-click an icon or pick an app from the dock · ⌘K to search'}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Mobile OS Home Screen (iOS/iPadOS widget stack above Mobile 3D Dock) */}
       <div className="block h-full w-full overflow-y-auto px-3.5 pb-28 pt-3 sm:hidden">
@@ -1413,7 +1374,10 @@ export default function Index() {
           </div>
 
           {/* Quick Shortcuts Row (CV, Blog, Terminal, Notes) */}
-          <div className="grid grid-cols-5 gap-2 pt-1">
+          <div
+            data-tour-target="desktop-icons-mobile"
+            className="grid grid-cols-5 gap-2 pt-1"
+          >
             {DESKTOP_ICONS.map((icon) => (
               <button
                 key={`mobile-${icon.id}`}
@@ -1479,8 +1443,8 @@ export default function Index() {
                       ? 'rounded-[24px] bg-transparent border border-white/65 p-0 text-white shadow-[0_20px_44px_-10px_rgba(15,23,42,0.22),0_2px_8px_rgba(15,23,42,0.08),inset_0_1.5px_0_rgba(255,255,255,0.84),inset_0_-1px_0_rgba(255,255,255,0.28),inset_1px_0_0_rgba(255,255,255,0.48)] hover:border-white/80 hover:shadow-[0_24px_50px_-10px_rgba(15,23,42,0.28),inset_0_1.5px_0_rgba(255,255,255,0.92)]'
                       : 'rounded-[24px] bg-transparent border border-white/25 p-0 text-white shadow-[0_22px_48px_-10px_rgba(0,0,0,0.48),inset_0_1.5px_0_rgba(255,255,255,0.36),inset_0_-1px_0_rgba(255,255,255,0.12),inset_1px_0_0_rgba(255,255,255,0.18)] hover:border-white/35 hover:shadow-[0_26px_54px_-10px_rgba(0,0,0,0.56),inset_0_1.5px_0_rgba(255,255,255,0.45)]'
                     : isLightSurface
-                      ? 'rounded-[24px] p-0 border border-black/[0.08] shadow-[0_20px_44px_-10px_rgba(15,23,42,0.26),0_2px_8px_rgba(15,23,42,0.08)] hover:border-black/[0.14] hover:shadow-[0_24px_52px_-10px_rgba(15,23,42,0.34)]'
-                      : 'rounded-[24px] p-0 border border-white/[0.14] shadow-[0_22px_48px_-10px_rgba(0,0,0,0.52),0_2px_8px_rgba(0,0,0,0.2)] hover:border-white/[0.24] hover:shadow-[0_26px_56px_-10px_rgba(0,0,0,0.62)]'
+                    ? 'rounded-[24px] p-0 border border-black/[0.08] shadow-[0_20px_44px_-10px_rgba(15,23,42,0.26),0_2px_8px_rgba(15,23,42,0.08)] hover:border-black/[0.14] hover:shadow-[0_24px_52px_-10px_rgba(15,23,42,0.34)]'
+                    : 'rounded-[24px] p-0 border border-white/[0.14] shadow-[0_22px_48px_-10px_rgba(0,0,0,0.52),0_2px_8px_rgba(0,0,0,0.2)] hover:border-white/[0.24] hover:shadow-[0_26px_56px_-10px_rgba(0,0,0,0.62)]'
                 )}
               >
                 {/* 8-direction resize handles */}
@@ -1705,6 +1669,7 @@ export default function Index() {
               iconRefs.current[icon.id] = node;
             }}
             type="button"
+            data-tour-desktop-icon="true"
             style={positionStyle}
             onPointerDown={(e) => handleIconPointerDown(e, icon)}
             onPointerMove={handleIconPointerMove}
@@ -1761,345 +1726,372 @@ export default function Index() {
 
       {/* macOS Sonoma Widget Gallery Sheet (Tactile Matte Dark Aesthetic matching Desktop Widgets) */}
       <AnimatePresence>
-      {widgetGalleryOpen && (
-        <motion.div
-          role="dialog"
-          aria-label="Edit Desktop Widgets"
-          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 8, transition: { duration: 0.14, ease: [0.22, 1, 0.36, 1] } }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="absolute inset-x-4 bottom-24 z-30 mx-auto max-w-2xl rounded-[26px] bg-[#121418] border border-white/[0.08] p-4 text-white shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.08)] select-none"
-        >
-          {/* Header Bar */}
-          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1b1f25] ring-1 ring-white/10 text-[#64d2ff]">
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[13.5px] font-bold tracking-tight text-white">
-                    GanOS Desktop Widgets
-                  </span>
-                  <span className="hidden sm:inline-flex items-center rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[9.5px] font-medium text-white/50 ring-1 ring-white/10">
-                    {enabledWidgets.length}/{WIDGET_CATALOG.length} on desktop
-                  </span>
+        {widgetGalleryOpen && (
+          <motion.div
+            role="dialog"
+            aria-label="Edit Desktop Widgets"
+            initial={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 }
+            }
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              reduceMotion
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    scale: 0.97,
+                    y: 8,
+                    transition: { duration: 0.14, ease: [0.22, 1, 0.36, 1] },
+                  }
+            }
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute inset-x-4 bottom-24 z-30 mx-auto max-w-2xl rounded-[26px] bg-[#121418] border border-white/[0.08] p-4 text-white shadow-[0_24px_60px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.08)] select-none"
+          >
+            {/* Header Bar */}
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1b1f25] ring-1 ring-white/10 text-[#64d2ff]">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13.5px] font-bold tracking-tight text-white">
+                      Desktop Widgets
+                    </span>
+                    <span className="hidden sm:inline-flex items-center rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[9.5px] font-medium text-white/50 ring-1 ring-white/10">
+                      {enabledWidgets.length}/{WIDGET_CATALOG.length} on desktop
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-white/45">
+                    Click any card to add or remove from desktop
+                  </div>
                 </div>
-                <div className="text-[11px] text-white/45">
-                  Click any card to add or remove from desktop
-                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const arranged = buildArrangedWidgetPositions(
+                      DEFAULT_ENABLED_WIDGETS,
+                      {},
+                      getDesktopBounds()
+                    );
+                    setEnabledWidgets(DEFAULT_ENABLED_WIDGETS);
+                    setWidgetSizes({});
+                    setWidgetPositions(arranged);
+                  }}
+                  title="Reset widgets to default layout"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#1b1f25] hover:bg-[#252b34] active:scale-95 px-3 py-1 font-mono text-[10.5px] font-medium text-white/70 hover:text-white ring-1 ring-white/10 transition-[background-color,color,transform] duration-150 ease-out"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Reset</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close widget gallery"
+                  onClick={() => setWidgetGalleryOpen(false)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1b1f25] hover:bg-[#252b34] active:scale-95 text-white/70 hover:text-white ring-1 ring-white/10 transition-[background-color,color,transform] duration-150 ease-out"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const arranged = buildArrangedWidgetPositions(
-                    DEFAULT_ENABLED_WIDGETS,
-                    {},
-                    getDesktopBounds()
-                  );
-                  setEnabledWidgets(DEFAULT_ENABLED_WIDGETS);
-                  setWidgetSizes({});
-                  setWidgetPositions(arranged);
-                }}
-                title="Reset widgets to default layout"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#1b1f25] hover:bg-[#252b34] active:scale-95 px-3 py-1 font-mono text-[10.5px] font-medium text-white/70 hover:text-white ring-1 ring-white/10 transition-[background-color,color,transform] duration-150 ease-out"
-              >
-                <RotateCcw className="h-3 w-3" />
-                <span>Reset</span>
-              </button>
-              <button
-                type="button"
-                aria-label="Close widget gallery"
-                onClick={() => setWidgetGalleryOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1b1f25] hover:bg-[#252b34] active:scale-95 text-white/70 hover:text-white ring-1 ring-white/10 transition-[background-color,color,transform] duration-150 ease-out"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Widget Cards Grid */}
-          <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {WIDGET_CATALOG.map((spec) => {
-              const isAdded = enabledWidgets.includes(spec.id);
-              const isWide = spec.size.width >= 300;
-              return (
-                <button
-                  key={spec.id}
-                  type="button"
-                  onClick={() => toggleWidget(spec.id)}
-                  className={cn(
-                    'group/item flex items-center justify-between gap-3 rounded-[12px] p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.98]',
-                    isAdded
-                      ? 'bg-[#1b1f25] ring-1 ring-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:bg-[#222731] hover:ring-white/25'
-                      : 'bg-[#15181e] ring-1 ring-white/[0.06] opacity-75 hover:opacity-100 hover:bg-[#1a1e26] hover:ring-white/15'
-                  )}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span
-                      className={cn(
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover/item:scale-105',
-                        spec.id === 'github' &&
-                          'bg-[#0e4429]/60 text-[#30d158] ring-1 ring-[#30d158]/30 shadow-[0_0_10px_rgba(48,209,88,0.15)]',
-                        spec.id === 'weather' &&
-                          'bg-[#ff9500]/15 text-[#ff9f0a] ring-1 ring-[#ff9f0a]/30 shadow-[0_0_10px_rgba(255,159,10,0.15)]',
-                        spec.id === 'clock' &&
-                          'bg-[#64d2ff]/15 text-[#64d2ff] ring-1 ring-[#64d2ff]/30 shadow-[0_0_10px_rgba(100,210,255,0.15)]',
-                        spec.id === 'profile' &&
-                          'bg-[#0a84ff]/15 text-[#64d2ff] ring-1 ring-[#64d2ff]/30 shadow-[0_0_10px_rgba(10,132,255,0.15)]',
-                        spec.id === 'music' &&
-                          'bg-[#ff2d55]/15 text-[#ff375f] ring-1 ring-[#ff375f]/30 shadow-[0_0_10px_rgba(255,55,95,0.15)]',
-                        spec.id === 'shipped' &&
-                          'bg-[#5e5ce6]/15 text-[#7d7aff] ring-1 ring-[#7d7aff]/30 shadow-[0_0_10px_rgba(94,92,230,0.15)]',
-                        spec.id === 'memo' &&
-                          'bg-[#ffd60a]/15 text-[#ffd60a] ring-1 ring-[#ffd60a]/30 shadow-[0_0_10px_rgba(255,214,10,0.15)]'
-                      )}
-                    >
-                      {spec.id === 'github' && (
-                        <GitCommitHorizontal className="h-4.5 w-4.5" />
-                      )}
-                      {spec.id === 'weather' && (
-                        <CloudSun className="h-4.5 w-4.5" />
-                      )}
-                      {spec.id === 'clock' && <Clock className="h-4.5 w-4.5" />}
-                      {spec.id === 'profile' && (
-                        <User className="h-4.5 w-4.5" />
-                      )}
-                      {spec.id === 'music' && (
-                        <Headphones className="h-4.5 w-4.5" />
-                      )}
-                      {spec.id === 'shipped' && (
-                        <FolderGit2 className="h-4.5 w-4.5" />
-                      )}
-                      {spec.id === 'memo' && (
-                        <StickyNote className="h-4.5 w-4.5" />
-                      )}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-[13px] font-bold text-white leading-tight">
-                          {spec.title}
-                        </span>
-                        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.2 font-mono text-[8.5px] font-medium text-white/40 ring-1 ring-white/10">
-                          {isWide ? 'Wide' : 'Small'}
-                        </span>
-                      </div>
-                      <div className="truncate text-[11px] text-white/50 mt-0.5 group-hover/item:text-white/70 transition-colors">
-                        {spec.subtitle}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
+            {/* Widget Cards Grid */}
+            <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {WIDGET_CATALOG.map((spec) => {
+                const isAdded = enabledWidgets.includes(spec.id);
+                const isWide = spec.size.width >= 300;
+                return (
+                  <button
+                    key={spec.id}
+                    type="button"
+                    onClick={() => toggleWidget(spec.id)}
                     className={cn(
-                      'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition-[background-color,color] duration-150 shadow-sm',
+                      'group/item flex items-center justify-between gap-3 rounded-[12px] p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-150 ease-smooth-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.98]',
                       isAdded
-                        ? 'bg-[#30d158]/15 text-[#30d158] ring-1 ring-[#30d158]/30 group-hover/item:bg-[#30d158]/25'
-                        : 'bg-white/[0.06] text-white/50 ring-1 ring-white/10 group-hover/item:bg-white/[0.12] group-hover/item:text-white'
+                        ? 'bg-[#1b1f25] ring-1 ring-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:bg-[#222731] hover:ring-white/25'
+                        : 'bg-[#15181e] ring-1 ring-white/[0.06] opacity-75 hover:opacity-100 hover:bg-[#1a1e26] hover:ring-white/15'
                     )}
                   >
-                    {isAdded ? (
-                      <>
-                        <Check className="h-3 w-3 stroke-[2.5]" />
-                        <span className="font-mono text-[9.5px]">Added</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-3 w-3 stroke-[2.5]" />
-                        <span className="font-mono text-[9.5px]">Add</span>
-                      </>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover/item:scale-105',
+                          spec.id === 'github' &&
+                            'bg-[#0e4429]/60 text-[#30d158] ring-1 ring-[#30d158]/30 shadow-[0_0_10px_rgba(48,209,88,0.15)]',
+                          spec.id === 'weather' &&
+                            'bg-[#ff9500]/15 text-[#ff9f0a] ring-1 ring-[#ff9f0a]/30 shadow-[0_0_10px_rgba(255,159,10,0.15)]',
+                          spec.id === 'clock' &&
+                            'bg-[#64d2ff]/15 text-[#64d2ff] ring-1 ring-[#64d2ff]/30 shadow-[0_0_10px_rgba(100,210,255,0.15)]',
+                          spec.id === 'profile' &&
+                            'bg-[#0a84ff]/15 text-[#64d2ff] ring-1 ring-[#64d2ff]/30 shadow-[0_0_10px_rgba(10,132,255,0.15)]',
+                          spec.id === 'music' &&
+                            'bg-[#ff2d55]/15 text-[#ff375f] ring-1 ring-[#ff375f]/30 shadow-[0_0_10px_rgba(255,55,95,0.15)]',
+                          spec.id === 'shipped' &&
+                            'bg-[#5e5ce6]/15 text-[#7d7aff] ring-1 ring-[#7d7aff]/30 shadow-[0_0_10px_rgba(94,92,230,0.15)]',
+                          spec.id === 'memo' &&
+                            'bg-[#ffd60a]/15 text-[#ffd60a] ring-1 ring-[#ffd60a]/30 shadow-[0_0_10px_rgba(255,214,10,0.15)]'
+                        )}
+                      >
+                        {spec.id === 'github' && (
+                          <GitCommitHorizontal className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'weather' && (
+                          <CloudSun className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'clock' && (
+                          <Clock className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'profile' && (
+                          <User className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'music' && (
+                          <Headphones className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'shipped' && (
+                          <FolderGit2 className="h-4.5 w-4.5" />
+                        )}
+                        {spec.id === 'memo' && (
+                          <StickyNote className="h-4.5 w-4.5" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-[13px] font-bold text-white leading-tight">
+                            {spec.title}
+                          </span>
+                          <span className="rounded-full bg-white/[0.06] px-1.5 py-0.2 font-mono text-[8.5px] font-medium text-white/40 ring-1 ring-white/10">
+                            {isWide ? 'Wide' : 'Small'}
+                          </span>
+                        </div>
+                        <div className="truncate text-[11px] text-white/50 mt-0.5 group-hover/item:text-white/70 transition-colors">
+                          {spec.subtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      className={cn(
+                        'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold transition-[background-color,color] duration-150 shadow-sm',
+                        isAdded
+                          ? 'bg-[#30d158]/15 text-[#30d158] ring-1 ring-[#30d158]/30 group-hover/item:bg-[#30d158]/25'
+                          : 'bg-white/[0.06] text-white/50 ring-1 ring-white/10 group-hover/item:bg-white/[0.12] group-hover/item:text-white'
+                      )}
+                    >
+                      {isAdded ? (
+                        <>
+                          <Check className="h-3 w-3 stroke-[2.5]" />
+                          <span className="font-mono text-[9.5px]">Added</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3 w-3 stroke-[2.5]" />
+                          <span className="font-mono text-[9.5px]">Add</span>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* macOS Desktop Context Menu */}
       <AnimatePresence>
-      {contextMenu && (
-        <motion.div
-          role="menu"
-          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, transition: { duration: 0.09 } }}
-          transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
-          onPointerDown={(e) => e.stopPropagation()}
-          style={{ left: contextMenu.x, top: contextMenu.y, transformOrigin: 'top left' }}
-          className="absolute z-30 w-[228px] rounded-[12px] bg-[#f6f6f6]/90 p-1.5 text-[13px] text-black/85 shadow-[0_12px_36px_rgba(0,0,0,0.32)] ring-1 ring-black/10 backdrop-blur-2xl dark:bg-[#231d21]/90 dark:text-white/90 dark:ring-white/15"
-        >
-          {targetIcon && (
-            <>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  openIcon(targetIcon);
-                  setContextMenu(null);
-                }}
-                className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left font-medium hover:bg-[#0a84ff] hover:text-white"
-              >
-                <span>Open {targetIcon.label}</span>
-              </button>
-              <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
-            </>
-          )}
+        {contextMenu && (
+          <motion.div
+            role="menu"
+            initial={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }
+            }
+            animate={{ opacity: 1, scale: 1 }}
+            exit={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.97, transition: { duration: 0.09 } }
+            }
+            transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{
+              left: contextMenu.x,
+              top: contextMenu.y,
+              transformOrigin: 'top left',
+            }}
+            className="absolute z-30 w-[228px] rounded-[12px] bg-[#f6f6f6]/90 p-1.5 text-[13px] text-black/85 shadow-[0_12px_36px_rgba(0,0,0,0.32)] ring-1 ring-black/10 backdrop-blur-2xl dark:bg-[#231d21]/90 dark:text-white/90 dark:ring-white/15"
+          >
+            {targetIcon && (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    openIcon(targetIcon);
+                    setContextMenu(null);
+                  }}
+                  className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left font-medium hover:bg-[#0a84ff] hover:text-white"
+                >
+                  <span>Open {targetIcon.label}</span>
+                </button>
+                <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
+              </>
+            )}
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setWidgetGalleryOpen(true);
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left font-medium hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Edit Widgets…</span>
-          </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setWidgetGalleryOpen(true);
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left font-medium hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Edit Widgets…</span>
+            </button>
 
-          <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
+            <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              openApp('projects');
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Open Finder</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              openApp('blog');
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Open Writing Log</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              openApp('terminal');
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>New Terminal Window</span>
-          </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                openApp('projects');
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Open Finder</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                openApp('blog');
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Open Writing Log</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                openApp('terminal');
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>New Terminal Window</span>
+            </button>
 
-          <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
+            <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              openApp('settings', 'wallpaper');
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Change Wallpaper…</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              cycleWallpaper();
-              pushNotification({
-                appId: 'settings',
-                appName: 'Wallpaper',
-                appIcon: '/macos-icons/settings.png',
-                title:
-                  language === 'id' ? 'Wallpaper Diganti' : 'Wallpaper Changed',
-                body:
-                  language === 'id'
-                    ? 'Latar belakang desktop telah diperbarui.'
-                    : 'Switched to next desktop wallpaper.',
-              });
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Next Wallpaper</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              const nextAppearance = isDark ? 'light' : 'dark';
-              setAppearance(nextAppearance);
-              pushNotification({
-                appId: 'settings',
-                appName: 'System Settings',
-                appIcon: '/macos-icons/settings.png',
-                title:
-                  language === 'id' ? 'Tampilan Diubah' : 'Appearance Changed',
-                body: isDark
-                  ? language === 'id'
-                    ? 'Mode terang diaktifkan'
-                    : 'Switched to Light Appearance'
-                  : language === 'id'
-                  ? 'Mode gelap diaktifkan'
-                  : 'Switched to Dark Appearance',
-              });
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>
-              {isDark ? 'Use Light Appearance' : 'Use Dark Appearance'}
-            </span>
-          </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                openApp('settings', 'wallpaper');
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Change Wallpaper…</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                cycleWallpaper();
+                pushNotification({
+                  appId: 'settings',
+                  appName: 'Wallpaper',
+                  appIcon: '/macos-icons/settings.png',
+                  title:
+                    language === 'id'
+                      ? 'Wallpaper Diganti'
+                      : 'Wallpaper Changed',
+                  body:
+                    language === 'id'
+                      ? 'Latar belakang desktop telah diperbarui.'
+                      : 'Switched to next desktop wallpaper.',
+                });
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Next Wallpaper</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const nextAppearance = isDark ? 'light' : 'dark';
+                setAppearance(nextAppearance);
+                pushNotification({
+                  appId: 'settings',
+                  appName: 'System Settings',
+                  appIcon: '/macos-icons/settings.png',
+                  title:
+                    language === 'id'
+                      ? 'Tampilan Diubah'
+                      : 'Appearance Changed',
+                  body: isDark
+                    ? language === 'id'
+                      ? 'Mode terang diaktifkan'
+                      : 'Switched to Light Appearance'
+                    : language === 'id'
+                    ? 'Mode gelap diaktifkan'
+                    : 'Switched to Dark Appearance',
+                });
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>
+                {isDark ? 'Use Light Appearance' : 'Use Dark Appearance'}
+              </span>
+            </button>
 
-          <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
+            <div className="my-1 h-px bg-black/10 dark:bg-white/10" />
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              const arranged = buildArrangedWidgetPositions(
-                enabledWidgets,
-                widgetSizes,
-                getDesktopBounds()
-              );
-              setPositions({});
-              setWidgetPositions(arranged);
-              setSelectedIds([]);
-              pushNotification({
-                appId: 'finder',
-                appName: 'Finder',
-                appIcon: '/macos-icons/finder.png',
-                title:
-                  language === 'id'
-                    ? 'Desktop Dirapikan'
-                    : 'Desktop Cleaned Up',
-                body:
-                  language === 'id'
-                    ? 'Ikon dan widget dikembalikan ke susunan rapi.'
-                    : 'Desktop icons and widgets aligned to default grid.',
-              });
-              setContextMenu(null);
-            }}
-            className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
-          >
-            <span>Clean Up Desktop</span>
-          </button>
-        </motion.div>
-      )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const arranged = buildArrangedWidgetPositions(
+                  enabledWidgets,
+                  widgetSizes,
+                  getDesktopBounds()
+                );
+                setPositions({});
+                setWidgetPositions(arranged);
+                setSelectedIds([]);
+                pushNotification({
+                  appId: 'finder',
+                  appName: 'Finder',
+                  appIcon: '/macos-icons/finder.png',
+                  title:
+                    language === 'id'
+                      ? 'Desktop Dirapikan'
+                      : 'Desktop Cleaned Up',
+                  body:
+                    language === 'id'
+                      ? 'Ikon dan widget dikembalikan ke susunan rapi.'
+                      : 'Desktop icons and widgets aligned to default grid.',
+                });
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center justify-between rounded-[6px] px-2.5 py-1 text-left hover:bg-[#0a84ff] hover:text-white"
+            >
+              <span>Clean Up Desktop</span>
+            </button>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

@@ -19,6 +19,7 @@ export interface GlassDock3DItem {
   isRunning?: boolean;
   isMinimizedWindow?: boolean;
   isLaunching?: boolean;
+  isDropTarget?: boolean;
   badge?: number | string | null;
   onClick: () => void;
 }
@@ -754,6 +755,8 @@ const DesktopGlassDock3D: React.FC<{
                   className={cn(
                     'dock-3d-btn relative h-full w-full cursor-pointer rounded-[22%] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40',
                     item.isLaunching && 'dock-3d-launching',
+                    item.isDropTarget &&
+                      'scale-[1.18] -translate-y-1.5 ring-2 ring-[#ff453a]/90 shadow-[0_0_24px_rgba(255,69,58,0.55)]',
                   )}
                 >
                   <span

@@ -109,7 +109,7 @@ export const ProjectSheet = ({ project, from, reducedMotion, onClose, onNext }: 
           </a>
         )}
         <a href={`/projects/${project.slug}`} target="_top" className={`${CTA} border-town-ink`}>
-          Case study in GanOS →
+          Full case study →
         </a>
       </div>
 

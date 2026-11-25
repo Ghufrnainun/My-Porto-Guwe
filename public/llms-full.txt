@@ -1,6 +1,6 @@
 # Ghufron Ainun Najib — Full Profile
 
-> Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio (GanOS) — web and mobile products built end to end with TypeScript, React, Next.js, Cloudflare Workers, Flutter, Laravel, and PostgreSQL.
+> Full-stack & mobile developer in Semarang, Indonesia. Interactive desktop portfolio — web and mobile products built end to end with TypeScript, React, Next.js, Cloudflare Workers, Flutter, Laravel, and PostgreSQL.
 
 ## About
 
