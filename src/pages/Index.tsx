@@ -214,6 +214,11 @@ const EDGE_PADDING = DESKTOP_EDGE_PADDING;
 const STACK_GAP_Y = 108;
 const DRAG_THRESHOLD_PX = 3;
 
+const MOBILE_PROFILE_SIZE = { width: 340, height: 156 };
+const MOBILE_WEATHER_SIZE = { width: 174, height: 178 };
+const MOBILE_GITHUB_SIZE = { width: 174, height: 178 };
+const MOBILE_PINNED_SIZE = { width: 340, height: 188 };
+
 interface MarqueeRect {
   startX: number;
   startY: number;
@@ -361,6 +366,9 @@ export default function Index() {
   const containerRef = useRef<HTMLDivElement>(null);
   const iconRefs = useRef<
     Partial<Record<DesktopIconConfig['id'], HTMLButtonElement | null>>
+  >({});
+  const widgetRefs = useRef<
+    Partial<Record<SonomaWidgetId, HTMLDivElement | null>>
   >({});
 
   const [positions, setPositions] = useState<
@@ -649,11 +657,15 @@ export default function Index() {
     'player'
   );
 
-  const visibleTracks = [0, 1, 2, 3].map(
-    (i) => RECENT_TRACKS[(trackOffset + i) % RECENT_TRACKS.length]
+  const visibleTracks = useMemo(
+    () =>
+      [0, 1, 2, 3].map(
+        (i) => RECENT_TRACKS[(trackOffset + i) % RECENT_TRACKS.length]
+      ),
+    [trackOffset]
   );
 
-  const handleShuffle = () => {
+  const handleShuffle = useCallback(() => {
     const next = shuffleTrack();
     setTrackOffset((prev) => (prev + 1) % RECENT_TRACKS.length);
     pushNotification({
@@ -664,12 +676,62 @@ export default function Index() {
       body: `${next.title} — ${next.artist}`,
       durationMs: 3200,
     });
-  };
+  }, [language, pushNotification, shuffleTrack]);
 
-  // Refresh daytime surface tint at 1-minute cadence (ClockWidget owns its own 1Hz ticker when mounted)
+  const handleToggleWeatherUnit = useCallback(() => {
+    setWeatherUnit((prev) => (prev === 'C' ? 'F' : 'C'));
+  }, []);
+
+  const handleWeatherRefresh = useCallback(() => {
+    void fetchWeather();
+  }, [fetchWeather]);
+
+  const handleOpenBio = useCallback(() => openApp('about'), [openApp]);
+  const handleOpenAllProjects = useCallback(
+    () => openApp('projects'),
+    [openApp]
+  );
+  const handleOpenProject = useCallback(
+    (slug: string) => openApp('projects', slug),
+    [openApp]
+  );
+  const handleOpenNotes = useCallback(() => openApp('notes'), [openApp]);
+
+  const handleSetYtEmbedTrack = useCallback(
+    (track: ListeningTrack | null) => {
+      if (track && isPlayingTrack) {
+        togglePlayTrack();
+      }
+      setYtEmbedTrack(track);
+    },
+    [isPlayingTrack, togglePlayTrack]
+  );
+
+  const handleOpenSafariTrack = useCallback(
+    (track: ListeningTrack) => {
+      if (isPlayingTrack) {
+        togglePlayTrack();
+      }
+      setYtEmbedTrack(null);
+      openApp(
+        'safari',
+        `https://www.youtube.com/embed/${track.ytId}?autoplay=1`
+      );
+    },
+    [isPlayingTrack, openApp, togglePlayTrack]
+  );
+
+  // Refresh daytime surface tint at 1-minute cadence (paused when tab is hidden)
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(timer);
+    const sync = () => {
+      if (!document.hidden) setNow(new Date());
+    };
+    const timer = window.setInterval(sync, 60_000);
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', sync);
+    };
   }, []);
 
   // Debounced persistence so dragging/resizing widgets never blocks frames with sync localStorage writes
@@ -697,6 +759,9 @@ export default function Index() {
     startClientX: number;
     startClientY: number;
     startPos: DesktopIconPosition;
+    lastPos: DesktopIconPosition;
+    bounds: DesktopBounds;
+    el: HTMLButtonElement | null;
     moved: boolean;
   } | null>(null);
 
@@ -706,7 +771,22 @@ export default function Index() {
     startClientX: number;
     startClientY: number;
     startPos: DesktopIconPosition;
+    lastPos: DesktopIconPosition;
     size: { width: number; height: number };
+    bounds: DesktopBounds;
+    el: HTMLDivElement | null;
+    moved: boolean;
+  } | null>(null);
+
+  const marqueeCacheRef = useRef<{
+    containerRect: DOMRect;
+    items: {
+      id: DesktopIconConfig['id'];
+      left: number;
+      top: number;
+      right: number;
+      bottom: number;
+    }[];
   } | null>(null);
 
   const suppressNextClickRef = useRef(false);
@@ -851,53 +931,23 @@ export default function Index() {
     };
   }, [contextMenu]);
 
-  const widgetResizeRef = useRef<WidgetResizeSession | null>(null);
+  const widgetResizeRef = useRef<
+    (WidgetResizeSession & {
+      bounds: DesktopBounds;
+      latestClientX: number;
+      latestClientY: number;
+    }) | null
+  >(null);
+  const widgetResizeRafRef = useRef<number>(0);
 
-  const handleWidgetResizePointerDown = (
-    e: React.PointerEvent<HTMLDivElement>,
-    spec: SonomaWidgetSpec,
-    dir: WidgetResizeDir
-  ) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const curPos = getWidgetPos(spec);
-    const curSize = widgetSizes[spec.id] ?? spec.size;
-
-    widgetResizeRef.current = {
-      id: spec.id,
-      dir,
-      pointerId: e.pointerId,
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startPos: { ...curPos },
-      startSize: { ...curSize },
-      spec,
-    };
-
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const handleWidgetResizePointerMove = (
-    e: React.PointerEvent<HTMLDivElement>
-  ) => {
+  const flushWidgetResize = useCallback(() => {
+    widgetResizeRafRef.current = 0;
     const session = widgetResizeRef.current;
-    if (!session || session.pointerId !== e.pointerId) return;
+    if (!session) return;
 
-    const dx = e.clientX - session.startClientX;
-    const dy = e.clientY - session.startClientY;
-
-    const container = containerRef.current;
-    const bounds: DesktopBounds = container
-      ? { width: container.clientWidth, height: container.clientHeight }
-      : { width: 1280, height: 720 };
-
-    const { spec, dir, startPos, startSize } = session;
+    const dx = session.latestClientX - session.startClientX;
+    const dy = session.latestClientY - session.startClientY;
+    const { spec, dir, startPos, startSize, bounds } = session;
     const minW = spec.minSize.width;
     const minH = spec.minSize.height;
     const maxW = spec.maxSize.width;
@@ -959,6 +1009,65 @@ export default function Index() {
         },
       }));
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (widgetResizeRafRef.current) {
+        window.cancelAnimationFrame(widgetResizeRafRef.current);
+      }
+    };
+  }, []);
+
+  const handleWidgetResizePointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    spec: SonomaWidgetSpec,
+    dir: WidgetResizeDir
+  ) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const curPos = getWidgetPos(spec);
+    const curSize = widgetSizes[spec.id] ?? spec.size;
+    const container = containerRef.current;
+    const bounds: DesktopBounds = container
+      ? { width: container.clientWidth, height: container.clientHeight }
+      : { width: 1280, height: 720 };
+
+    widgetResizeRef.current = {
+      id: spec.id,
+      dir,
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      latestClientX: e.clientX,
+      latestClientY: e.clientY,
+      startPos: { ...curPos },
+      startSize: { ...curSize },
+      bounds,
+      spec,
+    };
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleWidgetResizePointerMove = (
+    e: React.PointerEvent<HTMLDivElement>
+  ) => {
+    const session = widgetResizeRef.current;
+    if (!session || session.pointerId !== e.pointerId) return;
+
+    session.latestClientX = e.clientX;
+    session.latestClientY = e.clientY;
+    if (!widgetResizeRafRef.current) {
+      widgetResizeRafRef.current =
+        window.requestAnimationFrame(flushWidgetResize);
+    }
   };
 
   const handleWidgetResizePointerUp = (
@@ -966,6 +1075,10 @@ export default function Index() {
   ) => {
     const session = widgetResizeRef.current;
     if (!session || session.pointerId !== e.pointerId) return;
+    if (widgetResizeRafRef.current) {
+      window.cancelAnimationFrame(widgetResizeRafRef.current);
+      flushWidgetResize();
+    }
     widgetResizeRef.current = null;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -1023,13 +1136,22 @@ export default function Index() {
 
     const startPos = getWidgetPos(spec);
     const curSize = widgetSizes[spec.id] ?? spec.size;
+    const container = containerRef.current;
+    const bounds: DesktopBounds = container
+      ? { width: container.clientWidth, height: container.clientHeight }
+      : { width: 1280, height: 720 };
+
     widgetDragRef.current = {
       id: spec.id,
       pointerId: e.pointerId,
       startClientX: e.clientX,
       startClientY: e.clientY,
       startPos,
+      lastPos: startPos,
       size: curSize,
+      bounds,
+      el: widgetRefs.current[spec.id] ?? e.currentTarget,
+      moved: false,
     };
 
     try {
@@ -1045,36 +1167,49 @@ export default function Index() {
 
     const dx = e.clientX - session.startClientX;
     const dy = e.clientY - session.startClientY;
-    if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-
-    const container = containerRef.current;
-    const bounds: DesktopBounds = container
-      ? { width: container.clientWidth, height: container.clientHeight }
-      : { width: 1280, height: 720 };
+    if (!session.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+    session.moved = true;
 
     const clamped = clampDesktopIconPosition(
       {
         x: session.startPos.x + dx,
         y: session.startPos.y + dy,
       },
-      bounds,
+      session.bounds,
       session.size
     );
+    session.lastPos = clamped;
 
-    setWidgetPositions((prev) => ({
-      ...prev,
-      [session.id]: clamped,
-    }));
+    if (session.el) {
+      session.el.style.willChange = 'translate';
+      session.el.style.translate = `${Math.round(clamped.x - session.startPos.x)}px ${Math.round(clamped.y - session.startPos.y)}px`;
+    }
   };
 
   const handleWidgetPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     const session = widgetDragRef.current;
     if (!session || session.pointerId !== e.pointerId) return;
     widgetDragRef.current = null;
+
+    if (session.el) {
+      session.el.style.translate = '';
+      session.el.style.willChange = '';
+    }
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
       /* ignore */
+    }
+
+    if (
+      session.moved &&
+      (session.lastPos.x !== session.startPos.x ||
+        session.lastPos.y !== session.startPos.y)
+    ) {
+      setWidgetPositions((prev) => ({
+        ...prev,
+        [session.id]: session.lastPos,
+      }));
     }
   };
 
@@ -1115,12 +1250,19 @@ export default function Index() {
       startPos = getDefaultPosition(icon.defaultIndex);
     }
 
+    const bounds: DesktopBounds = container
+      ? { width: container.clientWidth, height: container.clientHeight }
+      : { width: 1280, height: 720 };
+
     dragSessionRef.current = {
       id: icon.id,
       pointerId: e.pointerId,
       startClientX: e.clientX,
       startClientY: e.clientY,
       startPos,
+      lastPos: startPos,
+      bounds,
+      el: button ?? e.currentTarget,
       moved: false,
     };
 
@@ -1143,23 +1285,19 @@ export default function Index() {
     }
     session.moved = true;
 
-    const container = containerRef.current;
-    const bounds: DesktopBounds = container
-      ? { width: container.clientWidth, height: container.clientHeight }
-      : { width: 1280, height: 720 };
-
     const clamped = clampDesktopIconPosition(
       {
         x: session.startPos.x + dx,
         y: session.startPos.y + dy,
       },
-      bounds
+      session.bounds
     );
+    session.lastPos = clamped;
 
-    setPositions((prev) => ({
-      ...prev,
-      [session.id]: clamped,
-    }));
+    if (session.el) {
+      session.el.style.willChange = 'translate';
+      session.el.style.translate = `${Math.round(clamped.x - session.startPos.x)}px ${Math.round(clamped.y - session.startPos.y)}px`;
+    }
   };
 
   const handleIconPointerUp = (
@@ -1170,7 +1308,14 @@ export default function Index() {
     if (!session || session.pointerId !== e.pointerId) return;
 
     const didMove = session.moved;
+    const finalPos = session.lastPos;
+    const startPos = session.startPos;
     dragSessionRef.current = null;
+
+    if (session.el) {
+      session.el.style.translate = '';
+      session.el.style.willChange = '';
+    }
 
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -1180,6 +1325,12 @@ export default function Index() {
 
     if (didMove) {
       suppressNextClickRef.current = true;
+      if (finalPos.x !== startPos.x || finalPos.y !== startPos.y) {
+        setPositions((prev) => ({
+          ...prev,
+          [session.id]: finalPos,
+        }));
+      }
       return;
     }
 
@@ -1201,12 +1352,33 @@ export default function Index() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    marqueeCacheRef.current = {
+      containerRect: rect,
+      items: DESKTOP_ICONS.flatMap((icon) => {
+        const btn = iconRefs.current[icon.id];
+        if (!btn) return [];
+        const bRect = btn.getBoundingClientRect();
+        const left = bRect.left - rect.left;
+        const top = bRect.top - rect.top;
+        return [
+          {
+            id: icon.id,
+            left,
+            top,
+            right: left + bRect.width,
+            bottom: top + bRect.height,
+          },
+        ];
+      }),
+    };
+
     setMarquee({ startX: x, startY: y, currentX: x, currentY: y });
   };
 
   const handleDesktopPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!marquee || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    const cached = marqueeCacheRef.current;
+    const rect = cached?.containerRect ?? containerRef.current.getBoundingClientRect();
     const currentX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
     const currentY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
 
@@ -1221,26 +1393,26 @@ export default function Index() {
     if (selRight - selLeft < 4 && selBottom - selTop < 4) return;
 
     const hitIds: DesktopIconConfig['id'][] = [];
-    for (const icon of DESKTOP_ICONS) {
-      const btn = iconRefs.current[icon.id];
-      if (!btn) continue;
-      const bRect = btn.getBoundingClientRect();
-      const left = bRect.left - rect.left;
-      const top = bRect.top - rect.top;
-      const right = left + bRect.width;
-      const bottom = top + bRect.height;
-
-      const intersects =
-        left < selRight &&
-        right > selLeft &&
-        top < selBottom &&
-        bottom > selTop;
-      if (intersects) hitIds.push(icon.id);
+    const items = cached?.items ?? [];
+    for (const item of items) {
+      if (
+        item.left < selRight &&
+        item.right > selLeft &&
+        item.top < selBottom &&
+        item.bottom > selTop
+      ) {
+        hitIds.push(item.id);
+      }
     }
-    setSelectedIds(hitIds);
+    setSelectedIds((prev) =>
+      prev.length === hitIds.length && prev.every((id, i) => id === hitIds[i])
+        ? prev
+        : hitIds
+    );
   };
 
   const handleDesktopPointerUp = () => {
+    marqueeCacheRef.current = null;
     if (marquee) setMarquee(null);
   };
 
@@ -1311,8 +1483,8 @@ export default function Index() {
               gpa={education.gpa}
               availability={profile.availability}
               githubUrl={profile.github}
-              onOpenBio={() => openApp('about')}
-              size={{ width: 340, height: 156 }}
+              onOpenBio={handleOpenBio}
+              size={MOBILE_PROFILE_SIZE}
             />
           </div>
 
@@ -1333,19 +1505,15 @@ export default function Index() {
               <WeatherWidget
                 weather={liveWeather}
                 unit={weatherUnit}
-                onToggleUnit={() =>
-                  setWeatherUnit((prev) => (prev === 'C' ? 'F' : 'C'))
-                }
+                onToggleUnit={handleToggleWeatherUnit}
                 activeHourlyIdx={activeHourlyIdx}
                 onSelectHourly={setActiveHourlyIdx}
-                size={{ width: 174, height: 178 }}
+                size={MOBILE_WEATHER_SIZE}
                 wallpaperId={wallpaperId}
                 glassMode={weatherGlassMode}
                 onChangeGlassMode={setWeatherGlassMode}
                 isRefreshing={weatherRefreshing}
-                onRefresh={() => {
-                  void fetchWeather();
-                }}
+                onRefresh={handleWeatherRefresh}
                 widgetGalleryOpen={false}
               />
             </div>
@@ -1358,7 +1526,7 @@ export default function Index() {
                 onChangeRange={setGhRange}
                 stats={ghStats}
                 contributions={ghContributions}
-                size={{ width: 174, height: 178 }}
+                size={MOBILE_GITHUB_SIZE}
               />
             </div>
           </div>
@@ -1367,9 +1535,9 @@ export default function Index() {
           <div className="h-[188px] w-full overflow-hidden rounded-[22px] border border-black/[0.08] shadow-[0_18px_40px_-10px_rgba(15,23,42,0.26)]">
             <PinnedWorkWidget
               projects={featuredProjects}
-              onOpenAll={() => openApp('projects')}
-              onOpenProject={(slug) => openApp('projects', slug)}
-              size={{ width: 340, height: 188 }}
+              onOpenAll={handleOpenAllProjects}
+              onOpenProject={handleOpenProject}
+              size={MOBILE_PINNED_SIZE}
             />
           </div>
 
@@ -1416,6 +1584,9 @@ export default function Index() {
             return (
               <div
                 key={spec.id}
+                ref={(node) => {
+                  widgetRefs.current[spec.id] = node;
+                }}
                 onPointerDown={(e) => handleWidgetPointerDown(e, spec)}
                 onPointerMove={handleWidgetPointerMove}
                 onPointerUp={handleWidgetPointerUp}
@@ -1519,10 +1690,10 @@ export default function Index() {
                   title={`Remove ${spec.title} widget`}
                   aria-label={`Remove ${spec.title} widget`}
                   className={cn(
-                    'absolute left-2 top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full shadow-sm transition-[opacity,transform,background-color,color] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] hover:scale-105 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] hover:bg-[#ff453a] hover:text-white',
+                    'absolute left-2 top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full shadow-sm transition-[opacity,transform,background-color,color] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] fine:hover:scale-105 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] active:scale-[0.96] hover:bg-[#ff453a] hover:text-white',
                     isLightSurface && spec.id !== 'memo'
-                      ? 'bg-white/80 text-slate-800 ring-1 ring-black/10 backdrop-blur-md'
-                      : 'bg-black/60 text-white/90 ring-1 ring-white/25 backdrop-blur-md',
+                      ? 'bg-white/90 text-slate-800 ring-1 ring-black/10'
+                      : 'bg-black/75 text-white/95 ring-1 ring-white/25',
                     widgetGalleryOpen
                       ? 'opacity-100'
                       : 'opacity-0 group-hover/widget:opacity-100'
@@ -1553,12 +1724,7 @@ export default function Index() {
                     viewMode={musicViewMode}
                     onChangeViewMode={setMusicViewMode}
                     ytEmbedTrack={ytEmbedTrack}
-                    onSetYtEmbedTrack={(track) => {
-                      if (track && isPlayingTrack) {
-                        togglePlayTrack();
-                      }
-                      setYtEmbedTrack(track);
-                    }}
+                    onSetYtEmbedTrack={handleSetYtEmbedTrack}
                     volume={volume}
                     isMuted={isMuted}
                     onSetVolume={setVolume}
@@ -1570,16 +1736,7 @@ export default function Index() {
                     onNextTrack={nextTrack}
                     onShuffle={handleShuffle}
                     onSeek={seekTrack}
-                    onOpenSafari={(track) => {
-                      if (isPlayingTrack) {
-                        togglePlayTrack();
-                      }
-                      setYtEmbedTrack(null);
-                      openApp(
-                        'safari',
-                        `https://www.youtube.com/embed/${track.ytId}?autoplay=1`
-                      );
-                    }}
+                    onOpenSafari={handleOpenSafariTrack}
                     size={size}
                   />
                 )}
@@ -1589,9 +1746,7 @@ export default function Index() {
                   <WeatherWidget
                     weather={liveWeather}
                     unit={weatherUnit}
-                    onToggleUnit={() =>
-                      setWeatherUnit((prev) => (prev === 'C' ? 'F' : 'C'))
-                    }
+                    onToggleUnit={handleToggleWeatherUnit}
                     activeHourlyIdx={activeHourlyIdx}
                     onSelectHourly={setActiveHourlyIdx}
                     size={size}
@@ -1599,9 +1754,7 @@ export default function Index() {
                     glassMode={weatherGlassMode}
                     onChangeGlassMode={setWeatherGlassMode}
                     isRefreshing={weatherRefreshing}
-                    onRefresh={() => {
-                      void fetchWeather();
-                    }}
+                    onRefresh={handleWeatherRefresh}
                     widgetGalleryOpen={widgetGalleryOpen}
                   />
                 )}
@@ -1622,7 +1775,7 @@ export default function Index() {
                     gpa={education.gpa}
                     availability={profile.availability}
                     githubUrl={profile.github}
-                    onOpenBio={() => openApp('about')}
+                    onOpenBio={handleOpenBio}
                     size={size}
                   />
                 )}
@@ -1631,8 +1784,8 @@ export default function Index() {
                 {spec.id === 'shipped' && (
                   <PinnedWorkWidget
                     projects={featuredProjects}
-                    onOpenAll={() => openApp('projects')}
-                    onOpenProject={(slug) => openApp('projects', slug)}
+                    onOpenAll={handleOpenAllProjects}
+                    onOpenProject={handleOpenProject}
                     size={size}
                   />
                 )}
@@ -1642,7 +1795,7 @@ export default function Index() {
                   <QuickMemoWidget
                     note={note}
                     onChangeNote={setNote}
-                    onOpenNotes={() => openApp('notes')}
+                    onOpenNotes={handleOpenNotes}
                     size={size}
                   />
                 )}

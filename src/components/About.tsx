@@ -204,7 +204,7 @@ export function About() {
                   style={{
                     transform: shouldReduceMotion ? 'none' : 'translateZ(14px)',
                   }}
-                  className="mt-2 px-3.5 py-2 rounded-xl bg-background/85 hover:bg-background border border-border/60 hover:border-emerald-500/50 text-xs font-mono flex items-center justify-between gap-2 text-muted-foreground transition-all duration-200 group/gh shadow-sm cursor-pointer select-none"
+                  className="mt-2 px-3.5 py-2 rounded-xl bg-background/85 hover:bg-background border border-border/60 hover:border-emerald-500/50 text-xs font-mono flex items-center justify-between gap-2 text-muted-foreground transition-[background-color,border-color,color,box-shadow] duration-200 group/gh shadow-sm cursor-pointer select-none"
                 >
                   <span className="flex items-center gap-2.5 text-foreground/90 font-medium">
                     <span className="relative flex size-2 items-center justify-center shrink-0">

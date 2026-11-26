@@ -1514,7 +1514,7 @@ export function ContributionSkyline({
               setCityMode(next);
               if (next && !is3d) setView("3d");
             }}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all duration-300 focus-visible:outline-2 ${
+            className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-[background-color,border-color,color,box-shadow] duration-200 focus-visible:outline-2 ${
               cityMode && is3d
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
                 : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"

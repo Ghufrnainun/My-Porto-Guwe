@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { ensureFontGroup } from '@/lib/loadFont';
 import {
   playClickSound,
   playPanelOpenSound,
@@ -85,6 +86,7 @@ const TownTour = ({ night, onToggleNight, onWork, onOpenProject, onFail, goToRef
       latest.current.onFail();
     };
 
+    let lastHero = '';
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       if (document.hidden) {
@@ -95,7 +97,11 @@ const TownTour = ({ night, onToggleNight, onWork, onOpenProject, onFail, goToRef
       last = now;
       const { frame, hero, pos, mode, keys } = latest.current.tour;
       frame(now);
-      root.current?.style.setProperty('--hero', hero.current.toFixed(3));
+      const nextHero = hero.current.toFixed(3);
+      if (nextHero !== lastHero) {
+        lastHero = nextHero;
+        root.current?.style.setProperty('--hero', nextHero);
+      }
       try {
         world.current?.update({
           dt,
@@ -230,6 +236,10 @@ const Town = () => {
   const [reducedMotion] = useState(prefersReducedMotion);
   const [plain, setPlain] = useState(() => !inBrowser || reducedMotion || !hasWebGL());
   const [night, setNight] = useTownNight();
+
+  useEffect(() => {
+    ensureFontGroup('town');
+  }, []);
   const [workOpen, setWorkOpen] = useState(false);
   const workOpenRef = useRef(workOpen);
   workOpenRef.current = workOpen;

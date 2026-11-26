@@ -55,7 +55,7 @@ export function Projects({ className = '' }: { className?: string }) {
               href={profile.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 self-start md:self-auto rounded-xl border border-border/60 bg-secondary/40 px-4 py-2 font-mono text-xs font-medium text-foreground hover:border-emerald-500/40 hover:text-emerald-500 transition-all duration-200 active:scale-[0.97]"
+              className="inline-flex items-center gap-2 self-start md:self-auto rounded-xl border border-border/60 bg-secondary/40 px-4 py-2 font-mono text-xs font-medium text-foreground hover:border-emerald-500/40 hover:text-emerald-500 transition-[border-color,color,background-color,transform] duration-200 active:scale-[0.97]"
             >
               <Github className="size-4" />
               <span>@Ghufrnainun on GitHub</span>

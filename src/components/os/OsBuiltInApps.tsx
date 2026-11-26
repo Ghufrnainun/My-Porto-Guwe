@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ensureFontGroup } from '@/lib/loadFont';
 import {
   certifications,
   education,
@@ -1725,6 +1726,12 @@ export const SystemSettingsApp: React.FC = () => {
   const currentWallpaper =
     WALLPAPERS.find((w) => w.id === wallpaperId) ?? WALLPAPERS[0];
 
+  useEffect(() => {
+    if (currentPane.id !== 'appearance') return;
+    ensureFontGroup('inter');
+    ensureFontGroup('geist');
+  }, [currentPane.id]);
+
   return (
     <div className="flex h-full">
       <Sidebar
@@ -2012,7 +2019,7 @@ export const SystemSettingsApp: React.FC = () => {
                         aria-label={`Select wallpaper ${item.label}`}
                         aria-pressed={wallpaperId === item.id}
                         className={cn(
-                          'relative aspect-video w-full overflow-hidden rounded-lg ring-1 ring-black/10 transition-[transform,box-shadow] duration-150 ease-smooth-out hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97] dark:ring-white/15',
+                          'relative aspect-video w-full overflow-hidden rounded-lg ring-1 ring-black/10 transition-[transform,box-shadow] duration-150 ease-smooth-out fine:hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff] focus-visible:ring-offset-2 active:scale-[0.97] dark:ring-white/15',
                           wallpaperId === item.id &&
                             'ring-[3px] ring-[#0a84ff] ring-offset-2 ring-offset-[#f2f2f7] dark:ring-offset-[#282025]',
                         )}

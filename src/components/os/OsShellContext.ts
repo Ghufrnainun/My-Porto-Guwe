@@ -307,6 +307,51 @@ export interface TrashItem {
   actionLabelId?: string;
 }
 
+export const DEFAULT_TRASH_EASTER_EGGS: readonly TrashItem[] = [
+  {
+    id: 'egg:cv-final',
+    kind: 'easter-egg',
+    label: 'CV_final_v2_REALLY_FINAL.pdf',
+    icon: '/macos-icons/pdf.png',
+    sizeLabel: '420 KB',
+    noteEn: 'Nice try — the real, up-to-date resume is right on the desktop.',
+    noteId: 'Hampir kena — CV asli yang terbaru ada di desktop.',
+    actionAppId: 'resume',
+    actionLabelEn: 'Open real CV.pdf',
+    actionLabelId: 'Buka CV.pdf asli',
+  },
+  {
+    id: 'egg:side-project',
+    kind: 'easter-egg',
+    label: 'side-project-2am.zip',
+    icon: '/macos-icons/folder.png',
+    sizeLabel: '1.4 GB',
+    noteEn: 'Bought the domain at 2 AM. Never made it past npm init.',
+    noteId: 'Beli domain jam 2 pagi. Nggak pernah lewat dari npm init.',
+  },
+  {
+    id: 'egg:console-log',
+    kind: 'easter-egg',
+    label: 'console-log-here-7.txt',
+    icon: '/macos-icons/notes.png',
+    sizeLabel: '12 KB',
+    noteEn: "console.log('here 1') · console.log('why is this undefined')",
+    noteId: "console.log('masuk') · console.log('kok masih undefined')",
+  },
+  {
+    id: 'egg:old-portfolio',
+    kind: 'easter-egg',
+    label: 'old-portfolio.html',
+    icon: '/macos-icons/safari.png',
+    sizeLabel: '64 KB',
+    noteEn: 'Previous portfolio build — still runs inside Safari.',
+    noteId: 'Versi portofolio lama — masih bisa dibuka di Safari.',
+    actionAppId: 'safari',
+    actionLabelEn: 'Preview in Safari',
+    actionLabelId: 'Buka di Safari',
+  },
+] as const;
+
 export type MusicPlaybackContextValue = {
   trackPlaybackSec: number;
   trackDurationSec: number;

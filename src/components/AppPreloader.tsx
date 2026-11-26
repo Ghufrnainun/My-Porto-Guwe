@@ -65,7 +65,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
   const [showReactPreloader, setShowReactPreloader] = useState(() => {
     if (typeof window === 'undefined') return false;
     if (forceShow) return true;
-    if (/^\/town(\/|$)/.test(window.location.pathname)) return false;
+    if (window.location.pathname !== '/') return false;
     // When the unified inline #boot-splash is already on screen, drive it directly
     // instead of mounting a second overlay (zero jump, single state).
     if (document.getElementById(BOOT_SPLASH_ID)) return false;
@@ -75,7 +75,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
   const [isReady, setIsReady] = useState(() => {
     if (typeof window === 'undefined') return true;
     if (forceShow) return false;
-    if (/^\/town(\/|$)/.test(window.location.pathname)) return true;
+    if (window.location.pathname !== '/') return true;
     if (document.getElementById(BOOT_SPLASH_ID)) return false;
     return hasBootedSession();
   });
@@ -135,9 +135,9 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
     // Path 1: Seamless handoff from the single inline #boot-splash rendered at t=0ms.
     if (!forceShow && splash) {
       const elapsed = typeof performance !== 'undefined' ? performance.now() : 0;
-      const minTotalMs = shouldReduceMotion ? 220 : 1080;
-      const holdDuration = Math.max(shouldReduceMotion ? 120 : 480, Math.round(minTotalMs - elapsed));
-      const exitDuration = shouldReduceMotion ? 140 : 340;
+      const minTotalMs = shouldReduceMotion ? 180 : 580;
+      const holdDuration = Math.max(shouldReduceMotion ? 100 : 240, Math.round(minTotalMs - elapsed));
+      const exitDuration = shouldReduceMotion ? 120 : 240;
 
       let removeTimer: number | undefined;
       const exitTimer = window.setTimeout(() => {
@@ -169,7 +169,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
     }
 
     // Path 3: Preview route (/preview-preloader-boot) or fallback when #boot-splash isn't present.
-    const delay = shouldReduceMotion ? 220 : 1120;
+    const delay = shouldReduceMotion ? 180 : 580;
     const timer = window.setTimeout(() => {
       setShowReactPreloader(false);
       setIsReady(true);
@@ -190,7 +190,7 @@ export function AppPreloader({ children, forceShow = false }: AppPreloaderProps)
             className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-[#09090b] text-[#f5f5f7] select-none pointer-events-auto"
             initial={{ opacity: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.015 }}
-            transition={{ duration: shouldReduceMotion ? 0.14 : 0.34, ease: easeOutExpo }}
+            transition={{ duration: shouldReduceMotion ? 0.12 : 0.24, ease: easeOutExpo }}
             role="status"
             aria-live="polite"
             aria-label="Loading portfolio"

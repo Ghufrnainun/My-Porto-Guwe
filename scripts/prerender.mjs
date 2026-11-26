@@ -132,6 +132,18 @@ function renderHead(tpl, meta, routePath) {
       `<script id="page-jsonld" type="application/ld+json">${payload}</script>\n  </head>`
     );
   }
+  if (routePath.startsWith('/town')) {
+    out = out.replace(
+      '</head>',
+      `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Serif:ital@1&family=Schibsted+Grotesk:wght@400;600&display=swap" data-font-group="town" />\n  </head>`
+    );
+  } else if (routePath === '/old') {
+    out = out.replace(
+      '</head>',
+      `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" data-font-group="editorial" />\n  </head>`
+    );
+  }
+
   return out;
 }
 
@@ -152,9 +164,10 @@ try {
     const withHead = renderHead(template, meta, routePath);
     // Replace the entire #root container (and any dev preloader/noscript stub)
     // with the clean server-rendered markup right before </body>.
-    const page = routePath.startsWith('/town')
-      ? withHead.replace(/<div\s+id="boot-splash"[\s\S]*?<!-- \/boot-splash -->/, '')
-      : withHead;
+    const page =
+      routePath !== '/'
+        ? withHead.replace(/<div\s+id="boot-splash"[\s\S]*?<!-- \/boot-splash -->/, '')
+        : withHead;
     const final = page.replace(
       /<div id="root">[\s\S]*?(?=\s*<\/body>)/,
       `<div id="root">\n${html}\n    </div>`

@@ -22,6 +22,7 @@ export interface GlassDock3DItem {
   isDropTarget?: boolean;
   badge?: number | string | null;
   onClick: () => void;
+  onPreload?: () => void;
 }
 
 export interface GlassDock3DProps {
@@ -752,6 +753,8 @@ const DesktopGlassDock3D: React.FC<{
                   aria-pressed={isActive}
                   data-dock-id={item.key}
                   onClick={item.onClick}
+                  onPointerEnter={item.onPreload}
+                  onFocus={item.onPreload}
                   className={cn(
                     'dock-3d-btn relative h-full w-full cursor-pointer rounded-[22%] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40',
                     item.isLaunching && 'dock-3d-launching',
@@ -861,6 +864,8 @@ const MobileGlassDock3D: React.FC<{
                   aria-pressed={isActive}
                   data-dock-id={item.key}
                   onClick={item.onClick}
+                  onPointerEnter={item.onPreload}
+                  onFocus={item.onPreload}
                   className={cn(
                     'dock-3d-btn relative h-12 w-12 min-h-[44px] min-w-[44px] rounded-[22%] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/90',
                     item.isLaunching && 'dock-3d-launching',

@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { memo, useId, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -81,7 +81,7 @@ function getBarColor(count: number, maxCount: number, isPeak: boolean): string {
   return 'bg-[#0e4429]';
 }
 
-export function GitHubWidget({
+export const GitHubWidget = memo(function GitHubWidget({
   username,
   profileUrl,
   range,
@@ -375,7 +375,7 @@ export function GitHubWidget({
                           aria-label={`${formatContributionDate(day.date)}: ${day.count} contributions`}
                           title={`${formatContributionDate(day.date)}: ${day.count} contributions`}
                           className={cn(
-                            'aspect-square w-full rounded-[2px] transition-[transform,filter] duration-100 ease-smooth-out hover:scale-125 hover:brightness-125 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80',
+                            'aspect-square w-full rounded-[2px] transition-[transform,filter] duration-100 ease-smooth-out fine:hover:scale-125 fine:hover:brightness-125 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/80',
                             getLevelColor(
                               day.level ??
                                 (day.count === 0
@@ -563,4 +563,4 @@ export function GitHubWidget({
       </div>
     </div>
   );
-}
+});

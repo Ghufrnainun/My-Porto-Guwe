@@ -16,7 +16,68 @@ import {
 } from '@/components/os/OsShellContext';
 import { playClickSound, playPanelOpenSound } from '@/lib/soundEffects';
 
-export const DynamicIsland: React.FC = () => {
+const formatSec = (sec: number) => {
+  const mins = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${mins}:${s < 10 ? '0' : ''}${s}`;
+};
+
+const DynamicIslandScrubber = React.memo(function DynamicIslandScrubber({
+  onSeek,
+}: {
+  onSeek: (time: number) => void;
+}) {
+  const { trackPlaybackSec, trackDurationSec } = useOsMusicPlayback();
+  const effectiveDuration = trackDurationSec || 30;
+  const progressRatio = Math.min(
+    1,
+    Math.max(0, trackPlaybackSec / effectiveDuration)
+  );
+
+  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    onSeek(ratio * effectiveDuration);
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2 text-[10px] text-white/45">
+      <span className="w-6 tabular-nums">
+        {formatSec(trackPlaybackSec)}
+      </span>
+      <div
+        onClick={handleScrub}
+        role="slider"
+        aria-label="Track progress"
+        aria-valuemin={0}
+        aria-valuemax={effectiveDuration}
+        aria-valuenow={trackPlaybackSec}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight') {
+            onSeek(Math.min(effectiveDuration, trackPlaybackSec + 5));
+          } else if (e.key === 'ArrowLeft') {
+            onSeek(Math.max(0, trackPlaybackSec - 5));
+          }
+        }}
+        title="Click to seek"
+        className="group/di-scrub relative flex h-3 flex-grow cursor-pointer items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/60"
+      >
+        <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/20">
+          <div
+            className="h-full w-full origin-left rounded-full bg-white transition-transform duration-150 ease-linear"
+            style={{ transform: `scaleX(${progressRatio})` }}
+          />
+        </div>
+      </div>
+      <span className="tabular-nums">
+        {formatSec(effectiveDuration)}
+      </span>
+    </div>
+  );
+});
+
+export const DynamicIsland: React.FC = React.memo(function DynamicIsland() {
   const {
     activeTrack,
     isPlayingTrack,
@@ -26,7 +87,6 @@ export const DynamicIsland: React.FC = () => {
     seekTrack,
     openApp,
   } = useOsNote();
-  const { trackPlaybackSec, trackDurationSec } = useOsMusicPlayback();
   const reduceMotion = useReducedMotion();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -53,24 +113,6 @@ export const DynamicIsland: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isExpanded]);
-
-  const formatSec = (sec: number) => {
-    const mins = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${mins}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  const effectiveDuration = trackDurationSec || 30;
-  const progressRatio = Math.min(
-    1,
-    Math.max(0, trackPlaybackSec / effectiveDuration)
-  );
-
-  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    seekTrack(ratio * effectiveDuration);
-  };
 
   return (
     <div
@@ -178,39 +220,7 @@ export const DynamicIsland: React.FC = () => {
                   </div>
 
                   {/* Interactive GPU Scrubber track */}
-                  <div className="mt-2 flex items-center gap-2 text-[10px] text-white/45">
-                    <span className="w-6 tabular-nums">
-                      {formatSec(trackPlaybackSec)}
-                    </span>
-                    <div
-                      onClick={handleScrub}
-                      role="slider"
-                      aria-label="Track progress"
-                      aria-valuemin={0}
-                      aria-valuemax={effectiveDuration}
-                      aria-valuenow={trackPlaybackSec}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowRight') {
-                          seekTrack(Math.min(effectiveDuration, trackPlaybackSec + 5));
-                        } else if (e.key === 'ArrowLeft') {
-                          seekTrack(Math.max(0, trackPlaybackSec - 5));
-                        }
-                      }}
-                      title="Click to seek"
-                      className="group/di-scrub relative flex h-3 flex-grow cursor-pointer items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/60"
-                    >
-                      <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/20">
-                        <div
-                          className="h-full w-full origin-left rounded-full bg-white transition-transform duration-150 ease-linear"
-                          style={{ transform: `scaleX(${progressRatio})` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="tabular-nums">
-                      {formatSec(effectiveDuration)}
-                    </span>
-                  </div>
+                  <DynamicIslandScrubber onSeek={seekTrack} />
                 </div>
               </div>
 
@@ -237,7 +247,7 @@ export const DynamicIsland: React.FC = () => {
                   }}
                   title={isPlayingTrack ? 'Pause' : 'Play'}
                   aria-label={isPlayingTrack ? 'Pause' : 'Play'}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-md transition-transform duration-150 hover:scale-105 active:scale-[0.96]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-md transition-transform duration-150 fine:hover:scale-105 active:scale-[0.96]"
                 >
                   {isPlayingTrack ? (
                     <Pause size={14} fill="currentColor" />
@@ -317,4 +327,4 @@ export const DynamicIsland: React.FC = () => {
       </motion.div>
     </div>
   );
-};
+});

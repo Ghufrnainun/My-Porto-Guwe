@@ -73,7 +73,7 @@ export default function About() {
                 onClick={() => openApp('mail')}
                 className="group flex flex-col items-center gap-1.5 text-[11px] font-medium text-[#0a84ff]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform group-hover:scale-105 group-active:scale-95">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform fine:group-hover:scale-105 group-active:scale-95">
                   <Mail className="h-[18px] w-[18px]" />
                 </span>
                 <span>Mail</span>
@@ -84,7 +84,7 @@ export default function About() {
                 onClick={() => openApp('resume')}
                 className="group flex flex-col items-center gap-1.5 text-[11px] font-medium text-[#0a84ff]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform group-hover:scale-105 group-active:scale-95">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform fine:group-hover:scale-105 group-active:scale-95">
                   <FileText className="h-[18px] w-[18px]" />
                 </span>
                 <span>CV</span>
@@ -96,7 +96,7 @@ export default function About() {
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center gap-1.5 text-[11px] font-medium text-[#0a84ff]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform group-hover:scale-105 group-active:scale-95">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform fine:group-hover:scale-105 group-active:scale-95">
                   <Globe className="h-[18px] w-[18px]" />
                 </span>
                 <span>Website</span>
@@ -107,7 +107,7 @@ export default function About() {
                 onClick={() => openApp('notes')}
                 className="group flex flex-col items-center gap-1.5 text-[11px] font-medium text-[#0a84ff]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform group-hover:scale-105 group-active:scale-95">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-sm transition-transform fine:group-hover:scale-105 group-active:scale-95">
                   <StickyNote className="h-[18px] w-[18px]" />
                 </span>
                 <span>Notes</span>

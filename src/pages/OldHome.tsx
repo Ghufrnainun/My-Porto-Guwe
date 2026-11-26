@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Hero } from '@/components/Hero';
 import { AboutPreview } from '@/components/AboutPreview';
 import { Skills } from '@/components/Skills';
@@ -5,8 +6,12 @@ import { ProjectsPreview } from '@/components/ProjectsPreview';
 import { BlogPreview } from '@/components/BlogPreview';
 import { HomeCanvas } from '@/components/HomeCanvas';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { ensureFontGroup } from '@/lib/loadFont';
 
 const OldHome = () => {
+  useEffect(() => {
+    ensureFontGroup('editorial');
+  }, []);
   usePageMeta({
     title: 'Ghufron Ainun Najib | Legacy Portfolio',
     description:
