@@ -10,27 +10,33 @@
 
 ## Overview
 
-This repository powers **[ghufronainun.tech](https://ghufronainun.tech/)** — a macOS-inspired interactive web desktop housing the portfolio, engineering case studies, writing log, and resume of **Ghufron Ainun Najib**.
+This repository powers **[ghufronainun.tech](https://ghufronainun.tech/)** — a macOS-inspired interactive web desktop housing the portfolio, engineering case studies, 3D drive-through showcase (**Ghufron Town** at `/town`), writing log, and resume of **Ghufron Ainun Najib**.
 
-Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpapers, spring-driven window management, and an adaptive iOS/iPadOS-style mobile home screen. The previous editorial portfolio remains preserved at `/old` and browseable directly inside the embedded Safari app.
+Designed with tactile liquid-glass surfaces, GPU-accelerated window & widget dragging, hardware-decoded animated wallpapers, spring-driven window management, and an adaptive iOS/iPadOS-style mobile home screen. The previous editorial portfolio remains preserved at `/old` and browseable directly inside the embedded Safari app.
 
 ---
 
 ## Previews
 
-| Finder & Case Studies | Mobile OS Home Screen |
+| Finder & Case Studies | Ghufron Town (3D) |
 | :---: | :---: |
-| ![Projects Finder](docs/screenshots/ganos-projects.webp) | <img src="docs/screenshots/ganos-mobile.webp" alt="Mobile Home Screen" width="260" /> |
+| ![Projects Finder](docs/screenshots/ganos-projects.webp) | ![Ghufron Town 3D](docs/screenshots/ganos-town.webp) |
+
+<p align="center">
+  <strong>Mobile OS Home Screen</strong><br />
+  <img src="docs/screenshots/ganos-mobile.webp" alt="Mobile Home Screen" width="260" />
+</p>
 
 ---
 
 ## Highlights
 
-- **Interactive Desktop Shell (`v2.4`)**: Draggable/resizable windows with edge snapping, 3D glass dock with magnification physics, Menu Bar, Control Center, Dynamic Island, `⌘K` Spotlight search, `⌘Tab` app switcher, and Notification Center.
-- **Built-in Apps**: Finder (Projects & Case Studies), curated sandboxed Safari (`/old`, portfolio routes, & YouTube embeds), Notes (with interactive skills checklist & scratchpad), interactive `zsh` Terminal (`help`, `neofetch`, `open`, `notify`), Mail, and System Settings (appearance, system font switcher, display brightness, and 16 dynamic/still wallpapers).
-- **Live Desktop Widgets**: GitHub contribution heatmap & 12-month velocity bar chart (`6M` / `1Y`), live Semarang weather widget with adaptive glass refraction, interactive Music player, Quick Memo, and responsive Mobile Home Screen widget stack.
+- **Interactive Desktop Shell (`v2.4`)**: Zero-rerender GPU-translated window/widget dragging with edge snapping, 3D glass dock with magnification physics & hover chunk preloading, Menu Bar, Control Center, Dynamic Island, instant `⌘K` Spotlight search, `⌘Tab` app switcher, anchored 3-step Quick Start Guide, interactive Trash easter eggs, and lazy Notification Center.
+- **Ghufron Town (`/town`)**: Interactive Three.js 3D world with scroll tour and free-drive navigation across featured projects, day/night switch, deep-linked project sheets (`/town/<slug>`), and an accessible reduced-motion fallback.
+- **Built-in Apps**: Finder (Projects & Case Studies), curated sandboxed Safari (`/old`, portfolio routes, & YouTube embeds), Notes (interactive skills checklist & scratchpad), interactive `zsh` Terminal (`help`, `neofetch`, `open`, `notify`), Mail, and System Settings (appearance, on-demand font switcher, display brightness, and 16 dynamic/still wallpapers).
+- **Live Desktop Widgets**: GitHub contribution heatmap & 12-month velocity bar chart (`6M` / `1Y`), live Semarang Weather widget with GPU specular glass refraction, Semarang `WIB` analog/digital Clock, Profile card, Music player, Pinned Work, Quick Memo, and responsive Mobile Home Screen widget stack.
 - **Hardware-Decoded Wallpapers**: 16 curated wallpapers (9 seamless H.264 MP4 loops with instant WebP posters + 7 high-res stills) with automatic `prefers-reduced-motion` and tab-visibility throttling.
-- **Prerendered SEO & Structured Data**: Static HTML prerendering across all 11 public routes, dynamic Open Graph & Twitter Cards (`public/og-image.png`), JSON-LD schemas (`Person`, `ProfilePage`, `WebSite`, `SoftwareApplication`), `sitemap.xml`, `robots.txt`, and `llms.txt`.
+- **Prerendered SEO & Performance**: Static HTML prerendering across 18 public routes (`5` static + `/town` + `6` project case studies + `6` town project routes), dynamic Open Graph & Twitter Cards (`public/og-image.png`), JSON-LD schemas (`Person`, `ProfilePage`, `WebSite`, `SoftwareApplication`), `sitemap.xml` (12 canonical URLs), `robots.txt`, `llms.txt`, on-demand non-critical Google Fonts, and compacted SVG brand vectors.
 - **Supabase Writing Log**: Type-safe blog queries, Tiptap rich-text editor, and Row-Level Security (RLS) for `/blog` and `/admin`.
 
 ---
@@ -79,6 +85,7 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 | **Frontend** | React 18, TypeScript 5, Vite 5 (SWC), React Router 6 |
 | **Styling & UI** | Tailwind CSS 3, Radix UI Primitives, Lucide Icons |
 | **Motion** | Framer Motion 12, GSAP, Lenis Scroll |
+| **3D Graphics** | Three.js, WebGL |
 | **Data & State** | Supabase JS (`@supabase/supabase-js`), TanStack Query 5 |
 | **Rich Text** | Tiptap Editor (`@tiptap/react`) |
 | **Build & Assets** | Sharp, Static HTML Prerenderer, Sitemap Generator |
@@ -89,7 +96,7 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 
 ```text
 .
-├── docs/screenshots/          # README desktop, Finder & mobile previews
+├── docs/screenshots/          # README desktop, Finder, Town 3D & mobile previews
 ├── public/                    # Static assets, wallpapers, audio, icons & metadata
 │   ├── wallpapers/            # Curated H.264 MP4 loops, WebP posters & thumbnails
 │   ├── macos-icons/           # App & desktop icon assets
@@ -107,8 +114,9 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 │   ├── data/                  # Static content (featuredProjects, sideProjects, profile, tracks)
 │   ├── hooks/                 # Custom hooks (SEO metadata, auth, analytics)
 │   ├── integrations/supabase/ # Supabase client & typed schema
-│   ├── lib/                   # Dock physics, weather, audio & notification utilities
-│   └── pages/                 # Route-level views (Index, Projects, About, Blog, Resume, OldHome)
+│   ├── lib/                   # Dock physics, weather, font loader, audio & notification utilities
+│   ├── pages/                 # Route-level views (Index, Town, Projects, About, Blog, Resume, OldHome)
+│   └── town/                  # Ghufron Town 3D world, tour camera/driving physics & UI overlays
 └── supabase/                  # Database migrations & storage policies
 ```
 
@@ -148,13 +156,15 @@ Designed with tactile liquid-glass surfaces, hardware-decoded animated wallpaper
 | Command | Action |
 |---|---|
 | `npm run dev` | Starts Vite dev server with HMR |
-| `npm run build` | Generates sitemap, runs `tsc -p tsconfig.app.json --noEmit`, compiles `dist/`, and prerenders 11 static pages |
+| `npm run build` | Generates sitemap, runs `tsc -p tsconfig.app.json --noEmit`, compiles `dist/`, and prerenders 18 static pages |
+| `npm run build:assets` | Regenerates brand SVG/PNG/ICO icons and Open Graph share image |
 | `npm run preview` | Serves the production build locally |
 | `npm run lint` | Runs ESLint across all `.ts`/`.tsx` files (zero warnings) |
 | `npm run test:portfolio` | Validates featured & side project metadata |
 | `npm run test:profile` | Validates profile, experience & certification data |
 | `npm run test:ux` | Validates route navigation matching |
 | `npm run test:widget-layout` | Validates desktop icon & widget layout geometry |
+| `npm run test:town` | Validates 3D Ghufron Town tour math |
 
 ---
 

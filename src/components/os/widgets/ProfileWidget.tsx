@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ interface ProfileWidgetProps {
   size: { width: number; height: number };
 }
 
-export function ProfileWidget({
+export const ProfileWidget = memo(function ProfileWidget({
   name,
   role = 'Full-Stack Dev',
   semester,
@@ -95,7 +96,7 @@ export function ProfileWidget({
         src="/Photo.webp"
         alt={name}
         draggable={false}
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 ease-out-spring group-hover/widget:scale-[1.03]"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 ease-out-spring fine:group-hover/widget:scale-[1.03]"
       />
 
       {/* Refined Editorial Gradient Scrim */}
@@ -116,7 +117,7 @@ export function ProfileWidget({
       <div className="relative z-10 flex justify-end p-2.5">
         <span
           title={availability}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2 py-0.5 text-[9.5px] font-medium text-white/90 backdrop-blur-md ring-1 ring-white/15"
+          className="inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[9.5px] font-medium text-white/95 ring-1 ring-white/15"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-[#30d158]" />
           <span>Open</span>
@@ -144,8 +145,8 @@ export function ProfileWidget({
             type="button"
             onClick={onOpenBio}
             className={cn(
-              'flex flex-1 items-center justify-center gap-1 rounded-[10px] bg-white/[0.18] py-1.5 text-[10.5px] font-semibold text-white backdrop-blur-md ring-1 ring-white/20',
-              'transition-[background-color,transform] duration-150 ease-out-spring hover:bg-white/[0.28] active:scale-[0.96]'
+              'flex flex-1 items-center justify-center gap-1 rounded-[10px] bg-white/[0.22] py-1.5 text-[10.5px] font-semibold text-white ring-1 ring-white/20',
+              'transition-[background-color,transform] duration-150 ease-out-spring hover:bg-white/[0.3] active:scale-[0.96]'
             )}
           >
             <span>Bio</span>
@@ -156,8 +157,8 @@ export function ProfileWidget({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              'flex flex-1 items-center justify-center gap-1 rounded-[10px] bg-black/40 py-1.5 text-[10.5px] font-medium text-white/90 backdrop-blur-md ring-1 ring-white/15',
-              'transition-[background-color,color,transform] duration-150 ease-out-spring hover:bg-black/60 hover:text-white active:scale-[0.96]'
+              'flex flex-1 items-center justify-center gap-1 rounded-[10px] bg-black/55 py-1.5 text-[10.5px] font-medium text-white/95 ring-1 ring-white/15',
+              'transition-[background-color,color,transform] duration-150 ease-out-spring hover:bg-black/70 hover:text-white active:scale-[0.96]'
             )}
           >
             <span>GitHub</span>
@@ -167,4 +168,4 @@ export function ProfileWidget({
       </div>
     </div>
   );
-}
+});

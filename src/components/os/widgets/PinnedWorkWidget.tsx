@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PortfolioProject } from '@/data/featuredProjects';
@@ -15,7 +16,7 @@ function getInitials(title: string): string {
   return `${words[0][0] ?? ''}${words[1][0] ?? ''}`.toUpperCase();
 }
 
-export function PinnedWorkWidget({
+export const PinnedWorkWidget = memo(function PinnedWorkWidget({
   projects,
   onOpenAll,
   onOpenProject,
@@ -90,7 +91,7 @@ export function PinnedWorkWidget({
                     <img
                       src={project.image}
                       alt=""
-                      className="h-full w-full object-cover transition-transform duration-200 group-hover/row:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-200 fine:group-hover/row:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[10px] font-bold tracking-tight text-white">
@@ -122,7 +123,7 @@ export function PinnedWorkWidget({
                 <span className="text-[10.5px] font-medium text-black/40 tabular-nums">
                   {project.year}
                 </span>
-                <ArrowUpRight className="h-3.5 w-3.5 text-black/30 transition-[transform,color] duration-150 ease-out-spring group-hover/row:translate-x-0.5 group-hover/row:-translate-y-0.5 group-hover/row:text-[#0066cc]" />
+                <ArrowUpRight className="h-3.5 w-3.5 text-black/30 transition-[transform,color] duration-150 ease-out-spring fine:group-hover/row:translate-x-0.5 fine:group-hover/row:-translate-y-0.5 group-hover/row:text-[#0066cc]" />
               </div>
             </button>
           ))}
@@ -130,4 +131,4 @@ export function PinnedWorkWidget({
       </div>
     </div>
   );
-}
+});

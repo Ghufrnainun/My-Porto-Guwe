@@ -1,5 +1,23 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+
+const WIB_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Jakarta',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false,
+});
+
+const WIB_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'Asia/Jakarta',
+});
+
+const CLOCK_TICKS = Array.from({ length: 60 }, (_, idx) => idx);
+const CLOCK_NUMERALS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
 
 interface ClockWidgetProps {
   now?: Date;
@@ -8,24 +26,12 @@ interface ClockWidgetProps {
 }
 
 function getWibParts(date: Date) {
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Jakarta',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  const parts = formatter.formatToParts(date);
+  const parts = WIB_TIME_FORMATTER.formatToParts(date);
   const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
   const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? '0');
   const second = Number(parts.find((p) => p.type === 'second')?.value ?? '0');
 
-  const dateLabel = date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'Asia/Jakarta',
-  });
+  const dateLabel = WIB_DATE_FORMATTER.format(date);
 
   const hh = String(hour).padStart(2, '0');
   const mm = String(minute).padStart(2, '0');
@@ -42,54 +48,25 @@ function getWibParts(date: Date) {
   };
 }
 
-export function ClockWidget({ now: externalNow, availability, size }: ClockWidgetProps) {
-  const [preferDigital, setPreferDigital] = useState(false);
-  const [internalNow, setInternalNow] = useState(() => new Date());
-
-  useEffect(() => {
-    if (externalNow) return;
-    const timer = window.setInterval(() => setInternalNow(new Date()), 1000);
-    return () => window.clearInterval(timer);
-  }, [externalNow]);
-
-  const now = externalNow ?? internalNow;
-
-  const { hour, minute, second, isDaytime, timeHm, secondsStr, dateLabel } =
-    getWibParts(now);
-
-  const isWide = size.width >= 236;
-  const isCompact = size.width < 176 || size.height < 176;
-
-  // Classic horological angles
-  const secondDeg = second * 6;
-  const minuteDeg = minute * 6 + second * 0.1;
-  const hourDeg = (hour % 12) * 30 + minute * 0.5;
-
-  const dialSize = isWide
-    ? Math.min(size.height - 24, Math.round(size.width * 0.48), 146)
-    : Math.min(size.width - 20, size.height - 20, 196);
-
-  const showAllNumerals = dialSize >= 132;
-
-  const dialBg = isDaytime ? '#ffffff' : '#121316';
-  const tickMajor = isDaytime ? '#1d1d1f' : '#f5f5f7';
-  const tickMinor = isDaytime
-    ? 'rgba(29,29,31,0.22)'
-    : 'rgba(255,255,255,0.22)';
-  const numeralColor = isDaytime ? '#1d1d1f' : '#f5f5f7';
-  const subLabelColor = isDaytime
-    ? 'rgba(29,29,31,0.45)'
-    : 'rgba(255,255,255,0.45)';
-  const handColor = isDaytime ? '#1d1d1f' : '#f5f5f7';
-
-  const renderAnalogDial = () => (
-    <svg
-      width={dialSize}
-      height={dialSize}
-      viewBox="0 0 160 160"
-      aria-hidden="true"
-      className="shrink-0 overflow-visible"
-    >
+const StaticAnalogDialFace = memo(function StaticAnalogDialFace({
+  isDaytime,
+  showAllNumerals,
+  dialBg,
+  tickMajor,
+  tickMinor,
+  numeralColor,
+  subLabelColor,
+}: {
+  isDaytime: boolean;
+  showAllNumerals: boolean;
+  dialBg: string;
+  tickMajor: string;
+  tickMinor: string;
+  numeralColor: string;
+  subLabelColor: string;
+}) {
+  return (
+    <>
       {/* Recessed watch dial */}
       <circle
         cx="80"
@@ -101,7 +78,7 @@ export function ClockWidget({ now: externalNow, availability, size }: ClockWidge
       />
 
       {/* 60 minute ticks */}
-      {Array.from({ length: 60 }).map((_, idx) => {
+      {CLOCK_TICKS.map((idx) => {
         const isHourMark = idx % 5 === 0;
         return (
           <line
@@ -119,7 +96,7 @@ export function ClockWidget({ now: externalNow, availability, size }: ClockWidge
       })}
 
       {/* Numerals */}
-      {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num, idx) => {
+      {CLOCK_NUMERALS.map((num, idx) => {
         if (!showAllNumerals && num % 3 !== 0) return null;
         const angleRad = ((idx * 30 - 90) * Math.PI) / 180;
         const radius = showAllNumerals ? 52 : 53;
@@ -165,6 +142,82 @@ export function ClockWidget({ now: externalNow, availability, size }: ClockWidge
       >
         WIB
       </text>
+    </>
+  );
+});
+
+export const ClockWidget = memo(function ClockWidget({
+  now: externalNow,
+  availability,
+  size,
+}: ClockWidgetProps) {
+  const [preferDigital, setPreferDigital] = useState(false);
+  const [internalNow, setInternalNow] = useState(() => new Date());
+
+  useEffect(() => {
+    if (externalNow) return;
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      setInternalNow(new Date());
+    };
+    const timer = window.setInterval(tick, 1000);
+    const onVisibilityChange = () => {
+      if (!document.hidden) setInternalNow(new Date());
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [externalNow]);
+
+  const now = externalNow ?? internalNow;
+
+  const { hour, minute, second, isDaytime, timeHm, secondsStr, dateLabel } =
+    getWibParts(now);
+
+  const isWide = size.width >= 236;
+  const isCompact = size.width < 176 || size.height < 176;
+
+  // Classic horological angles
+  const secondDeg = second * 6;
+  const minuteDeg = minute * 6 + second * 0.1;
+  const hourDeg = (hour % 12) * 30 + minute * 0.5;
+
+  const dialSize = isWide
+    ? Math.min(size.height - 24, Math.round(size.width * 0.48), 146)
+    : Math.min(size.width - 20, size.height - 20, 196);
+
+  const showAllNumerals = dialSize >= 132;
+
+  const dialBg = isDaytime ? '#ffffff' : '#121316';
+  const tickMajor = isDaytime ? '#1d1d1f' : '#f5f5f7';
+  const tickMinor = isDaytime
+    ? 'rgba(29,29,31,0.22)'
+    : 'rgba(255,255,255,0.22)';
+  const numeralColor = isDaytime ? '#1d1d1f' : '#f5f5f7';
+  const subLabelColor = isDaytime
+    ? 'rgba(29,29,31,0.45)'
+    : 'rgba(255,255,255,0.45)';
+  const handColor = isDaytime ? '#1d1d1f' : '#f5f5f7';
+
+  const renderAnalogDial = () => (
+    <svg
+      width={dialSize}
+      height={dialSize}
+      viewBox="0 0 160 160"
+      aria-hidden="true"
+      className="shrink-0 overflow-visible"
+    >
+      <StaticAnalogDialFace
+        isDaytime={isDaytime}
+        showAllNumerals={showAllNumerals}
+        dialBg={dialBg}
+        tickMajor={tickMajor}
+        tickMinor={tickMinor}
+        numeralColor={numeralColor}
+        subLabelColor={subLabelColor}
+      />
 
       {/* Hour hand */}
       <g transform={`rotate(${hourDeg} 80 80)`}>
@@ -350,4 +403,4 @@ export function ClockWidget({ now: externalNow, availability, size }: ClockWidge
       )}
     </div>
   );
-}
+});

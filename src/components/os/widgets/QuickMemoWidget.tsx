@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -8,7 +9,7 @@ interface QuickMemoWidgetProps {
   size: { width: number; height: number };
 }
 
-export function QuickMemoWidget({
+export const QuickMemoWidget = memo(function QuickMemoWidget({
   note,
   onChangeNote,
   onOpenNotes,
@@ -78,4 +79,4 @@ export function QuickMemoWidget({
       </div>
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   Pause,
   Play,
@@ -46,7 +47,7 @@ function formatSec(total: number): string {
   return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
-export function MusicWidget({
+export const MusicWidget = memo(function MusicWidget({
   activeTrack,
   visibleTracks,
   isPlaying,
@@ -131,7 +132,7 @@ export function MusicWidget({
               <div
                 role="tablist"
                 aria-label="Music widget view"
-                className="inline-flex shrink-0 items-center rounded-full bg-white/[0.11] p-[2px] backdrop-blur-md ring-1 ring-white/[0.14]"
+                className="inline-flex shrink-0 items-center rounded-full bg-white/[0.15] p-[2px] ring-1 ring-white/[0.16]"
               >
                 <button
                   type="button"
@@ -186,7 +187,7 @@ export function MusicWidget({
                 <button
                   type="button"
                   onClick={() => onOpenSafari(ytEmbedTrack)}
-                  className="inline-flex items-center gap-1 rounded-full bg-white/[0.12] px-2.5 py-1 text-[10px] font-medium text-white/90 backdrop-blur-md ring-1 ring-white/15 transition-[background-color,transform] duration-150 hover:bg-white/[0.2] active:scale-95"
+                  className="inline-flex items-center gap-1 rounded-full bg-white/[0.16] px-2.5 py-1 text-[10px] font-medium text-white/95 ring-1 ring-white/15 transition-[background-color,transform] duration-150 hover:bg-white/[0.24] active:scale-95"
                   title="Open inside Safari window"
                 >
                   <img
@@ -211,7 +212,7 @@ export function MusicWidget({
                   onClick={() => onSetYtEmbedTrack(activeTrack)}
                   title="Watch music video inside widget"
                   aria-label="Watch music video inside widget"
-                  className="inline-flex h-6 items-center gap-1 rounded-full bg-white/[0.10] px-2 text-[10px] font-medium text-white/80 backdrop-blur-md ring-1 ring-white/[0.12] transition-[background-color,color,transform] duration-150 hover:bg-white/[0.18] hover:text-white active:scale-95"
+                  className="inline-flex h-6 items-center gap-1 rounded-full bg-white/[0.14] px-2 text-[10px] font-medium text-white/85 ring-1 ring-white/[0.14] transition-[background-color,color,transform] duration-150 hover:bg-white/[0.22] hover:text-white active:scale-95"
                 >
                   <Youtube className="h-3 w-3 text-[#ff453a]" />
                   <span>Video</span>
@@ -221,7 +222,7 @@ export function MusicWidget({
                   onClick={() => onOpenSafari(activeTrack)}
                   title="Open in Safari"
                   aria-label="Open track in Safari"
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.10] backdrop-blur-md ring-1 ring-white/[0.12] transition-[background-color,transform] duration-150 hover:bg-white/[0.18] active:scale-95"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.14] ring-1 ring-white/[0.14] transition-[background-color,transform] duration-150 hover:bg-white/[0.22] active:scale-95"
                 >
                   <img
                     src="/macos-icons/safari.png"
@@ -437,7 +438,7 @@ export function MusicWidget({
                     onDoubleClick={() => onOpenSafari(track)}
                     title={`Play ${track.title} — ${track.artist}`}
                     className={cn(
-                      'relative aspect-square w-full overflow-hidden rounded-[12px] shadow-[0_6px_16px_rgba(0,0,0,0.38)] transition-[transform,box-shadow] duration-200 ease-out-spring hover:scale-[1.03] active:scale-[0.96]',
+                      'relative aspect-square w-full overflow-hidden rounded-[12px] shadow-[0_6px_16px_rgba(0,0,0,0.38)] transition-[transform,box-shadow] duration-200 ease-out-spring fine:hover:scale-[1.03] active:scale-[0.96]',
                       isTrackPlaying
                         ? 'ring-2 ring-white'
                         : isTrackActive
@@ -458,7 +459,7 @@ export function MusicWidget({
                     {isTrackPlaying && (
                       <div
                         aria-hidden="true"
-                        className="absolute bottom-1.5 right-1.5 flex h-4 items-end gap-[1.5px] rounded-full bg-black/70 px-1.5 py-1 backdrop-blur-md"
+                        className="absolute bottom-1.5 right-1.5 flex h-4 items-end gap-[1.5px] rounded-full bg-black/80 px-1.5 py-1"
                       >
                         <span className="ganos-eq-bar h-2 w-[2px] rounded-full bg-white" />
                         <span className="ganos-eq-bar ganos-eq-bar-2 h-2.5 w-[2px] rounded-full bg-white" />
@@ -491,4 +492,4 @@ export function MusicWidget({
       </div>
     </div>
   );
-}
+});

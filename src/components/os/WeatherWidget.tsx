@@ -2,11 +2,10 @@
  * states: default · hover · focus-visible · active · selected · refreshing · light-glass · dark-glass
  * pre-emit critique: P5 H5 E5 S5 R5 V5
  */
-import { useEffect, useId, useRef, useState } from 'react';
+import { memo, useEffect, useId, useRef, useState } from 'react';
 import {
   AnimatePresence,
   motion,
-  useMotionTemplate,
   useMotionValue,
   useReducedMotion,
   useSpring,
@@ -549,7 +548,7 @@ interface WeatherWidgetProps {
   widgetGalleryOpen?: boolean;
 }
 
-export function WeatherWidget({
+export const WeatherWidget = memo(function WeatherWidget({
   weather,
   unit,
   onToggleUnit,
@@ -567,21 +566,22 @@ export function WeatherWidget({
   const [showExtraStats, setShowExtraStats] = useState(false);
   const [pointerInside, setPointerInside] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const rectRef = useRef<DOMRect | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // Emil-style spring-interpolated specular caustic across liquid glass
-  const rawPointerX = useMotionValue(50);
-  const rawPointerY = useMotionValue(20);
+  // Emil-style spring-interpolated GPU specular caustic across liquid glass
+  const rawPointerX = useMotionValue(size.width * 0.5);
+  const rawPointerY = useMotionValue(size.height * 0.2);
   const springX = useSpring(rawPointerX, { stiffness: 160, damping: 24, mass: 0.6 });
   const springY = useSpring(rawPointerY, { stiffness: 160, damping: 24, mass: 0.6 });
 
   const profile = getWallpaperGlassProfile(wallpaperId, glassMode);
   const lightGlass = profile.isLightSurface;
 
-  const specularCaustic = useMotionTemplate`radial-gradient(180px circle at ${springX}% ${springY}%, ${
-    lightGlass ? 'rgba(255, 255, 255, 0.44)' : 'rgba(255, 255, 255, 0.16)'
-  } 0%, transparent 72%)`;
+  useEffect(() => {
+    rectRef.current = null;
+  }, [size.width, size.height]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -601,14 +601,25 @@ export function WeatherWidget({
     };
   }, [menuOpen]);
 
-  const handleSurfacePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleSurfacePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
+    setPointerInside(true);
     if (prefersReducedMotion || !rootRef.current) return;
     const rect = rootRef.current.getBoundingClientRect();
+    rectRef.current = rect;
     if (rect.width <= 0 || rect.height <= 0) return;
-    const pctX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    const pctY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-    rawPointerX.set(pctX);
-    rawPointerY.set(pctY);
+    rawPointerX.set(Math.max(0, Math.min(rect.width, e.clientX - rect.left)));
+    rawPointerY.set(Math.max(0, Math.min(rect.height, e.clientY - rect.top)));
+  };
+
+  const handleSurfacePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (prefersReducedMotion || e.pointerType === 'touch' || !rootRef.current) return;
+    const rect = rectRef.current ?? (rectRef.current = rootRef.current.getBoundingClientRect());
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const px = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const py = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    rawPointerX.set(px);
+    rawPointerY.set(py);
   };
 
   const activeSlot = weather.forecast[activeHourlyIdx] ?? weather.forecast[0];
@@ -653,8 +664,11 @@ export function WeatherWidget({
   return (
     <div
       ref={rootRef}
-      onPointerEnter={() => setPointerInside(true)}
-      onPointerLeave={() => setPointerInside(false)}
+      onPointerEnter={handleSurfacePointerEnter}
+      onPointerLeave={() => {
+        setPointerInside(false);
+        rectRef.current = null;
+      }}
       onPointerMove={handleSurfacePointerMove}
       className={cn(
         'relative flex h-full w-full flex-col justify-between overflow-hidden select-none',
@@ -686,16 +700,24 @@ export function WeatherWidget({
         }}
       />
 
-      {/* Layer 4: Spring-Interpolated Pointer Specular Caustic */}
+      {/* Layer 4: Spring-Interpolated GPU Specular Caustic */}
       {!prefersReducedMotion && (
-        <motion.div
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 transition-opacity duration-200 ease-out"
-          style={{
-            background: specularCaustic,
-            opacity: pointerInside ? 1 : 0,
-          }}
-        />
+          className="pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-200 ease-out"
+          style={{ opacity: pointerInside ? 1 : 0 }}
+        >
+          <motion.div
+            className="h-[360px] w-[360px] -ml-[180px] -mt-[180px] rounded-full will-change-transform"
+            style={{
+              x: springX,
+              y: springY,
+              background: `radial-gradient(circle, ${
+                lightGlass ? 'rgba(255, 255, 255, 0.44)' : 'rgba(255, 255, 255, 0.16)'
+              } 0%, transparent 72%)`,
+            }}
+          />
+        </div>
       )}
 
       {/* Layer 5: Prismatic Top Specular Rim Highlight */}
@@ -1130,4 +1152,4 @@ export function WeatherWidget({
       </div>
     </div>
   );
-}
+});

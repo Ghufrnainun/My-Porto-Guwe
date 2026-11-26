@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { profile } from '@/data/profile';
 import { featuredProjects } from '@/data/featuredProjects';
 import {
+  DEFAULT_TRASH_EASTER_EGGS,
   OsMusicPlaybackContext,
   OsShellContext,
   WALLPAPERS,
@@ -46,20 +47,18 @@ import {
   type TrashItem,
   type WallpaperId,
 } from '@/components/os/OsShellContext';
+import { ensureFontGroup } from '@/lib/loadFont';
 import {
   GlassDock3D,
   type GlassDock3DItem,
 } from '@/components/ui/glass-dock-3d';
 import { useOsNotification } from '@/components/os/OsNotificationContext';
 import { OsNotificationBannerContainer } from '@/components/os/OsNotificationBanner';
-import { OsNotificationCenter } from '@/components/os/OsNotificationCenter';
 import { DynamicIsland } from '@/components/os/DynamicIsland';
 import {
   AppSwitcherHUD,
   type AppSwitcherItem,
 } from '@/components/os/AppSwitcherHUD';
-import { QuickStartGuide } from '@/components/os/QuickStartGuide';
-import { DEFAULT_TRASH_EASTER_EGGS, TrashPopover } from '@/components/os/TrashPopover';
 import { WallpaperStage } from '@/components/os/WallpaperStage';
 import { usePreloader } from '@/hooks/usePreloader';
 import { RECENT_TRACKS, type ListeningTrack } from '@/data/recentTracks';
@@ -77,6 +76,51 @@ import {
   playWindowOpenSound,
   playWindowSnapSound,
 } from '@/lib/soundEffects';
+
+const OsNotificationCenter = lazy(() =>
+  import('@/components/os/OsNotificationCenter').then((m) => ({
+    default: m.OsNotificationCenter,
+  }))
+);
+const QuickStartGuide = lazy(() =>
+  import('@/components/os/QuickStartGuide').then((m) => ({
+    default: m.QuickStartGuide,
+  }))
+);
+const TrashPopover = lazy(() =>
+  import('@/components/os/TrashPopover').then((m) => ({
+    default: m.TrashPopover,
+  }))
+);
+
+const preloadedAppChunks = new Set<OsAppId>();
+function preloadAppChunk(id: OsAppId): void {
+  if (typeof window === 'undefined' || preloadedAppChunks.has(id)) return;
+  preloadedAppChunks.add(id);
+  switch (id) {
+    case 'projects':
+      void import('@/pages/Projects');
+      break;
+    case 'about':
+      void import('@/pages/About');
+      break;
+    case 'resume':
+      void import('@/pages/Resume');
+      break;
+    case 'blog':
+      void import('@/pages/Blog');
+      break;
+    case 'safari':
+    case 'notes':
+    case 'terminal':
+    case 'mail':
+    case 'settings':
+      void import('@/components/os/OsBuiltInApps');
+      break;
+    case 'town':
+      break;
+  }
+}
 
 const SafariApp = lazy(() =>
   import('@/components/os/OsBuiltInApps').then((m) => ({
@@ -100,28 +144,50 @@ const MailApp = lazy(() =>
   import('@/components/os/OsBuiltInApps').then((m) => ({ default: m.MailApp }))
 );
 
+const MENU_DATE_EN = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Asia/Jakarta',
+});
+const MENU_DATE_ID = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Asia/Jakarta',
+});
+const MENU_TIME_WIB = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZone: 'Asia/Jakarta',
+});
+const LOCK_DATE_WIB = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'Asia/Jakarta',
+});
+
 const MenuBarClock: React.FC<{ language: OsLanguage }> = React.memo(
   ({ language }) => {
     const [now, setNow] = useState(() => new Date());
 
     useEffect(() => {
-      const id = window.setInterval(() => setNow(new Date()), 15_000);
-      return () => window.clearInterval(id);
+      const sync = () => {
+        if (!document.hidden) setNow(new Date());
+      };
+      const id = window.setInterval(sync, 15_000);
+      document.addEventListener('visibilitychange', sync);
+      return () => {
+        window.clearInterval(id);
+        document.removeEventListener('visibilitychange', sync);
+      };
     }, []);
 
-    const formattedDate = now
-      .toLocaleDateString(language === 'id' ? 'id-ID' : 'en-GB', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        timeZone: 'Asia/Jakarta',
-      })
+    const formattedDate = (language === 'id' ? MENU_DATE_ID : MENU_DATE_EN)
+      .format(now)
       .replace(',', '');
-    const formattedTime = now.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: 'Asia/Jakarta',
-    });
+    const formattedTime = MENU_TIME_WIB.format(now);
 
     return (
       <>
@@ -136,25 +202,23 @@ const LockScreenClock: React.FC = React.memo(() => {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 10_000);
-    return () => window.clearInterval(id);
+    const sync = () => {
+      if (!document.hidden) setNow(new Date());
+    };
+    const id = window.setInterval(sync, 10_000);
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', sync);
+    };
   }, []);
 
-  const formattedTime = now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Jakarta',
-  });
+  const formattedTime = MENU_TIME_WIB.format(now);
 
   return (
     <div className="relative text-center [text-shadow:0_2px_18px_rgba(0,0,0,0.28)]">
       <div className="text-[18px] font-medium tracking-tight text-white/90 sm:text-[20px]">
-        {now.toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-          timeZone: 'Asia/Jakarta',
-        })}
+        {LOCK_DATE_WIB.format(now)}
       </div>
       <div className="mt-1 text-[84px] font-bold leading-none tracking-tight text-white tabular-nums sm:text-[104px]">
         {formattedTime.replace(/\s?[AP]M/i, '')}
@@ -455,9 +519,13 @@ export function OsShell({
   const [spotlightQuery, setSpotlightQuery] = useState('');
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [quickStartOpen, setQuickStartOpen] = useState(false);
+  const [hasOpenedQuickStart, setHasOpenedQuickStart] = useState(false);
   const quickStartOpenedFromMenubarRef = useRef(false);
   const quickStartTriggerRef = useRef<HTMLButtonElement>(null);
   const [trashOpen, setTrashOpen] = useState(false);
+  const [hasOpenedTrash, setHasOpenedTrash] = useState(false);
+  const [hasOpenedNotificationCenter, setHasOpenedNotificationCenter] =
+    useState(false);
   const [trashDropActive, setTrashDropActive] = useState(false);
   const [trashState, setTrashState] = useState<StoredTrashState>(() =>
     readTrashSession(),
@@ -531,12 +599,17 @@ export function OsShell({
 
   const menubarRef = useRef<HTMLElement>(null);
   const zCounter = useRef(12);
+  const windowRefs = useRef<Partial<Record<OsAppId, HTMLDivElement | null>>>({});
   const dragRef = useRef<{
     id: OsAppId;
     startX: number;
     startY: number;
     origX: number;
     origY: number;
+    width: number;
+    lastX: number;
+    lastY: number;
+    el: HTMLDivElement | null;
   } | null>(null);
 
   const [activeTrack, setActiveTrack] = useState<ListeningTrack>(
@@ -725,7 +798,22 @@ export function OsShell({
 
   useEffect(() => {
     document.documentElement.setAttribute('data-font', systemFont);
+    if (systemFont === 'inter' || systemFont === 'geist') {
+      ensureFontGroup(systemFont);
+    }
   }, [systemFont]);
+
+  useEffect(() => {
+    if (quickStartOpen) setHasOpenedQuickStart(true);
+  }, [quickStartOpen]);
+
+  useEffect(() => {
+    if (trashOpen) setHasOpenedTrash(true);
+  }, [trashOpen]);
+
+  useEffect(() => {
+    if (isCenterOpen) setHasOpenedNotificationCenter(true);
+  }, [isCenterOpen]);
 
   const activeWallpaper = useMemo(
     () => WALLPAPERS.find((w) => w.id === wallpaperId) ?? WALLPAPERS[0],
@@ -1421,6 +1509,10 @@ export function OsShell({
       startY: event.clientY,
       origX: win.frame.x,
       origY: win.frame.y,
+      width: win.frame.width,
+      lastX: win.frame.x,
+      lastY: win.frame.y,
+      el: windowRefs.current[id] ?? null,
     };
     setIsInteractingWindow(true);
     try {
@@ -1437,49 +1529,43 @@ export function OsShell({
       const vw = window.innerWidth;
       const edgeThreshold = 24;
 
-      if (moveEvent.clientX <= edgeThreshold) {
-        setSnapTarget('left');
-        snapTargetRef.current = 'left';
-      } else if (moveEvent.clientX >= vw - edgeThreshold) {
-        setSnapTarget('right');
-        snapTargetRef.current = 'right';
-      } else if (moveEvent.clientY <= MENUBAR_HEIGHT + 12) {
-        setSnapTarget('top');
-        snapTargetRef.current = 'top';
-      } else {
-        if (snapTargetRef.current !== null) {
-          setSnapTarget(null);
-          snapTargetRef.current = null;
-        }
+      const nextSnap: 'left' | 'right' | 'top' | null =
+        moveEvent.clientX <= edgeThreshold
+          ? 'left'
+          : moveEvent.clientX >= vw - edgeThreshold
+            ? 'right'
+            : moveEvent.clientY <= MENUBAR_HEIGHT + 12
+              ? 'top'
+              : null;
+
+      if (nextSnap !== snapTargetRef.current) {
+        snapTargetRef.current = nextSnap;
+        setSnapTarget(nextSnap);
       }
 
-      setWindows((current) =>
-        current.map((w) =>
-          w.id === drag.id
-            ? {
-                ...w,
-                frame: {
-                  ...w.frame,
-                  x: Math.max(
-                    80 - w.frame.width,
-                    Math.min(drag.origX + dx, window.innerWidth - 80)
-                  ),
-                  y: Math.max(
-                    0,
-                    Math.min(
-                      drag.origY + dy,
-                      window.innerHeight - MENUBAR_HEIGHT - 56
-                    )
-                  ),
-                },
-              }
-            : w
-        )
+      const nextX = Math.max(
+        80 - drag.width,
+        Math.min(drag.origX + dx, vw - 80)
       );
+      const nextY = Math.max(
+        0,
+        Math.min(drag.origY + dy, window.innerHeight - MENUBAR_HEIGHT - 56)
+      );
+      drag.lastX = nextX;
+      drag.lastY = nextY;
+
+      if (drag.el) {
+        drag.el.style.willChange = 'translate';
+        drag.el.style.translate = `${Math.round(nextX - drag.origX)}px ${Math.round(nextY - drag.origY)}px`;
+      }
     };
     const onUp = () => {
       const drag = dragRef.current;
       const snap = snapTargetRef.current;
+      if (drag?.el) {
+        drag.el.style.translate = '';
+        drag.el.style.willChange = '';
+      }
       if (drag && snap) {
         playWindowSnapSound();
         const vw = window.innerWidth;
@@ -1531,6 +1617,19 @@ export function OsShell({
             )
           );
         }
+      } else if (
+        drag &&
+        (drag.lastX !== drag.origX || drag.lastY !== drag.origY)
+      ) {
+        const finalX = Math.round(drag.lastX);
+        const finalY = Math.round(drag.lastY);
+        setWindows((current) =>
+          current.map((w) =>
+            w.id === drag.id
+              ? { ...w, frame: { ...w.frame, x: finalX, y: finalY } }
+              : w
+          )
+        );
       }
 
       setSnapTarget(null);
@@ -1570,10 +1669,14 @@ export function OsShell({
     const startY = event.clientY;
     const minW = APP_SPECS[id].minSize.width;
     const minH = APP_SPECS[id].minSize.height;
+    let latestClientX = startX;
+    let latestClientY = startY;
+    let resizeRaf = 0;
 
-    const onMove = (moveEvent: PointerEvent) => {
-      const dx = moveEvent.clientX - startX;
-      const dy = moveEvent.clientY - startY;
+    const applyResizeFrame = () => {
+      resizeRaf = 0;
+      const dx = latestClientX - startX;
+      const dy = latestClientY - startY;
       const vw = window.innerWidth;
       const vh = window.innerHeight - MENUBAR_HEIGHT;
 
@@ -1621,7 +1724,19 @@ export function OsShell({
       );
     };
 
+    const onMove = (moveEvent: PointerEvent) => {
+      latestClientX = moveEvent.clientX;
+      latestClientY = moveEvent.clientY;
+      if (!resizeRaf) {
+        resizeRaf = window.requestAnimationFrame(applyResizeFrame);
+      }
+    };
+
     const onUp = () => {
+      if (resizeRaf) {
+        window.cancelAnimationFrame(resizeRaf);
+        applyResizeFrame();
+      }
       setIsInteractingWindow(false);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
@@ -1864,6 +1979,7 @@ export function OsShell({
       isRunning,
       isLaunching: launchingId === id,
       badge: appBadges[id],
+      onPreload: () => preloadAppChunk(id),
       onClick: () => {
         clearAppBadge(id);
         openApp(id);
@@ -2232,7 +2348,7 @@ export function OsShell({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-[left,top,width,height,opacity] duration-150',
+                  'pointer-events-none fixed z-20 rounded-[22px] border border-white/40 bg-[#0a84ff]/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-opacity duration-150 ease-smooth-out',
                   snapTarget === 'left' &&
                     'left-2 top-[36px] w-[calc(50vw-12px)] h-[calc(100svh-136px)]',
                   snapTarget === 'right' &&
@@ -2269,6 +2385,9 @@ export function OsShell({
               return (
                 <motion.div
                   key={win.id}
+                  ref={(el) => {
+                    windowRefs.current[win.id] = el;
+                  }}
                   role="dialog"
                   aria-label={spec.title}
                   style={style}
@@ -2515,7 +2634,7 @@ export function OsShell({
                       <img
                         src={item.icon}
                         alt={item.name}
-                        className="h-24 w-24 object-contain transition-transform duration-200 group-hover:scale-105 active:brightness-75 drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
+                        className="h-24 w-24 object-contain transition-transform duration-200 fine:group-hover:scale-105 active:brightness-75 drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
                       />
                       <span className="text-[13px] font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
                         {item.name}
@@ -3069,148 +3188,156 @@ export function OsShell({
           </header>
 
           {/* Interactive Dock Trash Popover (Dragged items + Dev Easter Eggs) */}
-          <TrashPopover
-            isOpen={trashOpen && power === 'on'}
-            language={language}
-            items={trashState.items}
-            hasDeletedDesktopItems={trashState.deletedDesktopSources.length > 0}
-            onRestoreItem={restoreTrashItem}
-            onRestoreAll={restoreAllTrash}
-            onRestoreDesktopItems={restoreDesktopItems}
-            onEmptyTrash={emptyTrash}
-            onOpenApp={openApp}
-            onClose={() => setTrashOpen(false)}
-          />
+          {hasOpenedTrash && (
+            <Suspense fallback={null}>
+              <TrashPopover
+                isOpen={trashOpen && power === 'on'}
+                language={language}
+                items={trashState.items}
+                hasDeletedDesktopItems={
+                  trashState.deletedDesktopSources.length > 0
+                }
+                onRestoreItem={restoreTrashItem}
+                onRestoreAll={restoreAllTrash}
+                onRestoreDesktopItems={restoreDesktopItems}
+                onEmptyTrash={emptyTrash}
+                onOpenApp={openApp}
+                onClose={() => setTrashOpen(false)}
+              />
+            </Suspense>
+          )}
 
           {/* Recruiter & First-Visit 3-Step Anchored Mini Tour */}
-          <QuickStartGuide
-            isOpen={quickStartOpen && power === 'on'}
-            language={language}
-            onLanguageChange={setLanguage}
-            onOpenApp={openApp}
-            onOpenSpotlight={() => setSpotlightOpen(true)}
-            onClose={() => {
-              const wasFromMenubar = quickStartOpenedFromMenubarRef.current;
-              closeQuickStart();
-              if (wasFromMenubar) {
-                window.requestAnimationFrame(() => {
-                  quickStartTriggerRef.current?.focus();
-                });
-              }
-            }}
-          />
+          {hasOpenedQuickStart && (
+            <Suspense fallback={null}>
+              <QuickStartGuide
+                isOpen={quickStartOpen && power === 'on'}
+                language={language}
+                onLanguageChange={setLanguage}
+                onOpenApp={openApp}
+                onOpenSpotlight={() => setSpotlightOpen(true)}
+                onClose={() => {
+                  const wasFromMenubar = quickStartOpenedFromMenubarRef.current;
+                  closeQuickStart();
+                  if (wasFromMenubar) {
+                    window.requestAnimationFrame(() => {
+                      quickStartTriggerRef.current?.focus();
+                    });
+                  }
+                }}
+              />
+            </Suspense>
+          )}
 
           {/* Spotlight Modal (⌘K) — Instant keyboard response (Raycast/Emil principle) */}
-          <AnimatePresence>
-            {spotlightOpen && (
-              <motion.div
-                className="absolute inset-0 z-40"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.06 }}
-                onMouseDown={(event) => {
-                  if (event.target === event.currentTarget)
-                    setSpotlightOpen(false);
-                }}
-              >
-                <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
-                  <div className="overflow-hidden rounded-[26px] bg-[#f4f2f5]/90 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/85 dark:text-white">
-                    <div className="flex h-14 items-center gap-3 px-4">
-                      <Search size={20} className="opacity-50" />
-                      <input
-                        autoFocus
-                        value={spotlightQuery}
-                        onChange={(event) => {
-                          setSpotlightQuery(event.target.value);
-                          setSpotlightIndex(0);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Escape') setSpotlightOpen(false);
-                          if (
-                            event.key === 'Enter' &&
-                            spotlightResults[spotlightIndex]
-                          ) {
-                            spotlightResults[spotlightIndex].action();
-                            setSpotlightOpen(false);
-                          }
-                          if (
-                            event.key === 'ArrowDown' ||
-                            event.key === 'ArrowUp'
-                          ) {
-                            event.preventDefault();
-                            const dir = event.key === 'ArrowDown' ? 1 : -1;
-                            setSpotlightIndex((curr) =>
-                              Math.min(
-                                Math.max(curr + dir, 0),
-                                Math.max(0, spotlightResults.length - 1)
-                              )
-                            );
-                          }
-                        }}
-                        placeholder="Spotlight Search"
-                        className="flex-grow bg-transparent text-[20px] outline-none placeholder:text-neutral-400"
-                      />
-                    </div>
-                    {spotlightQuery.trim() && (
-                      <div className="max-h-80 overflow-y-auto border-t border-black/10 p-2 dark:border-white/10">
-                        {spotlightResults.length === 0 ? (
-                          <div className="py-6 text-center text-[14px] text-neutral-400">
-                            No Results
-                          </div>
-                        ) : (
-                          spotlightResults.map((result, idx) => (
-                            <React.Fragment key={result.id}>
-                              {result.category !==
-                                spotlightResults[idx - 1]?.category && (
-                                <div className="px-2 pb-1 pt-2 text-[11px] font-semibold text-neutral-400">
-                                  {result.category}
-                                </div>
-                              )}
-                              <button
-                                type="button"
-                                onMouseMove={() => setSpotlightIndex(idx)}
-                                onClick={() => {
-                                  result.action();
-                                  setSpotlightOpen(false);
-                                }}
-                                className={cn(
-                                  'flex w-full cursor-default items-center gap-3 rounded-[10px] px-2 py-1.5 text-left',
-                                  idx === spotlightIndex &&
-                                    'bg-[#0a84ff] text-white'
-                                )}
-                              >
-                                <img
-                                  src={result.icon}
-                                  alt=""
-                                  className="h-7 w-7 shrink-0 object-contain"
-                                />
-                                <div className="min-w-0">
-                                  <div className="truncate text-[14px]">
-                                    {result.title}
-                                  </div>
-                                  <div
-                                    className={cn(
-                                      'truncate text-[12px]',
-                                      idx === spotlightIndex
-                                        ? 'text-white/75'
-                                        : 'text-neutral-400'
-                                    )}
-                                  >
-                                    {result.subtitle}
-                                  </div>
-                                </div>
-                              </button>
-                            </React.Fragment>
-                          ))
-                        )}
-                      </div>
-                    )}
+          {spotlightOpen && (
+            <div
+              className="absolute inset-0 z-40"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget)
+                  setSpotlightOpen(false);
+              }}
+            >
+              <div className="absolute left-1/2 top-[22%] w-[min(640px,calc(100vw-32px))] -translate-x-1/2">
+                <div className="overflow-hidden rounded-[26px] bg-[#f4f2f5]/90 text-black shadow-[0_20px_60px_rgba(0,0,0,0.45),inset_0_0_0_0.5px_rgba(255,255,255,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-[#2a2429]/85 dark:text-white">
+                  <div className="flex h-14 items-center gap-3 px-4">
+                    <Search size={20} className="opacity-50" />
+                    <input
+                      autoFocus
+                      value={spotlightQuery}
+                      onChange={(event) => {
+                        setSpotlightQuery(event.target.value);
+                        setSpotlightIndex(0);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') setSpotlightOpen(false);
+                        if (
+                          event.key === 'Enter' &&
+                          spotlightResults[spotlightIndex]
+                        ) {
+                          spotlightResults[spotlightIndex].action();
+                          setSpotlightOpen(false);
+                        }
+                        if (
+                          event.key === 'ArrowDown' ||
+                          event.key === 'ArrowUp'
+                        ) {
+                          event.preventDefault();
+                          const dir = event.key === 'ArrowDown' ? 1 : -1;
+                          setSpotlightIndex((curr) =>
+                            Math.min(
+                              Math.max(curr + dir, 0),
+                              Math.max(0, spotlightResults.length - 1)
+                            )
+                          );
+                        }
+                      }}
+                      placeholder="Spotlight Search"
+                      className="flex-grow bg-transparent text-[20px] outline-none placeholder:text-neutral-400"
+                    />
                   </div>
+                  {spotlightQuery.trim() && (
+                    <div className="max-h-80 overflow-y-auto border-t border-black/10 p-2 dark:border-white/10">
+                      {spotlightResults.length === 0 ? (
+                        <div className="py-6 text-center text-[14px] text-neutral-400">
+                          No Results
+                        </div>
+                      ) : (
+                        spotlightResults.map((result, idx) => (
+                          <React.Fragment key={result.id}>
+                            {result.category !==
+                              spotlightResults[idx - 1]?.category && (
+                              <div className="px-2 pb-1 pt-2 text-[11px] font-semibold text-neutral-400">
+                                {result.category}
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onMouseEnter={() =>
+                                setSpotlightIndex((curr) =>
+                                  curr === idx ? curr : idx
+                                )
+                              }
+                              onClick={() => {
+                                result.action();
+                                setSpotlightOpen(false);
+                              }}
+                              className={cn(
+                                'flex w-full cursor-default items-center gap-3 rounded-[10px] px-2 py-1.5 text-left',
+                                idx === spotlightIndex &&
+                                  'bg-[#0a84ff] text-white'
+                              )}
+                            >
+                              <img
+                                src={result.icon}
+                                alt=""
+                                className="h-7 w-7 shrink-0 object-contain"
+                              />
+                              <div className="min-w-0">
+                                <div className="truncate text-[14px]">
+                                  {result.title}
+                                </div>
+                                <div
+                                  className={cn(
+                                    'truncate text-[12px]',
+                                    idx === spotlightIndex
+                                      ? 'text-white/75'
+                                      : 'text-neutral-400'
+                                  )}
+                                >
+                                  {result.subtitle}
+                                </div>
+                              </div>
+                            </button>
+                          </React.Fragment>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </div>
+          )}
 
           {/* Brightness Overlay */}
           <div
@@ -3263,7 +3390,7 @@ export function OsShell({
 
                 {/* Bottom Brand Logo Avatar & Unlock Prompt */}
                 <div className="relative flex flex-col items-center gap-2.5">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.35)] ring-1 ring-white/35 backdrop-blur-md transition-transform hover:scale-105">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.35)] ring-1 ring-white/35 backdrop-blur-md transition-transform fine:hover:scale-105">
                     <img
                       src="/brand-logo.svg"
                       alt="Ghufron Logo"
@@ -3306,7 +3433,11 @@ export function OsShell({
 
           {/* GanOS Notification System */}
           <OsNotificationBannerContainer />
-          <OsNotificationCenter />
+          {hasOpenedNotificationCenter && (
+            <Suspense fallback={null}>
+              <OsNotificationCenter />
+            </Suspense>
+          )}
 
           {/* macOS / Windows App Switcher HUD (⌘Tab / Ctrl+Tab) */}
           <AppSwitcherHUD
